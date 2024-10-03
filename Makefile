@@ -1,4 +1,4 @@
-.PHONY: start
+.PHONY: start_devnet stop_devnet clean_devnet
 
 start_devnet:
 	kurtosis run kurtosis_package/ --enclave=devnet
