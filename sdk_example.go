@@ -32,7 +32,8 @@ func startEnclave() error {
 		log.L.Error("Failed to create enclave context, error: ", err)
 		return err
 	}
-	starklarkScriptBytes, err := os.ReadFile("kurtosis_package/main.star")
+	scriptFile := "kurtosis_package/main.star"
+	starklarkScriptBytes, err := os.ReadFile(scriptFile)
 	if err != nil {
 		log.L.Error("Failed to read file, error: ", err)
 		return err
@@ -46,9 +47,10 @@ func startEnclave() error {
 	log.L.Info(starlarkRunResult)
 	log.L.Info("Finished running starlark script")
 
-	serviceCtx, err := enclaveCtx.GetServiceContext("cl-1-lighthouse-geth")
+	service := "cl-1-lighthouse-geth"
+	serviceCtx, err := enclaveCtx.GetServiceContext(service)
 	privatePorts := serviceCtx.GetPrivatePorts()
-	log.L.Info("cl-1-lighthouse-geth private ports = ", privatePorts)
+	log.L.Info(service+" private ports = ", privatePorts)
 
 	kurtosisCtx.StopEnclave(context.Background(), enclaveName)
 	kurtosisCtx.DestroyEnclave(context.Background(), enclaveName)
