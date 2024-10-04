@@ -11,7 +11,7 @@ COPY . .
 WORKDIR /usr/src/app/operator/cmd
 RUN go build -v -o /usr/local/bin/operator ./...
 
-FROM debian:latest
-COPY --from=build /usr/local/bin/operator /usr/local/bin/operator
+WORKDIR /usr/src/app
+
 ENTRYPOINT [ "operator"]
-CMD ["--config=/app/avs_config.yaml"]
+CMD ["--config=/usr/src/app/config-files/operator.anvil.yaml"]
