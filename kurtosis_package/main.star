@@ -14,14 +14,21 @@ def run(plan, args={}):
         name="eigenlayer-deployment-input",
     )
 
-    # TODO: arg
-    eigenlayer_contracts_version = "v0.4.2-mainnet-pepe"
+    eigenlayer_deployer_img = ImageBuildSpec(
+        image_name="eigenlayer_deployer",
+        build_context_dir="./dockerfiles/",
+        build_file="contract_deployer.dockerfile",
+        build_args={
+            "CONTRACTS_REPO": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
+            "CONTRACTS_REF": "v0.4.2-mainnet-pepe",
+            "CONTRACTS_PATH": ".",
+        },
+    )
+
     plan.run_sh(
-        # Nightly (2024-10-03)
-        image="contract_deployer",
+        image=eigenlayer_deployer_img,
         run="forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json",
         env_vars={
-            "EIGENLAYER_CONTRACTS_VERSION": eigenlayer_contracts_version,
             "HTTP_RPC_URL": http_rpc_url,
             "PRIVATE_KEY": private_key,
         },
@@ -32,5 +39,6 @@ def run(plan, args={}):
             StoreSpec(src = "/app/contracts/script/output/devnet/M2_from_scratch_deployment_data.json", name = "eigenlayer_addresses")
         ],
         wait="15s",
+        description="Deploying EigenLayer contracts",
     )
     return ethereum_output
