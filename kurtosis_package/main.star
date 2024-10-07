@@ -36,6 +36,34 @@ def run(plan, args={}):
         wait="15s",
     )
 
+    setup_operator_config(plan, http_rpc_url)
+
+    operator = plan.add_service(
+        name = "ics-operator",
+        config = ServiceConfig(
+            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
+            ports = {
+                "rpc": PortSpec(
+                    number = 9000,
+                    transport_protocol = "TCP",
+                    application_protocol = "http",
+                    wait = "5s",
+                ),
+            },
+            files = {
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names = ["operator-updated-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
+                ),
+            },
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
+        ),
+
+    )
+
+    return ethereum_output
+
+
+def setup_operator_config(plan, http_rpc_url):
     operator_config = plan.upload_files(
         src="./operator-config.yaml",
         name="operator-config",
@@ -49,13 +77,12 @@ def run(plan, args={}):
         src="./test.ecdsa.key.json",
         name="operator_ecdsa_keystore",
     )
-    # TODO: replace this with a template
     
     eigenlayer_addresses = plan.get_files_artifact(
         name = "eigenlayer_addresses",
         description = "gets you an artifact",
     )
-
+    # get avsDirectory
     result = plan.run_sh(
         image="badouralix/curl-jq",
         run="jq -j .addresses.avsDirectory /usr/src/app/config-files/M2_from_scratch_deployment_data.json",
@@ -66,6 +93,7 @@ def run(plan, args={}):
     )
     avs_directory = result.output
     
+    # get strategyManager
     result = plan.run_sh(
         image="badouralix/curl-jq",
         run="jq -j .addresses.strategyManager /usr/src/app/config-files/M2_from_scratch_deployment_data.json",
@@ -76,6 +104,7 @@ def run(plan, args={}):
     )
     strategy_manager = result.output
 
+    # get operator address
     result = plan.run_sh(
         image="badouralix/curl-jq",
         run="jq -j .address /usr/src/app/config-files/test.ecdsa.key.json",
@@ -130,28 +159,3 @@ def run(plan, args={}):
         name = "operator-updated-config",
         description = "rendering a template"  
     )
-
-    operator = plan.add_service(
-        name = "ics-operator",
-        config = ServiceConfig(
-            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            ports = {
-                "rpc": PortSpec(
-                    number = 9000,
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-                    wait = "5s",
-                ),
-            },
-            files = {
-                # "/usr/src/app/config-files/": "operator-updated-config",
-                "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["operator-updated-config", operator_bls_keystore, operator_ecdsa_keystore],
-                ),
-            },
-            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
-        ),
-
-    )
-
-    return ethereum_output
