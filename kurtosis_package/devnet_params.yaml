@@ -1,0 +1,7 @@
+ethereum_params:
+  participants:
+    - el_type: reth
+      cl_type: teku
+  additional_services:
+    - blockscout
+    - dora
