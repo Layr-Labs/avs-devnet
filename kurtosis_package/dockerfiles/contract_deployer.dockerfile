@@ -16,3 +16,5 @@ WORKDIR /app/contracts
 
 # TODO: we can use a multi-stage build to store artifacts only
 RUN forge build
+
+ENTRYPOINT [ "forge", "script", "./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2" ]
