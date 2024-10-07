@@ -75,10 +75,20 @@ def run(plan, args={}):
         wait="1s",
     )
     strategy_manager = result.output
+
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .address /usr/src/app/config-files/test.ecdsa.key.json",
+        files={
+            "/usr/src/app/config-files/": operator_ecdsa_keystore,
+        },
+        wait="1s",
+    )
+    operator_address = result.output
     
     template_data = {
         "Production": False,
-        "OperatorAddress": "2",
+        "OperatorAddress": operator_address,
         "AvsRegistryCoordinatorAddress": avs_directory,
         "OperatorStateRetrieverAddress": strategy_manager,
         "EthRpcUrl": http_rpc_url,
