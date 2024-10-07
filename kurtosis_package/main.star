@@ -10,7 +10,7 @@ def run(plan, args={}):
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
     private_key = ethereum_output.pre_funded_accounts[0].private_key
-
+    
     deploy_config_file_artifact = plan.upload_files(
         src="./static_files/deploy_from_scratch.config.json",
         name="eigenlayer-deployment-input",
@@ -41,6 +41,33 @@ def run(plan, args={}):
         name="operator-config",
     )
 
+    operator_bls_keystore = plan.upload_files(
+        src="./test.bls.key.json",
+        name="operator_bls_keystore",
+    )
+    operator_ecdsa_keystore = plan.upload_files(
+        src="./test.ecdsa.key.json",
+        name="operator_ecdsa_keystore",
+    )
+    # TODO: replace this with a template
+    plan.run_sh(
+        image="ics-operator",
+        run=" && ".join([
+            "sed -i \"s#eth_rpc_url: .*#eth_rpc_url: " + http_rpc_url + "#g\" /usr/src/app/config-files/operator-config.yaml",
+            "sed -i \"s#eth_ws_url: .*#eth_ws_url: " + http_rpc_url + "#g\" /usr/src/app/config-files/operator-config.yaml",
+            "sed -i \"s#ecdsa_private_key_store_path: .*#ecdsa_private_key_store_path: " + "/usr/src/app/config-files/test.ecdsa.key.json" + "#g\" /usr/src/app/config-files/operator-config.yaml",
+            "sed -i \"s#bls_private_key_store_path: .*#bls_private_key_store_path: " + "/usr/src/app/config-files/test.bls.key.json" + "#g\" /usr/src/app/config-files/operator-config.yaml",
+            "cat /usr/src/app/config-files/operator-config.yaml",
+        ]),
+        files={
+            "/usr/src/app/config-files/": operator_config,
+        },
+        store=[
+            StoreSpec(src = "/usr/src/app/config-files/", name = "operator-updated-config")
+        ],
+        wait="15s",
+    )
+
     operator = plan.add_service(
         name = "ics-operator",
         config = ServiceConfig(
@@ -54,11 +81,13 @@ def run(plan, args={}):
                 ),
             },
             files = {
-                "/usr/src/app/config-files/": operator_config
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names = ["operator-updated-config", operator_bls_keystore, operator_ecdsa_keystore],
+                ),
             },
             cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
         ),
 
     )
-    
+
     return ethereum_output
