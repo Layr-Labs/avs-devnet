@@ -56,7 +56,7 @@ def run(plan, args={}):
         run=" && ".join(
             [
                 "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json",
-                "mv /app/contracts/script/output/devnet/M2_from_scratch_deployment_data.json /app/contracts/script/output/devnet/eigenlayer_deployment_output.json",
+                "mv /app/script/output/devnet/M2_from_scratch_deployment_data.json /app/script/output/devnet/eigenlayer_deployment_output.json",
             ]
         ),
         env_vars={
@@ -64,11 +64,11 @@ def run(plan, args={}):
             "PRIVATE_KEY": private_key,
         },
         files={
-            "/app/contracts/script/configs/devnet/": deploy_config_file_artifact,
+            "/app/script/configs/devnet/": deploy_config_file_artifact,
         },
         store=[
             StoreSpec(
-                src="/app/contracts/script/output/devnet/eigenlayer_deployment_output.json",
+                src="/app/script/output/devnet/eigenlayer_deployment_output.json",
                 name="eigenlayer_addresses",
             )
         ],
@@ -82,7 +82,7 @@ def run(plan, args={}):
         path="./contracts",
     )
 
-    output_dir = "/app/contracts/contracts/script/output/{}/".format(chain_id)
+    output_dir = "/app/contracts/script/output/{}/".format(chain_id)
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
