@@ -13,5 +13,5 @@ RUN go build -v -o /usr/local/bin/operator ./...
 
 WORKDIR /usr/src/app
 
-ENTRYPOINT [ "operator"]
-CMD ["--config=/usr/src/app/config-files/operator.anvil.yaml"]
+# ENTRYPOINT [ "operator"]
+# CMD ["--config=/usr/src/app/config-files/operator-config.yaml"]

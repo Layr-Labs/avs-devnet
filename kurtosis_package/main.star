@@ -5,6 +5,11 @@ def run(plan, args={}):
     ethereum_args = args.get("ethereum_args", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
+    operator_config = plan.upload_files(
+        src="./operator-config.yaml",
+        name="operator-config",
+    )
+
     operator = plan.add_service(
         name = "ics-operator",
         config = ServiceConfig(
@@ -17,7 +22,12 @@ def run(plan, args={}):
                     wait = "5s",
                 ),
             },
+            files = {
+                "/usr/src/app/config-files/": operator_config
+            },
+            entrypoint = ["operator", "--config", "/usr/src/app/config-files/operator-config.yaml"],
         ),
+
     )
 
     return ethereum_output
