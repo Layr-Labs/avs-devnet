@@ -1,6 +1,7 @@
 # Import remote code from another package using an absolute import
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 
+
 def gen_deployer_img(repo, ref, path="."):
     name = repo.rstrip(".git").split("/")[-1]
     ref_name = ref.replace("/", "_")
@@ -17,8 +18,10 @@ def gen_deployer_img(repo, ref, path="."):
 
 
 def run(plan, args={}):
-    ethereum_args = args.get("ethereum_args", {})
+    # Run the Ethereum package first
+    ethereum_args = args.get("ethereum_params", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
+
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
     private_key = ethereum_output.pre_funded_accounts[0].private_key
@@ -44,7 +47,6 @@ def run(plan, args={}):
         store=[
             StoreSpec(src = "/app/contracts/script/output/devnet/M2_from_scratch_deployment_data.json", name = "eigenlayer_addresses")
         ],
-        wait="15s",
         description="Deploying EigenLayer contracts",
     )
     return ethereum_output
