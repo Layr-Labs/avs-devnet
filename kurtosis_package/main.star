@@ -13,7 +13,7 @@ def run(plan, args={}):
     operator = plan.add_service(
         name = "ics-operator",
         config = ServiceConfig(
-            image = "ics-operator",
+            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
             ports = {
                 "rpc": PortSpec(
                     number = 9000,
@@ -25,7 +25,7 @@ def run(plan, args={}):
             files = {
                 "/usr/src/app/config-files/": operator_config
             },
-            entrypoint = ["operator", "--config", "/usr/src/app/config-files/operator-config.yaml"],
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
         ),
 
     )
