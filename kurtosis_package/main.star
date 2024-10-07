@@ -32,7 +32,9 @@ def run(plan, args={}):
         description="Uploading EigenLayer deployment configuration file",
     )
 
-    eigenlayer_deployer_img = gen_deployer_img("https://github.com/Layr-Labs/eigenlayer-contracts.git", "v0.4.2-mainnet-pepe")
+    eigenlayer_deployer_img = gen_deployer_img(
+        "https://github.com/Layr-Labs/eigenlayer-contracts.git", "v0.4.2-mainnet-pepe"
+    )
 
     result = plan.run_sh(
         image=eigenlayer_deployer_img,
@@ -45,7 +47,10 @@ def run(plan, args={}):
             "/app/contracts/script/configs/devnet/": deploy_config_file_artifact,
         },
         store=[
-            StoreSpec(src = "/app/contracts/script/output/devnet/M2_from_scratch_deployment_data.json", name = "eigenlayer_addresses")
+            StoreSpec(
+                src="/app/contracts/script/output/devnet/M2_from_scratch_deployment_data.json",
+                name="eigenlayer_addresses",
+            )
         ],
         description="Deploying EigenLayer contracts",
     )
