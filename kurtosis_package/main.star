@@ -59,8 +59,39 @@ def run(plan, args={}):
         ),
 
     )
+    aggregator_config = plan.upload_files(
+        src="./aggregator.yaml",
+        name="aggregator-config",
+    )
+    operator_ecdsa_keystore = plan.upload_files(
+        src="./test.ecdsa.key.json",
+        name="aggregator_ecdsa_keystore",
+    )
 
-    return ethereum_output
+    aggregator = plan.add_service(
+        name = "ics-aggregator",
+        config = ServiceConfig(
+            image = "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest",
+            ports = {
+                "rpc": PortSpec(
+                    number = 9001,
+                    transport_protocol = "TCP",
+                    application_protocol = "http",
+                    wait = "5s",
+                ),
+            },
+            files = {
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names = ["aggregator-config", "aggregator_ecdsa_keystore", "eigenlayer_addresses"],
+                ),
+            },
+            cmd=["--ecdsa-private-key", "/usr/src/app/config-files/aggregator.yaml", "--credible-squaring-deployment", "/usr/src/app/config-files/M2_from_scratch_deployment_data.json"]
+        ),
+
+    )
+
+
+    # return ethereum_output
 
 
 def setup_operator_config(plan, http_rpc_url):
