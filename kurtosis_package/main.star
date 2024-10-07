@@ -50,22 +50,75 @@ def run(plan, args={}):
         name="operator_ecdsa_keystore",
     )
     # TODO: replace this with a template
-    plan.run_sh(
-        image="ics-operator",
-        run=" && ".join([
-            "sed -i \"s#eth_rpc_url: .*#eth_rpc_url: " + http_rpc_url + "#g\" /usr/src/app/config-files/operator-config.yaml",
-            "sed -i \"s#eth_ws_url: .*#eth_ws_url: " + http_rpc_url + "#g\" /usr/src/app/config-files/operator-config.yaml",
-            "sed -i \"s#ecdsa_private_key_store_path: .*#ecdsa_private_key_store_path: " + "/usr/src/app/config-files/test.ecdsa.key.json" + "#g\" /usr/src/app/config-files/operator-config.yaml",
-            "sed -i \"s#bls_private_key_store_path: .*#bls_private_key_store_path: " + "/usr/src/app/config-files/test.bls.key.json" + "#g\" /usr/src/app/config-files/operator-config.yaml",
-            "cat /usr/src/app/config-files/operator-config.yaml",
-        ]),
+    
+    eigenlayer_addresses = plan.get_files_artifact(
+        name = "eigenlayer_addresses",
+        description = "gets you an artifact",
+    )
+
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .addresses.avsDirectory /usr/src/app/config-files/M2_from_scratch_deployment_data.json",
         files={
-            "/usr/src/app/config-files/": operator_config,
+            "/usr/src/app/config-files/": eigenlayer_addresses,
         },
-        store=[
-            StoreSpec(src = "/usr/src/app/config-files/", name = "operator-updated-config")
-        ],
-        wait="15s",
+        wait="1s",
+    )
+    avs_directory = result.output
+    
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .addresses.strategyManager /usr/src/app/config-files/M2_from_scratch_deployment_data.json",
+        files={
+            "/usr/src/app/config-files/": eigenlayer_addresses,
+        },
+        wait="1s",
+    )
+    strategy_manager = result.output
+    
+    template_data = {
+        "Production": False,
+        "OperatorAddress": "2",
+        "AvsRegistryCoordinatorAddress": avs_directory,
+        "OperatorStateRetrieverAddress": strategy_manager,
+        "EthRpcUrl": http_rpc_url,
+        "EthWsUrl": http_rpc_url,
+        "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
+        "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
+        "AggregatorServerIpPortAddress": "9",
+        "EigenMetricsIpPortAddress": "10",
+        "EnableMetrics": False,
+        "NodeApiIpPortAddress": "12",
+        "EnableNodeApi": False,
+        "RegisterOperatorOnStartup": False,
+        "TokenStrategyAddr": "15",
+    }
+
+    artifact_name = plan.render_templates(
+        config = {
+            "operator-config.yaml": struct(
+                template="\n".join([
+                    "production: {{.Production}}",
+                    "operator_address: {{.OperatorAddress}}",
+                    "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
+                    "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
+                    "eth_rpc_url: {{.EthRpcUrl}}",
+                    "eth_ws_url: {{.EthWsUrl}}",
+                    "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
+                    "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
+                    "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
+                    "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
+                    "enable_metrics: {{.EnableMetrics}}",
+                    "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
+                    "enable_node_api: {{.EnableNodeApi}}",
+                    "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
+                    "token_strategy_addr: {{.TokenStrategyAddr}}"
+                ]),
+                data=template_data,
+            ),
+        },
+        name = "operator-updated-config",
+        description = "rendering a template"  
     )
 
     operator = plan.add_service(
@@ -81,6 +134,7 @@ def run(plan, args={}):
                 ),
             },
             files = {
+                # "/usr/src/app/config-files/": "operator-updated-config",
                 "/usr/src/app/config-files/": Directory(
                     artifact_names = ["operator-updated-config", operator_bls_keystore, operator_ecdsa_keystore],
                 ),
