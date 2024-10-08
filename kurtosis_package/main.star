@@ -43,6 +43,7 @@ def run(plan, args={}):
 
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
+    ws_url = el_context.ws_url
 
     pre_funded_account = ethereum_output.pre_funded_accounts[0]
     private_key = pre_funded_account.private_key
@@ -141,7 +142,7 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
-    setup_operator_config(plan, http_rpc_url)
+    setup_operator_config(plan, http_rpc_url, ws_url)
 
     operator = plan.add_service(
         name = "ics-operator",
@@ -149,9 +150,15 @@ def run(plan, args={}):
             image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
             ports = {
                 "rpc": PortSpec(
-                    number = 9000,
+                    number = 8545,
                     transport_protocol = "TCP",
                     application_protocol = "http",
+                    wait = None,
+                ),
+                "ws": PortSpec(
+                    number = 8546,
+                    transport_protocol = "TCP",
+                    application_protocol = "ws",
                     wait = "60s",
                 ),
             },
@@ -168,7 +175,7 @@ def run(plan, args={}):
     return ethereum_output
 
 
-def setup_operator_config(plan, http_rpc_url):
+def setup_operator_config(plan, http_rpc_url, ws_url):
     operator_config = plan.upload_files(
         src="./operator-config.yaml",
         name="operator-config",
@@ -237,7 +244,7 @@ def setup_operator_config(plan, http_rpc_url):
         "AvsRegistryCoordinatorAddress": registry_coordinator_address,
         "OperatorStateRetrieverAddress": operator_state_retriever,
         "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": http_rpc_url,
+        "EthWsUrl": ws_url,
         "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
         "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
         "AggregatorServerIpPortAddress": "9",
