@@ -94,7 +94,7 @@ def run(plan, args={}):
         run=" && ".join(
             [
                 "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json",
-                "mv ./script/output/devnet/M2_from_scratch_deployment_data.json ./script/output/devnet/eigenlayer_deployment_output.json",
+                "mv ./script/output/devnet/M2_from_scratch_deployment_data.json /eigenlayer_deployment_output.json",
             ]
         ),
         env_vars={
@@ -108,9 +108,7 @@ def run(plan, args={}):
         },
         store=[
             StoreSpec(
-                src="/app/{}/script/output/devnet/eigenlayer_deployment_output.json".format(
-                    eigenlayer_path
-                ),
+                src="/eigenlayer_deployment_output.json".format(eigenlayer_path),
                 name="eigenlayer_addresses",
             )
         ],
