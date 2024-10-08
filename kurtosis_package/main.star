@@ -59,14 +59,35 @@ def run(plan, args={}):
         ),
 
     )
-    aggregator_config = plan.upload_files(
-        src="./aggregator.yaml",
-        name="aggregator-config",
-    )
-    operator_ecdsa_keystore = plan.upload_files(
+
+    aggregator_ecdsa_keystore = plan.upload_files(
         src="./test.ecdsa.key.json",
         name="aggregator_ecdsa_keystore",
     )
+
+    template_data = {
+        "Environment": "development",
+        "EthRpcUrl": http_rpc_url,
+        "EthWsUrl": http_rpc_url,
+        "AggregatorServerIpPortAddress": "localhost:8090",
+    }
+
+    aggregator_config = plan.render_templates(
+        config = {
+            "aggregator-config.yaml": struct(
+                template="\n".join([
+                    "environment: {{.Environment}}",
+                    "eth_rpc_url: {{.EthRpcUrl}}",
+                    "eth_ws_url: {{.EthWsUrl}}",
+                    "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
+                ]),
+                data=template_data,
+            ),
+        },
+        name = "aggregator-config",
+        description = "rendering a template"
+    )
+
 
     aggregator = plan.add_service(
         name = "ics-aggregator",
@@ -74,7 +95,7 @@ def run(plan, args={}):
             image = "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest",
             ports = {
                 "rpc": PortSpec(
-                    number = 9001,
+                    number = 8090,
                     transport_protocol = "TCP",
                     application_protocol = "http",
                     wait = "5s",
@@ -85,7 +106,11 @@ def run(plan, args={}):
                     artifact_names = ["aggregator-config", "aggregator_ecdsa_keystore", "eigenlayer_addresses"],
                 ),
             },
-            cmd=["--ecdsa-private-key", "/usr/src/app/config-files/aggregator.yaml", "--credible-squaring-deployment", "/usr/src/app/config-files/M2_from_scratch_deployment_data.json"]
+            cmd=[
+                "--config","/usr/src/app/config-files/aggregator-config.yaml",
+                "--ecdsa-private-key", "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6", 
+                "--credible-squaring-deployment", "/usr/src/app/config-files/M2_from_scratch_deployment_data.json"
+            ]
         ),
 
     )
