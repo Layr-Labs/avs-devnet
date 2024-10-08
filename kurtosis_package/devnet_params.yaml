@@ -1,0 +1,15 @@
+eigenlayer_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+eigenlayer_ref: "master"
+eigenlayer_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
+
+avs_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+avs_ref: "master"
+avs_path: "contracts"
+
+ethereum_params:
+  participants:
+    - el_type: reth
+      cl_type: teku
+  additional_services:
+    - blockscout
+    - dora

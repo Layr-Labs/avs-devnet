@@ -1,20 +1,31 @@
-ARG EIGENLAYER_CONTRACTS_VERSION="v0.4.2-mainnet-pepe"
+# The repository's URL.
+ARG CONTRACTS_REPO
+# The commit hash, tag, or branch to checkout from the repo.
+ARG CONTRACTS_REF
+# Path to the contracts directory within the repository.
+# It must contain a foundry.toml file.
+ARG CONTRACTS_PATH="."
 
 # Nightly (2024-10-03)
 # Foundry doesn't support non-arm64 images, so we need to specify the platform
-FROM ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0
+FROM --platform=amd64 ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0
+
+WORKDIR /
+
+ARG CONTRACTS_REPO
+ARG CONTRACTS_REF
+ARG CONTRACTS_PATH
+
+RUN git init app
 
 WORKDIR /app
 
-ARG EIGENLAYER_CONTRACTS_VERSION="v0.4.2-mainnet-pepe"
+RUN git remote add origin ${CONTRACTS_REPO} && \
+    git fetch --depth 1 origin ${CONTRACTS_REF} && \
+    git checkout FETCH_HEAD && \
+    git submodule update --init --recursive --depth 1 --single-branch --recursive
 
-RUN git clone https://github.com/Layr-Labs/eigenlayer-contracts.git contracts \
-    --single-branch --branch ${EIGENLAYER_CONTRACTS_VERSION} \
-    --depth 1 --shallow-submodules --recurse-submodules
-
-WORKDIR /app/contracts
+WORKDIR /app/${CONTRACTS_PATH}
 
 # TODO: we can use a multi-stage build to store artifacts only
 RUN forge build
-
-ENTRYPOINT [ "forge", "script", "./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2" ]

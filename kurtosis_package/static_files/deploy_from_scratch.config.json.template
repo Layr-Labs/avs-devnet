@@ -1,9 +1,9 @@
 {
     "maintainer": "samlaf@eigenlabs.org",
     "multisig_addresses": {
-        "operationsMultisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-        "pauserMultisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-        "executorMultisig": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+        "operationsMultisig": "{{.OperationsMultisig}}",
+        "pauserMultisig": "{{.PauserMultisig}}",
+        "executorMultisig": "{{.ExecutorMultisig}}"
     },
     "strategies": [],
     "strategyManager": {

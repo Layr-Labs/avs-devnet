@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  merge_group:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ '**' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          if [ '1.3.0' = "latest" ]; then
+            sudo apt install kurtosis-cli
+          else
+            sudo apt install kurtosis-cli='1.3.0'
+          fi
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Run Package with default args
+        run: |
+          kurtosis run ./kurtosis_package
+
+  run_with_args:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          if [ '1.3.0' = "latest" ]; then
+            sudo apt install kurtosis-cli
+          else
+            sudo apt install kurtosis-cli='1.3.0'
+          fi
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Run Package with args file './kurtosis_package/devnet_params.yaml'
+        run: |
+          kurtosis run ./kurtosis_package --args-file ./kurtosis_package/devnet_params.yaml
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          if [ '1.3.0' = "latest" ]; then
+            sudo apt install kurtosis-cli
+          else
+            sudo apt install kurtosis-cli='1.3.0'
+          fi
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Kurtosis Lint
+        run: kurtosis lint ./kurtosis_package
