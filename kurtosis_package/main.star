@@ -25,17 +25,21 @@ def run(plan, args={}):
     ethereum_args = args.get("ethereum_params", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
+    # TODO: generalize this for any app
     eigenlayer_repo = args.get(
-        "eigenlayer_repo", "https://github.com/Layr-Labs/eigenlayer-contracts.git"
+        "eigenlayer_repo", "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     )
-    eigenlayer_ref = args.get("eigenlayer_ref", "v0.3.3-mainnet-rewards")
-    eigenlayer_path = args.get("eigenlayer_path", ".")
+    eigenlayer_ref = args.get("eigenlayer_ref", "master")
+    eigenlayer_path = args.get(
+        "eigenlayer_path",
+        "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts",
+    )
 
     avs_repo = args.get(
         "avs_repo", "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     )
     avs_ref = args.get("avs_ref", "master")
-    avs_path = args.get("avs_path", "./contracts")
+    avs_path = args.get("avs_path", "contracts")
 
     chain_id = ethereum_args.get("network_params", {"network_id": 3151908})[
         "network_id"
@@ -84,15 +88,16 @@ def run(plan, args={}):
         )
     )
 
+    # NOTE: we're using `;` because using `&&` after `--` fails to execute following commands
+    cmd = "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 \
+            --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' \
+            -- deploy_from_scratch.config.json  ; \
+        mv ./script/output/devnet/M2_from_scratch_deployment_data.json /eigenlayer_deployment_output.json"
+
     # Deploy the EigenLayer contracts
     result = plan.run_sh(
         image=eigenlayer_deployer_img,
-        run=" && ".join(
-            [
-                "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json",
-                "mv ./script/output/devnet/M2_from_scratch_deployment_data.json ./script/output/devnet/eigenlayer_deployment_output.json",
-            ]
-        ),
+        run=cmd,
         env_vars={
             "HTTP_RPC_URL": http_rpc_url,
             "PRIVATE_KEY": private_key,
@@ -104,15 +109,17 @@ def run(plan, args={}):
         },
         store=[
             StoreSpec(
-                src="/app/{}/script/output/devnet/eigenlayer_deployment_output.json".format(
-                    eigenlayer_path
-                ),
+                src="/eigenlayer_deployment_output.json",
                 name="eigenlayer_addresses",
             )
         ],
         description="Deploying EigenLayer contracts",
     )
     eigenlayer_deployment_file = result.files_artifacts[0]
+
+    # If AVS wasn't provided, we skip setting it up
+    if avs_repo == None or avs_path == None or avs_ref == None:
+        return ethereum_output
 
     ics_deployer_img = gen_deployer_img(
         avs_repo,
