@@ -119,7 +119,8 @@ def run(plan, args={}):
         avs_ref,
         avs_path,
     )
-
+    aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
+    aggregator_private_key = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
     output_dir = "/app/{}/script/output/{}/".format(avs_path, chain_id)
 
     # Deploy the Incredible Squaring AVS contracts
@@ -142,42 +143,20 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
-    setup_operator_config(plan, http_rpc_url, ws_url)
-
-    operator = plan.add_service(
-        name = "ics-operator",
-        config = ServiceConfig(
-            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            ports = {
-                "rpc": PortSpec(
-                    number = 8545,
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-                    wait = None,
-                ),
-                "ws": PortSpec(
-                    number = 8546,
-                    transport_protocol = "TCP",
-                    application_protocol = "ws",
-                    wait = "60s",
-                ),
-            },
-            files = {
-                "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["operator-updated-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
-                ),
-            },
-            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
-        ),
-
-    )
-
     template_data = {
         "Environment": "development",
         "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": http_rpc_url,
+        "EthWsUrl": ws_url,
         "AggregatorServerIpPortAddress": "localhost:8090",
     }
+
+    funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
+    result = plan.run_sh(
+        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
+        run="cast send --value 0.1ether --private-key " + funded_private_key + " --rpc-url " + http_rpc_url + " " + aggregator_address,
+        description="Depositing funds into the aggregator's account",
+    )
+    
 
     aggregator_config = plan.render_templates(
         config = {
@@ -205,19 +184,50 @@ def run(plan, args={}):
                     number = 8090,
                     transport_protocol = "TCP",
                     application_protocol = "http",
-                    wait = "5s",
+                    wait = None,
                 ),
             },
             files = {
                 "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["aggregator-config", "eigenlayer_addresses"],
+                    artifact_names = ["aggregator-config", "avs_addresses"],
                 ),
             },
             cmd=[
                 "--config","/usr/src/app/config-files/aggregator-config.yaml",
-                "--ecdsa-private-key", "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6", 
-                "--credible-squaring-deployment", "/usr/src/app/config-files/M2_from_scratch_deployment_data.json"
+                "--ecdsa-private-key", aggregator_private_key, 
+                "--credible-squaring-deployment", "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json"
             ]
+        ),
+
+    )
+    aggregator_url = aggregator.ports["rpc"].url
+
+    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_url)
+
+    operator = plan.add_service(
+        name = "ics-operator",
+        config = ServiceConfig(
+            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
+            ports = {
+                "rpc": PortSpec(
+                    number = 8545,
+                    transport_protocol = "TCP",
+                    application_protocol = "http",
+                    wait = None,
+                ),
+                "ws": PortSpec(
+                    number = 8546,
+                    transport_protocol = "TCP",
+                    application_protocol = "ws",
+                    wait = "100s",
+                ),
+            },
+            files = {
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names = ["operator-updated-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
+                ),
+            },
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
         ),
 
     )
@@ -226,7 +236,7 @@ def run(plan, args={}):
     return ethereum_output
 
 
-def setup_operator_config(plan, http_rpc_url, ws_url):
+def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_url):
     operator_config = plan.upload_files(
         src="./operator-config.yaml",
         name="operator-config",
@@ -298,7 +308,7 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
         "EthWsUrl": ws_url,
         "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
         "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
-        "AggregatorServerIpPortAddress": "9",
+        "AggregatorServerIpPortAddress": aggregator_url,
         "EigenMetricsIpPortAddress": "10",
         "EnableMetrics": False,
         "NodeApiIpPortAddress": "12",
