@@ -2,11 +2,15 @@
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 
 
-def gen_deployer_img(repo, ref, path="."):
+def gen_deployer_img(repo, ref, path):
     name = repo.rstrip(".git").split("/")[-1]
     ref_name = ref.replace("/", "_")
+    # Generate a unique identifier for the image
+    uid = hash(str(repo + chr(0) + ref + chr(0) + path)) % 1000000
     return ImageBuildSpec(
-        image_name="{name}_{ref}_deployer".format(name=name, ref=ref_name),
+        image_name="{name}_{ref}_deployer_{uid}".format(
+            name=name, ref=ref_name, uid=uid
+        ),
         build_context_dir="./dockerfiles/",
         build_file="contract_deployer.dockerfile",
         build_args={
@@ -21,6 +25,18 @@ def run(plan, args={}):
     # Run the Ethereum package first
     ethereum_args = args.get("ethereum_params", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
+
+    eigenlayer_repo = args.get(
+        "eigenlayer_repo", "https://github.com/Layr-Labs/eigenlayer-contracts.git"
+    )
+    eigenlayer_ref = args.get("eigenlayer_ref", "v0.3.3-mainnet-rewards")
+    eigenlayer_path = args.get("eigenlayer_path", ".")
+
+    avs_repo = args.get(
+        "avs_repo", "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+    )
+    avs_ref = args.get("avs_ref", "master")
+    avs_path = args.get("avs_path", "./contracts")
 
     chain_id = ethereum_args.get("network_params", {"network_id": 3151908})[
         "network_id"
@@ -37,7 +53,7 @@ def run(plan, args={}):
     )
 
     eigenlayer_deployer_img = gen_deployer_img(
-        "https://github.com/Layr-Labs/eigenlayer-contracts.git", "v0.4.2-mainnet-pepe"
+        eigenlayer_repo, eigenlayer_ref, eigenlayer_path
     )
 
     plan.print(
@@ -56,7 +72,7 @@ def run(plan, args={}):
         run=" && ".join(
             [
                 "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json",
-                "mv /app/script/output/devnet/M2_from_scratch_deployment_data.json /app/script/output/devnet/eigenlayer_deployment_output.json",
+                "mv ./script/output/devnet/M2_from_scratch_deployment_data.json ./script/output/devnet/eigenlayer_deployment_output.json",
             ]
         ),
         env_vars={
@@ -64,11 +80,15 @@ def run(plan, args={}):
             "PRIVATE_KEY": private_key,
         },
         files={
-            "/app/script/configs/devnet/": deploy_config_file_artifact,
+            "/app/{}/script/configs/devnet/".format(
+                eigenlayer_path
+            ): deploy_config_file_artifact,
         },
         store=[
             StoreSpec(
-                src="/app/script/output/devnet/eigenlayer_deployment_output.json",
+                src="/app/{}/script/output/devnet/eigenlayer_deployment_output.json".format(
+                    eigenlayer_path
+                ),
                 name="eigenlayer_addresses",
             )
         ],
@@ -77,12 +97,12 @@ def run(plan, args={}):
     eigenlayer_deployment_file = result.files_artifacts[0]
 
     ics_deployer_img = gen_deployer_img(
-        "https://github.com/Layr-Labs/incredible-squaring-avs.git",
-        "master",
-        path="./contracts",
+        avs_repo,
+        avs_ref,
+        avs_path,
     )
 
-    output_dir = "/app/contracts/script/output/{}/".format(chain_id)
+    output_dir = "/app/{}/script/output/{}/".format(avs_path, chain_id)
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
