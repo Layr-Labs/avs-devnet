@@ -44,12 +44,30 @@ def run(plan, args={}):
 
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
-    private_key = ethereum_output.pre_funded_accounts[0].private_key
 
-    deploy_config_file_artifact = plan.upload_files(
-        src="./static_files/deploy_from_scratch.config.json",
+    pre_funded_account = ethereum_output.pre_funded_accounts[0]
+    private_key = pre_funded_account.private_key
+    eth_address = pre_funded_account.address
+
+    el_config_template = read_file(
+        "static_files/deploy_from_scratch.config.json.template"
+    )
+
+    el_config_data = {
+        "OperationsMultisig": str(eth_address),
+        "PauserMultisig": str(eth_address),
+        "ExecutorMultisig": str(eth_address),
+    }
+
+    deploy_config_file_artifact = plan.render_templates(
+        config={
+            "deploy_from_scratch.config.json": struct(
+                template=el_config_template,
+                data=el_config_data,
+            )
+        },
         name="eigenlayer-deployment-input",
-        description="Uploading EigenLayer deployment configuration file",
+        description="Generating EigenLayer deployment configuration file",
     )
 
     eigenlayer_deployer_img = gen_deployer_img(
@@ -107,7 +125,7 @@ def run(plan, args={}):
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
         image=ics_deployer_img,
-        run="forge script ./script/IncredibleSquaringDeployer.s.sol --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast -vvvv",
+        run="forge script ./script/IncredibleSquaringDeployer.s.sol --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast -vvv",
         env_vars={
             "HTTP_RPC_URL": http_rpc_url,
             "PRIVATE_KEY": private_key,
