@@ -194,7 +194,7 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
     
     avs_addresses = plan.get_files_artifact(
         name = "avs_addresses",
-        description = "gets you an artifact",
+        description = "Getting AVS addresses file",
     )
     # get registryCoordinator
     result = plan.run_sh(
@@ -282,5 +282,5 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
             ),
         },
         name = "operator-config",
-        description = "rendering a template"  
+        description = "Generating operator configuration file"  
     )
