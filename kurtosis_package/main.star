@@ -130,9 +130,10 @@ def run(plan, args={}):
     output_dir = "/app/{}/script/output/{}/".format(avs_path, chain_id)
 
     # Deploy the Incredible Squaring AVS contracts
+    # TODO: replace sleep with a call to plan.wait(...) or similar
     result = plan.run_sh(
         image=ics_deployer_img,
-        run="forge script ./script/IncredibleSquaringDeployer.s.sol --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast -vvv",
+        run="sleep 12 ; forge script ./script/IncredibleSquaringDeployer.s.sol --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast -vvv",
         env_vars={
             "HTTP_RPC_URL": http_rpc_url,
             "PRIVATE_KEY": private_key,

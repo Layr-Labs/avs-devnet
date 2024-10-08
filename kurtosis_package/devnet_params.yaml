@@ -8,7 +8,7 @@ avs_path: "contracts"
 
 ethereum_params:
   participants:
-    - el_type: reth
+    - el_type: besu
       cl_type: teku
   additional_services:
     - blockscout
