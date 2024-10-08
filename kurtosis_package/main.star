@@ -159,7 +159,7 @@ def run(plan, args={}):
                     number = 8546,
                     transport_protocol = "TCP",
                     application_protocol = "ws",
-                    wait = "60s",
+                    wait = None,
                 ),
             },
             files = {
