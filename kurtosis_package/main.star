@@ -60,11 +60,6 @@ def run(plan, args={}):
 
     )
 
-    aggregator_ecdsa_keystore = plan.upload_files(
-        src="./test.ecdsa.key.json",
-        name="aggregator_ecdsa_keystore",
-    )
-
     template_data = {
         "Environment": "development",
         "EthRpcUrl": http_rpc_url,
@@ -83,7 +78,7 @@ def run(plan, args={}):
                 ]),
                 data=template_data,
             ),
-        },
+        },          
         name = "aggregator-config",
         description = "rendering a template"
     )
@@ -103,7 +98,7 @@ def run(plan, args={}):
             },
             files = {
                 "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["aggregator-config", "aggregator_ecdsa_keystore", "eigenlayer_addresses"],
+                    artifact_names = ["aggregator-config", "eigenlayer_addresses"],
                 ),
             },
             cmd=[
@@ -116,7 +111,7 @@ def run(plan, args={}):
     )
 
 
-    # return ethereum_output
+    return ethereum_output
 
 
 def setup_operator_config(plan, http_rpc_url):
