@@ -164,7 +164,7 @@ def run(plan, args={}):
             },
             files = {
                 "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["operator-updated-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
+                    artifact_names = ["operator-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
                 ),
             },
             cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
@@ -176,11 +176,6 @@ def run(plan, args={}):
 
 
 def setup_operator_config(plan, http_rpc_url, ws_url):
-    operator_config = plan.upload_files(
-        src="./operator-config.yaml",
-        name="operator-config",
-    )
-
     operator_bls_keystore = plan.upload_files(
         src="./test.bls.key.json",
         name="operator_bls_keystore",
@@ -279,6 +274,6 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
                 data=template_data,
             ),
         },
-        name = "operator-updated-config",
+        name = "operator-config",
         description = "rendering a template"  
     )
