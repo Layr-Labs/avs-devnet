@@ -163,12 +163,6 @@ def run(plan, args={}):
                     application_protocol="http",
                     wait=None,
                 ),
-                "ws": PortSpec(
-                    number=8546,
-                    transport_protocol="TCP",
-                    application_protocol="ws",
-                    wait=None,
-                ),
             },
             files={
                 "/usr/src/app/config-files/": Directory(
