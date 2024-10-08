@@ -147,7 +147,7 @@ def run(plan, args={}):
         "Environment": "development",
         "EthRpcUrl": http_rpc_url,
         "EthWsUrl": ws_url,
-        "AggregatorServerIpPortAddress": "localhost:8090",
+        "AggregatorServerIpPortAddress": ":8090",
     }
 
     funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
@@ -200,28 +200,14 @@ def run(plan, args={}):
         ),
 
     )
-    aggregator_url = aggregator.ports["rpc"].url
+    aggregator_ip_port = aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
 
-    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_url)
+    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
 
     operator = plan.add_service(
         name = "ics-operator",
         config = ServiceConfig(
             image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            ports = {
-                "rpc": PortSpec(
-                    number = 8545,
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-                    wait = None,
-                ),
-                "ws": PortSpec(
-                    number = 8546,
-                    transport_protocol = "TCP",
-                    application_protocol = "ws",
-                    wait = "100s",
-                ),
-            },
             files = {
                 "/usr/src/app/config-files/": Directory(
                     artifact_names = ["operator-updated-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
@@ -236,7 +222,7 @@ def run(plan, args={}):
     return ethereum_output
 
 
-def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_url):
+def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
     operator_config = plan.upload_files(
         src="./operator-config.yaml",
         name="operator-config",
@@ -308,7 +294,7 @@ def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_url):
         "EthWsUrl": ws_url,
         "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
         "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
-        "AggregatorServerIpPortAddress": aggregator_url,
+        "AggregatorServerIpPortAddress": aggregator_ip_port,
         "EigenMetricsIpPortAddress": "10",
         "EnableMetrics": False,
         "NodeApiIpPortAddress": "12",
