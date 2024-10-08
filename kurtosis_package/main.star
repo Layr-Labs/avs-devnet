@@ -156,14 +156,6 @@ def run(plan, args={}):
         name="ics-operator",
         config=ServiceConfig(
             image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            ports={
-                "rpc": PortSpec(
-                    number=8545,
-                    transport_protocol="TCP",
-                    application_protocol="http",
-                    wait=None,
-                ),
-            },
             files={
                 "/usr/src/app/config-files/": Directory(
                     artifact_names=[
