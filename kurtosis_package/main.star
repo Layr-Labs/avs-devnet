@@ -48,6 +48,7 @@ def run(plan, args={}):
 
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
+    ws_url = el_context.ws_url
 
     pre_funded_account = ethereum_output.pre_funded_accounts[0]
     private_key = pre_funded_account.private_key
@@ -148,4 +149,130 @@ def run(plan, args={}):
         ],
         description="Deploying Incredible Squaring contracts",
     )
+
+    setup_operator_config(plan, http_rpc_url, ws_url)
+
+    operator = plan.add_service(
+        name="ics-operator",
+        config=ServiceConfig(
+            image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
+            files={
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names=[
+                        "operator-config",
+                        "operator_bls_keystore",
+                        "operator_ecdsa_keystore",
+                    ],
+                ),
+            },
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"],
+        ),
+    )
+
     return ethereum_output
+
+
+def setup_operator_config(plan, http_rpc_url, ws_url):
+    operator_bls_keystore = plan.upload_files(
+        src="./test.bls.key.json",
+        name="operator_bls_keystore",
+    )
+    operator_ecdsa_keystore = plan.upload_files(
+        src="./test.ecdsa.key.json",
+        name="operator_ecdsa_keystore",
+    )
+
+    avs_addresses = plan.get_files_artifact(
+        name="avs_addresses",
+        description="Getting AVS addresses file",
+    )
+    # get registryCoordinator
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .addresses.registryCoordinator /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
+        files={
+            "/usr/src/app/config-files/": avs_addresses,
+        },
+        wait="1s",
+    )
+    registry_coordinator_address = result.output
+
+    # get operatorStateRetriever
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .addresses.operatorStateRetriever /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
+        files={
+            "/usr/src/app/config-files/": avs_addresses,
+        },
+        wait="1s",
+    )
+    operator_state_retriever = result.output
+
+    # get tokenStrategy
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .addresses.erc20MockStrategy /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
+        files={
+            "/usr/src/app/config-files/": avs_addresses,
+        },
+        wait="1s",
+    )
+    token_strategy = result.output
+
+    # get operator address
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j .address /usr/src/app/config-files/test.ecdsa.key.json",
+        files={
+            "/usr/src/app/config-files/": operator_ecdsa_keystore,
+        },
+        wait="1s",
+    )
+    operator_address = result.output
+
+    template_data = {
+        "Production": False,
+        "OperatorAddress": operator_address,
+        "AvsRegistryCoordinatorAddress": registry_coordinator_address,
+        "OperatorStateRetrieverAddress": operator_state_retriever,
+        "EthRpcUrl": http_rpc_url,
+        "EthWsUrl": ws_url,
+        "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
+        "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
+        "AggregatorServerIpPortAddress": "9",
+        "EigenMetricsIpPortAddress": "10",
+        "EnableMetrics": False,
+        "NodeApiIpPortAddress": "12",
+        "EnableNodeApi": False,
+        "RegisterOperatorOnStartup": True,
+        "TokenStrategyAddr": token_strategy,
+    }
+
+    artifact_name = plan.render_templates(
+        config={
+            "operator-config.yaml": struct(
+                template="\n".join(
+                    [
+                        "production: {{.Production}}",
+                        "operator_address: {{.OperatorAddress}}",
+                        "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
+                        "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
+                        "eth_rpc_url: {{.EthRpcUrl}}",
+                        "eth_ws_url: {{.EthWsUrl}}",
+                        "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
+                        "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
+                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
+                        "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
+                        "enable_metrics: {{.EnableMetrics}}",
+                        "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
+                        "enable_node_api: {{.EnableNodeApi}}",
+                        "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
+                        "token_strategy_addr: {{.TokenStrategyAddr}}",
+                    ]
+                ),
+                data=template_data,
+            ),
+        },
+        name="operator-config",
+        description="Generating operator configuration file",
+    )
