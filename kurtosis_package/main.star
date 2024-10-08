@@ -20,6 +20,7 @@ def gen_deployer_img(repo, ref, path):
         },
     )
 
+
 def run(plan, args={}):
     # Run the Ethereum package first
     ethereum_args = args.get("ethereum_params", {})
@@ -152,31 +153,34 @@ def run(plan, args={}):
     setup_operator_config(plan, http_rpc_url, ws_url)
 
     operator = plan.add_service(
-        name = "ics-operator",
-        config = ServiceConfig(
-            image = "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            ports = {
+        name="ics-operator",
+        config=ServiceConfig(
+            image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
+            ports={
                 "rpc": PortSpec(
-                    number = 8545,
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-                    wait = None,
+                    number=8545,
+                    transport_protocol="TCP",
+                    application_protocol="http",
+                    wait=None,
                 ),
                 "ws": PortSpec(
-                    number = 8546,
-                    transport_protocol = "TCP",
-                    application_protocol = "ws",
-                    wait = None,
+                    number=8546,
+                    transport_protocol="TCP",
+                    application_protocol="ws",
+                    wait=None,
                 ),
             },
-            files = {
+            files={
                 "/usr/src/app/config-files/": Directory(
-                    artifact_names = ["operator-config", "operator_bls_keystore", "operator_ecdsa_keystore"],
+                    artifact_names=[
+                        "operator-config",
+                        "operator_bls_keystore",
+                        "operator_ecdsa_keystore",
+                    ],
                 ),
             },
-            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"],
         ),
-
     )
 
     return ethereum_output
@@ -191,10 +195,10 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
         src="./test.ecdsa.key.json",
         name="operator_ecdsa_keystore",
     )
-    
+
     avs_addresses = plan.get_files_artifact(
-        name = "avs_addresses",
-        description = "Getting AVS addresses file",
+        name="avs_addresses",
+        description="Getting AVS addresses file",
     )
     # get registryCoordinator
     result = plan.run_sh(
@@ -206,7 +210,7 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
         wait="1s",
     )
     registry_coordinator_address = result.output
-    
+
     # get operatorStateRetriever
     result = plan.run_sh(
         image="badouralix/curl-jq",
@@ -239,7 +243,7 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
         wait="1s",
     )
     operator_address = result.output
-    
+
     template_data = {
         "Production": False,
         "OperatorAddress": operator_address,
@@ -259,28 +263,30 @@ def setup_operator_config(plan, http_rpc_url, ws_url):
     }
 
     artifact_name = plan.render_templates(
-        config = {
+        config={
             "operator-config.yaml": struct(
-                template="\n".join([
-                    "production: {{.Production}}",
-                    "operator_address: {{.OperatorAddress}}",
-                    "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
-                    "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
-                    "eth_rpc_url: {{.EthRpcUrl}}",
-                    "eth_ws_url: {{.EthWsUrl}}",
-                    "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
-                    "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
-                    "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
-                    "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
-                    "enable_metrics: {{.EnableMetrics}}",
-                    "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
-                    "enable_node_api: {{.EnableNodeApi}}",
-                    "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
-                    "token_strategy_addr: {{.TokenStrategyAddr}}"
-                ]),
+                template="\n".join(
+                    [
+                        "production: {{.Production}}",
+                        "operator_address: {{.OperatorAddress}}",
+                        "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
+                        "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
+                        "eth_rpc_url: {{.EthRpcUrl}}",
+                        "eth_ws_url: {{.EthWsUrl}}",
+                        "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
+                        "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
+                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
+                        "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
+                        "enable_metrics: {{.EnableMetrics}}",
+                        "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
+                        "enable_node_api: {{.EnableNodeApi}}",
+                        "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
+                        "token_strategy_addr: {{.TokenStrategyAddr}}",
+                    ]
+                ),
                 data=template_data,
             ),
         },
-        name = "operator-config",
-        description = "Generating operator configuration file"  
+        name="operator-config",
+        description="Generating operator configuration file",
     )
