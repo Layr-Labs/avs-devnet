@@ -114,7 +114,7 @@ def run(plan, args={}):
     eigenlayer_deployment_file = result.files_artifacts[0]
 
     # If AVS wasn't provided, we skip setting it up
-    if avs_repo is None or avs_path is None or avs_ref is None:
+    if avs_repo == None or avs_path == None or avs_ref == None:
         return ethereum_output
 
     ics_deployer_img = gen_deployer_img(
