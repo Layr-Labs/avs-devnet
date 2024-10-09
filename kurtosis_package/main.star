@@ -126,8 +126,11 @@ def run(plan, args={}):
         avs_ref,
         avs_path,
     )
+    # This address corresponds to the one that is hardcoded as the aggregator address in the ics deployer contract.
+    # We need to fund this account in order to set up the aggregator
     aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
     aggregator_private_key = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+
     output_dir = "/app/{}/script/output/{}/".format(avs_path, chain_id)
 
     # Deploy the Incredible Squaring AVS contracts
@@ -160,10 +163,9 @@ def run(plan, args={}):
     funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
     result = plan.run_sh(
         image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-        run="cast send --value 0.1ether --private-key " + funded_private_key + " --rpc-url " + http_rpc_url + " " + aggregator_address,
+        run="cast send --value 1ether --private-key " + funded_private_key + " --rpc-url " + http_rpc_url + " " + aggregator_address,
         description="Depositing funds into the aggregator's account",
     )
-    
 
     aggregator_config = plan.render_templates(
         config = {
@@ -178,9 +180,8 @@ def run(plan, args={}):
             ),
         },          
         name = "aggregator-config",
-        description = "rendering a template"
+        description = "Generating aggregator configuration file"
     )
-
 
     aggregator = plan.add_service(
         name = "ics-aggregator",
@@ -191,7 +192,7 @@ def run(plan, args={}):
                     number = 8090,
                     transport_protocol = "TCP",
                     application_protocol = "http",
-                    wait = None,
+                    wait = "10s",
                 ),
             },
             files = {
@@ -207,6 +208,7 @@ def run(plan, args={}):
         ),
 
     )
+    # We reconstruct the aggregator address (ip + port)
     aggregator_ip_port = aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
 
     setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
@@ -222,9 +224,7 @@ def run(plan, args={}):
             },
             cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"]
         ),
-
     )
-
 
     return ethereum_output
 
