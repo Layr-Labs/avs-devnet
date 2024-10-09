@@ -158,9 +158,11 @@ def run(plan, args={}):
     )
 
     funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
-    
-    setup_aggregator_config(plan, aggregator_address, http_rpc_url, ws_url, funded_private_key)
-    
+
+    setup_aggregator_config(
+        plan, aggregator_address, http_rpc_url, ws_url, funded_private_key
+    )
+
     aggregator = plan.add_service(
         name="ics-aggregator",
         config=ServiceConfig(
@@ -214,7 +216,10 @@ def run(plan, args={}):
 
     return ethereum_output
 
-def setup_aggregator_config(plan, aggregator_address, http_rpc_url, ws_url, funded_private_key):
+
+def setup_aggregator_config(
+    plan, aggregator_address, http_rpc_url, ws_url, funded_private_key
+):
     result = plan.run_sh(
         image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
         run="cast send --value 1ether --private-key "
