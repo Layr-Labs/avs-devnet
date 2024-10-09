@@ -127,12 +127,6 @@ def run(plan, args={}):
         avs_ref,
         avs_path,
     )
-    # This address corresponds to the one that is hardcoded as the aggregator address in the ics deployer contract.
-    # We need to fund this account in order to set up the aggregator
-    aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
-    aggregator_private_key = (
-        "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-    )
 
     output_dir = "/app/{}/script/output/{}/".format(avs_path, chain_id)
 
@@ -156,43 +150,17 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
-    template_data = {
-        "Environment": "development",
-        "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": ws_url,
-        "AggregatorServerIpPortAddress": ":8090",
-    }
+    # This address corresponds to the one that is hardcoded as the aggregator address in the ics deployer contract.
+    # We need to fund this account in order to set up the aggregator
+    aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
+    aggregator_private_key = (
+        "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+    )
 
     funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
-    result = plan.run_sh(
-        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-        run="cast send --value 1ether --private-key "
-        + funded_private_key
-        + " --rpc-url "
-        + http_rpc_url
-        + " "
-        + aggregator_address,
-        description="Depositing funds into the aggregator's account",
-    )
-
-    aggregator_config = plan.render_templates(
-        config={
-            "aggregator-config.yaml": struct(
-                template="\n".join(
-                    [
-                        "environment: {{.Environment}}",
-                        "eth_rpc_url: {{.EthRpcUrl}}",
-                        "eth_ws_url: {{.EthWsUrl}}",
-                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
-                    ]
-                ),
-                data=template_data,
-            ),
-        },
-        name="aggregator-config",
-        description="Generating aggregator configuration file",
-    )
-
+    
+    setup_aggregator_config(plan, aggregator_address, http_rpc_url, ws_url, funded_private_key)
+    
     aggregator = plan.add_service(
         name="ics-aggregator",
         config=ServiceConfig(
@@ -245,6 +213,43 @@ def run(plan, args={}):
     )
 
     return ethereum_output
+
+def setup_aggregator_config(plan, aggregator_address, http_rpc_url, ws_url, funded_private_key):
+    result = plan.run_sh(
+        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
+        run="cast send --value 1ether --private-key "
+        + funded_private_key
+        + " --rpc-url "
+        + http_rpc_url
+        + " "
+        + aggregator_address,
+        description="Depositing funds into the aggregator's account",
+    )
+
+    template_data = {
+        "Environment": "development",
+        "EthRpcUrl": http_rpc_url,
+        "EthWsUrl": ws_url,
+        "AggregatorServerIpPortAddress": ":8090",
+    }
+
+    aggregator_config = plan.render_templates(
+        config={
+            "aggregator-config.yaml": struct(
+                template="\n".join(
+                    [
+                        "environment: {{.Environment}}",
+                        "eth_rpc_url: {{.EthRpcUrl}}",
+                        "eth_ws_url: {{.EthWsUrl}}",
+                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
+                    ]
+                ),
+                data=template_data,
+            ),
+        },
+        name="aggregator-config",
+        description="Generating aggregator configuration file",
+    )
 
 
 def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
