@@ -6,6 +6,46 @@ avs_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
 avs_ref: "master"
 avs_path: "contracts"
 
+artifacts:
+  aggregator-config:
+    # TODO: document this
+    aggregator.yaml: |
+      # 'production' only prints info and above. 'development' also prints debug
+      environment: production
+      eth_rpc_url: {{.HttpRpcUrl}}
+      eth_ws_url: {{.WsUrl}}
+      # address which the aggregator listens on for operator signed messages
+      aggregator_server_ip_port_address: 0.0.0.0:8090
+
+services:
+  - name: "ics-aggregator"
+    image: "ics-aggregator"
+    ports:
+      rpc:
+        number: 8090
+        transport_protocol: "TCP"
+        application_protocol: "http"
+        wait: "10s"
+    # TODO: derive address from private_key
+    address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+    private_key: "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+    input:
+      "/usr/src/app/config-files/":
+        - aggregator-config
+        - avs_addresses # TODO: this comes from hardcoded AVS deployment output
+    cmd:
+      # TODO: document magic env vars
+      - "aggregator"
+      - "--config"
+      - "${ARTIFACT_PATH_AGGREGATOR_CONFIG}/aggregator.yaml"
+      - "--ecdsa-private-key"
+      - "$PRIVATE_KEY"
+      - "--credible-squaring-deployment"
+      - "${ARTIFACT_PATH_AGGREGATOR_CONFIG}/credible_squaring_avs_deployment_output.json"
+
+  # - name: "ics-operator"
+  #   image: "ics_operator"
+
 ethereum_params:
   participants:
     - el_type: reth
