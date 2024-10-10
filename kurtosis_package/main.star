@@ -13,7 +13,7 @@ def gen_deployer_img(repo, ref, path):
             name=name, ref=ref_name, uid=uid
         ),
         build_context_dir="./dockerfiles/",
-        build_file="contract_deployer.dockerfile",
+        build_file="contract_deployer.Dockerfile",
         build_args={
             "CONTRACTS_REPO": repo,
             "CONTRACTS_REF": ref,
