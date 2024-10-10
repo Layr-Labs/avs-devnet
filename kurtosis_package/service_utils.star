@@ -57,6 +57,7 @@ def generate_port_specs(ports):
     }
 
 
+# Taken from ethereum-package
 def new_port_spec(
     number,
     transport_protocol,
