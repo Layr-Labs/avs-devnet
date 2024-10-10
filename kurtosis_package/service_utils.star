@@ -30,7 +30,6 @@ def add_service(plan, service_args, ethereum_output):
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
-        public_ports=ports,
         files=files,
         cmd=service_args.get("cmd", []),
     )
