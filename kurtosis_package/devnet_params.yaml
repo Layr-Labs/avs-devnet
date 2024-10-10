@@ -19,7 +19,7 @@ artifacts:
 
 services:
   - name: "ics-aggregator"
-    image: "ics-aggregator"
+    image: "incredible-squaring/aggregator/cmd/main.go"
     ports:
       rpc:
         number: 8090
