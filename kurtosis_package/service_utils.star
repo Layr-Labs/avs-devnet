@@ -28,7 +28,7 @@ def add_service(plan, service_args, ethereum_output):
         cmd=service_args["cmd"],
     )
     plan.print(config)
-    plan.add_service(
+    return plan.add_service(
         name=name,
         config=config,
     )

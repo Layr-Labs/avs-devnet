@@ -18,7 +18,7 @@ artifacts:
       aggregator_server_ip_port_address: 0.0.0.0:8090
 
 services:
-  - name: "ics-aggregator"
+  - name: "aggregator"
     image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
     ports:
       rpc:

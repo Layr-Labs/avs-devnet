@@ -169,74 +169,40 @@ def run(plan, args={}):
             description="Generating '{}'".format(artifact_name),
         )
 
+    services = {}
+
     for service in args.get("services", []):
-        service_utils.add_service(plan, service, ethereum_output)
+        service_name = service["name"]
+        services[service_name] = service_utils.add_service(plan, service, ethereum_output)
 
-    # This address corresponds to the one that is hardcoded as the aggregator address in the ics deployer contract.
-    # We need to fund this account in order to set up the aggregator
-    # aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
-    # aggregator_private_key = (
-    #     "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-    # )
+    # TODO: remove this once we generalize operator
+    aggregator = services["aggregator"]
 
-    # funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
-
-    # setup_aggregator_config(
-    #     plan, aggregator_address, http_rpc_url, ws_url, funded_private_key
-    # )
-
-    # aggregator = plan.add_service(
-    #     name="ics-aggregator",
-    #     config=ServiceConfig(
-    #         image="ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest",
-    #         ports={
-    #             "rpc": PortSpec(
-    #                 number=8090,
-    #                 transport_protocol="TCP",
-    #                 application_protocol="http",
-    #                 wait="10s",
-    #             ),
-    #         },
-    #         files={
-    #             "/usr/src/app/config-files/": Directory(
-    #                 artifact_names=["aggregator-config", "avs_addresses"],
-    #             ),
-    #         },
-    #         cmd=[
-    #             "--config",
-    #             "/usr/src/app/config-files/aggregator-config.yaml",
-    #             "--ecdsa-private-key",
-    #             aggregator_private_key,
-    #             "--credible-squaring-deployment",
-    #             "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-    #         ],
-    #     ),
-    # )
     # We reconstruct the aggregator address (ip + port)
-    # aggregator_ip_port = (
-    #     aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
-    # )
+    aggregator_ip_port = (
+        aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
+    )
 
-    # setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
+    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
 
-    # operator = plan.add_service(
-    #     name="ics-operator",
-    #     config=ServiceConfig(
-    #         image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-    #         files={
-    #             "/usr/src/app/config-files/": Directory(
-    #                 artifact_names=[
-    #                     "operator-config",
-    #                     "operator_bls_keystore",
-    #                     "operator_ecdsa_keystore",
-    #                 ],
-    #             ),
-    #         },
-    #         cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"],
-    #     ),
-    # )
+    operator = plan.add_service(
+        name="ics-operator",
+        config=ServiceConfig(
+            image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
+            files={
+                "/usr/src/app/config-files/": Directory(
+                    artifact_names=[
+                        "operator-config",
+                        "operator_bls_keystore",
+                        "operator_ecdsa_keystore",
+                    ],
+                ),
+            },
+            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"],
+        ),
+    )
 
-    # return ethereum_output
+    return ethereum_output
 
 
 def setup_aggregator_config(
