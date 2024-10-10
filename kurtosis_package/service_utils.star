@@ -1,11 +1,4 @@
 def add_service(plan, service_args, ethereum_output):
-    if "output" in service_args:
-        return run_sh(
-            plan,
-            service_args,
-            ethereum_output,
-        )
-
     name = service_args["name"]
     files = generate_service_files(plan, service_args.get("input", {}))
     address = service_args.get("address", None)
@@ -38,21 +31,6 @@ def add_service(plan, service_args, ethereum_output):
         name=name,
         config=config,
     )
-
-
-def run_sh(plan, service_args, ethereum_output):
-    image = service_args["image"]
-    run = service_args["run"]
-    store = generate_store_specs(service_args["output"])
-    return plan.run_sh(
-        image=image,
-        run=run,
-        store=store,
-    )
-
-
-def generate_store_specs(output_args):
-    return [StoreSpec(src=src, name=name) for name, src in output_args.items()]
 
 
 def generate_service_files(plan, input_args):
