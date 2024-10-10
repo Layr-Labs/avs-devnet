@@ -169,9 +169,10 @@ def run(plan, args={}):
             description="Generating '{}'".format(artifact_name),
         )
 
+    service_specs = args.get("services", [])
     services = {}
 
-    for service in args.get("services", []):
+    for service in service_specs[:1]:
         service_name = service["name"]
         services[service_name] = service_utils.add_service(
             plan, service, ethereum_output
@@ -187,64 +188,14 @@ def run(plan, args={}):
 
     setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
 
-    operator = plan.add_service(
-        name="ics-operator",
-        config=ServiceConfig(
-            image="ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest",
-            files={
-                "/usr/src/app/config-files/": Directory(
-                    artifact_names=[
-                        "operator-config",
-                        "operator_bls_keystore",
-                        "operator_ecdsa_keystore",
-                    ],
-                ),
-            },
-            cmd=["--config", "/usr/src/app/config-files/operator-config.yaml"],
-        ),
-    )
+    # TODO: add input-output chains between services
+    for service in service_specs[1:]:
+        service_name = service["name"]
+        services[service_name] = service_utils.add_service(
+            plan, service, ethereum_output
+        )
 
     return ethereum_output
-
-
-def setup_aggregator_config(
-    plan, aggregator_address, http_rpc_url, ws_url, funded_private_key
-):
-    result = plan.run_sh(
-        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-        run="cast send --value 1ether --private-key "
-        + funded_private_key
-        + " --rpc-url "
-        + http_rpc_url
-        + " "
-        + aggregator_address,
-        description="Depositing funds into the aggregator's account",
-    )
-
-    template_data = {
-        "Environment": "development",
-        "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": ws_url,
-        "AggregatorServerIpPortAddress": ":8090",
-    }
-
-    aggregator_config = plan.render_templates(
-        config={
-            "aggregator-config.yaml": struct(
-                template="\n".join(
-                    [
-                        "environment: {{.Environment}}",
-                        "eth_rpc_url: {{.EthRpcUrl}}",
-                        "eth_ws_url: {{.EthWsUrl}}",
-                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
-                    ]
-                ),
-                data=template_data,
-            ),
-        },
-        name="aggregator-config",
-        description="Generating aggregator configuration file",
-    )
 
 
 def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):

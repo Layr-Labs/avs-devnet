@@ -6,10 +6,10 @@ avs_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
 avs_ref: "master"
 avs_path: "contracts"
 
+# TODO: document this
 artifacts:
   aggregator-config:
-    # TODO: document this
-    aggregator.yaml: |
+    aggregator-config.yaml: |
       # 'production' only prints info and above. 'development' also prints debug
       environment: production
       eth_rpc_url: {{.HttpRpcUrl}}
@@ -28,19 +28,25 @@ services:
         wait: "10s"
     address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
     input:
-      "/usr/src/app/config-files/":
+      /usr/src/app/config-files/:
         - aggregator-config
         - avs_addresses # TODO: this comes from hardcoded AVS deployment output
     cmd:
       - "--config"
-      - "/usr/src/app/config-files/aggregator.yaml"
+      - "/usr/src/app/config-files/aggregator-config.yaml"
       - "--ecdsa-private-key"
       - "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
       - "--credible-squaring-deployment"
       - "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json"
 
-  # - name: "ics-operator"
-  #   image: "ics_operator"
+  - name: "operator1"
+    image: "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest"
+    input:
+      /usr/src/app/config-files/:
+        - operator-config
+        - operator_bls_keystore
+        - operator_ecdsa_keystore
+    cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 ethereum_params:
   participants:
