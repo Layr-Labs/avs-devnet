@@ -1,12 +1,9 @@
 def add_service(plan, service_args, ethereum_output):
     name = service_args["name"]
-    files, env_vars = generate_service_files(plan, service_args["input"])
-    private_key = service_args.get("private_key", None)
+    files = generate_service_files(plan, service_args["input"])
     address = service_args.get("address", None)
 
-    if private_key != None and address != None:
-        env_vars["ADDRESS"] = address
-        env_vars["PRIVATE_KEY"] = private_key
+    if address != None:
         http_rpc_url = ethereum_output.all_participants[0].el_context.rpc_http_url
         funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
         plan.run_sh(
@@ -28,9 +25,7 @@ def add_service(plan, service_args, ethereum_output):
         ports=ports,
         public_ports=ports,
         files=files,
-        env_vars=env_vars,
-        entrypoint=["sh", "-c"],
-        cmd=["\"" + "\" \"".join(service_args["cmd"]) + "\""],
+        cmd=service_args["cmd"],
     )
     plan.print(config)
     plan.add_service(
@@ -41,19 +36,13 @@ def add_service(plan, service_args, ethereum_output):
 
 def generate_service_files(plan, input_args):
     files = {}
-    env_vars = {}
 
     for path, artifact_names in input_args.items():
         if len(artifact_names) == 0:
             continue
         files[path] = Directory(artifact_names=artifact_names)
-        for name in artifact_names:
-            var_name = "ARTIFACT_PATH_{name}".format(
-                name=name.upper().replace("-", "_")
-            )
-            env_vars[var_name] = path
 
-    return files, env_vars
+    return files
 
 
 def generate_port_specs(ports):
