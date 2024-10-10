@@ -173,7 +173,9 @@ def run(plan, args={}):
 
     for service in args.get("services", []):
         service_name = service["name"]
-        services[service_name] = service_utils.add_service(plan, service, ethereum_output)
+        services[service_name] = service_utils.add_service(
+            plan, service, ethereum_output
+        )
 
     # TODO: remove this once we generalize operator
     aggregator = services["aggregator"]
