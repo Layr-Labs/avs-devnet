@@ -1,1 +1,6 @@
 name: "github.com/Layr-Labs/avs-devnet"
+description: |
+  Runs an Ethereum devnet with EigenLayer and AVS contracts plus off-chain services
+replace:
+  # Fix to a specific version of kurtosis ethereum package to avoid breaking changes
+  github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@4.3.0

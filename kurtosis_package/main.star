@@ -1,5 +1,6 @@
 # Import remote code from another package using an absolute import
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
+service_utils = import_module("./service_utils.star")
 
 
 def gen_deployer_img(repo, ref, path):
@@ -150,46 +151,35 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
-    # This address corresponds to the one that is hardcoded as the aggregator address in the ics deployer contract.
-    # We need to fund this account in order to set up the aggregator
-    aggregator_address = "a0Ee7A142d267C1f36714E4a8F75612F20a79720"
-    aggregator_private_key = (
-        "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-    )
+    data = {
+        "HttpRpcUrl": http_rpc_url,
+        "WsUrl": ws_url,
+    }
 
-    funded_private_key = ethereum_output.pre_funded_accounts[0].private_key
+    for artifact_name, files in args.get("artifacts", {}).items():
+        config = {}
+        for name, template in files.items():
+            config[name] = struct(
+                template=template,
+                data=data,
+            )
+        plan.render_templates(
+            config=config,
+            name=artifact_name,
+            description="Generating '{}'".format(artifact_name),
+        )
 
-    setup_aggregator_config(
-        plan, aggregator_address, http_rpc_url, ws_url, funded_private_key
-    )
+    services = {}
 
-    aggregator = plan.add_service(
-        name="ics-aggregator",
-        config=ServiceConfig(
-            image="ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest",
-            ports={
-                "rpc": PortSpec(
-                    number=8090,
-                    transport_protocol="TCP",
-                    application_protocol="http",
-                    wait="10s",
-                ),
-            },
-            files={
-                "/usr/src/app/config-files/": Directory(
-                    artifact_names=["aggregator-config", "avs_addresses"],
-                ),
-            },
-            cmd=[
-                "--config",
-                "/usr/src/app/config-files/aggregator-config.yaml",
-                "--ecdsa-private-key",
-                aggregator_private_key,
-                "--credible-squaring-deployment",
-                "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-            ],
-        ),
-    )
+    for service in args.get("services", []):
+        service_name = service["name"]
+        services[service_name] = service_utils.add_service(
+            plan, service, ethereum_output
+        )
+
+    # TODO: remove this once we generalize operator
+    aggregator = services["aggregator"]
+
     # We reconstruct the aggregator address (ip + port)
     aggregator_ip_port = (
         aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
