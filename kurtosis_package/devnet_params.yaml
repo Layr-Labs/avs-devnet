@@ -6,16 +6,50 @@ avs_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
 avs_ref: "master"
 avs_path: "contracts"
 
+keystores:
+  - name: "operator1_bls_keystore"
+    type: "bls"
+  - name: "operator1_ecdsa_keystore"
+    type: "ecdsa"
+
 # TODO: document this
 artifacts:
   aggregator-config:
-    aggregator-config.yaml: |
-      # 'production' only prints info and above. 'development' also prints debug
-      environment: production
-      eth_rpc_url: {{.HttpRpcUrl}}
-      eth_ws_url: {{.WsUrl}}
-      # address which the aggregator listens on for operator signed messages
-      aggregator_server_ip_port_address: 0.0.0.0:8090
+    files:
+      aggregator-config.yaml: |
+        # 'production' only prints info and above. 'development' also prints debug
+        environment: production
+        eth_rpc_url: {{.HttpRpcUrl}}
+        eth_ws_url: {{.WsUrl}}
+        # address which the aggregator listens on for operator signed messages
+        aggregator_server_ip_port_address: 0.0.0.0:8090
+
+  operator-config:
+    # TODO: maybe add this eagerly
+    additional_data:
+      operator1_ecdsa_keystore:
+        OperatorAddress: ".address"
+      avs_addresses:
+        AvsRegistryCoordinatorAddress: ".addresses.registryCoordinator"
+        OperatorStateRetrieverAddress: ".addresses.operatorStateRetriever"
+        TokenStrategyAddress: ".addresses.erc20MockStrategy"
+    files:
+      operator-config.yaml: |
+        production: False
+        operator_address: {{.OperatorAddress}}
+        avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}
+        operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}
+        eth_rpc_url: {{.HttpRpcUrl}}
+        eth_ws_url: {{.WsUrl}}
+        ecdsa_private_key_store_path: /usr/src/app/config-files/1.ecdsa.key.json
+        bls_private_key_store_path: /usr/src/app/config-files/1.bls.key.json
+        aggregator_server_ip_port_address: {{.Service_aggregator}}:8090
+        eigen_metrics_ip_port_address: "10"
+        enable_metrics: False
+        node_api_ip_port_address: "12"
+        enable_node_api: False
+        register_operator_on_startup: True
+        token_strategy_addr: {{.TokenStrategyAddress}}
 
 services:
   - name: "aggregator"
@@ -44,8 +78,11 @@ services:
     input:
       /usr/src/app/config-files/:
         - operator-config
-        - operator_bls_keystore
-        - operator_ecdsa_keystore
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
+    env:
+      OPERATOR_ECDSA_KEY_PASSWORD: $operator1_ecdsa_keystore_password
+      OPERATOR_BLS_KEY_PASSWORD: $operator1_bls_keystore_password
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 ethereum_params:

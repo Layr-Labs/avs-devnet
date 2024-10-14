@@ -13,7 +13,7 @@ def gen_deployer_img(repo, ref, path):
             name=name, ref=ref_name, uid=uid
         ),
         build_context_dir="./dockerfiles/",
-        build_file="contract_deployer.dockerfile",
+        build_file="contract_deployer.Dockerfile",
         build_args={
             "CONTRACTS_REPO": repo,
             "CONTRACTS_REF": ref,
@@ -151,154 +151,77 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
+    # Default to an empty dict
+    args["artifacts"] = args.get("artifacts", {})
     data = {
         "HttpRpcUrl": http_rpc_url,
         "WsUrl": ws_url,
     }
 
-    for artifact_name, files in args.get("artifacts", {}).items():
-        config = {}
-        for name, template in files.items():
-            config[name] = struct(
-                template=template,
-                data=data,
-            )
-        plan.render_templates(
-            config=config,
-            name=artifact_name,
-            description="Generating '{}'".format(artifact_name),
-        )
-
     service_specs = args.get("services", [])
-    services = {}
-
-    for service in service_specs[:1]:
-        service_name = service["name"]
-        services[service_name] = service_utils.add_service(
-            plan, service, ethereum_output
-        )
-
-    # TODO: remove this once we generalize operator
-    aggregator = services["aggregator"]
-
-    # We reconstruct the aggregator address (ip + port)
-    aggregator_ip_port = (
-        aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
+    context = struct(
+        artifacts=args["artifacts"],
+        services={},
+        ethereum=ethereum_output,
+        data=data,
+        passwords={},
     )
 
-    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
+    generate_keystores(plan, context, args.get("keystores", []))
 
-    # TODO: add input-output chains between services
-    for service in service_specs[1:]:
-        service_name = service["name"]
-        services[service_name] = service_utils.add_service(
-            plan, service, ethereum_output
-        )
+    for service in service_specs:
+        service_utils.add_service(plan, service, context)
 
     return ethereum_output
 
 
-def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
-    operator_bls_keystore = plan.upload_files(
-        src="./test.bls.key.json",
-        name="operator_bls_keystore",
-    )
-    operator_ecdsa_keystore = plan.upload_files(
-        src="./test.ecdsa.key.json",
-        name="operator_ecdsa_keystore",
-    )
-
-    avs_addresses = plan.get_files_artifact(
-        name="avs_addresses",
-        description="Getting AVS addresses file",
-    )
-    # get registryCoordinator
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.registryCoordinator /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    registry_coordinator_address = result.output
-
-    # get operatorStateRetriever
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.operatorStateRetriever /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    operator_state_retriever = result.output
-
-    # get tokenStrategy
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.erc20MockStrategy /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    token_strategy = result.output
-
-    # get operator address
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .address /usr/src/app/config-files/test.ecdsa.key.json",
-        files={
-            "/usr/src/app/config-files/": operator_ecdsa_keystore,
-        },
-        wait="1s",
-    )
-    operator_address = result.output
-
-    template_data = {
-        "Production": False,
-        "OperatorAddress": operator_address,
-        "AvsRegistryCoordinatorAddress": registry_coordinator_address,
-        "OperatorStateRetrieverAddress": operator_state_retriever,
-        "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": ws_url,
-        "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
-        "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
-        "AggregatorServerIpPortAddress": aggregator_ip_port,
-        "EigenMetricsIpPortAddress": "10",
-        "EnableMetrics": False,
-        "NodeApiIpPortAddress": "12",
-        "EnableNodeApi": False,
-        "RegisterOperatorOnStartup": True,
-        "TokenStrategyAddr": token_strategy,
-    }
-
-    artifact_name = plan.render_templates(
-        config={
-            "operator-config.yaml": struct(
-                template="\n".join(
-                    [
-                        "production: {{.Production}}",
-                        "operator_address: {{.OperatorAddress}}",
-                        "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
-                        "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
-                        "eth_rpc_url: {{.EthRpcUrl}}",
-                        "eth_ws_url: {{.EthWsUrl}}",
-                        "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
-                        "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
-                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
-                        "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
-                        "enable_metrics: {{.EnableMetrics}}",
-                        "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
-                        "enable_node_api: {{.EnableNodeApi}}",
-                        "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
-                        "token_strategy_addr: {{.TokenStrategyAddr}}",
-                    ]
-                ),
-                data=template_data,
+def generate_keystores(plan, context, keystores):
+    generator_service = plan.add_service(
+        "egnkey-service",
+        config=ServiceConfig(
+            image=ImageBuildSpec(
+                image_name="egnkey",
+                build_context_dir="./dockerfiles/",
+                build_file="egnkey.Dockerfile",
             ),
-        },
-        name="operator-config",
-        description="Generating operator configuration file",
+            entrypoint=["sleep", "99999"],
+            description="Spinning up EigenLayer key generator service",
+        ),
     )
+
+    for keystore in keystores:
+        name = keystore["name"]
+        key_type = keystore["type"]
+        _, password = generate_key(plan, generator_service.name, key_type, name)
+
+        if key_type == "ecdsa":
+            address = service_utils.read_json_artifact(plan, name, ".address")
+            service_utils.send_funds(plan, context, address)
+
+        context.passwords[name] = password
+
+    plan.remove_service(generator_service.name)
+
+
+def generate_key(plan, egnkey_service_name, key_type, artifact_name):
+    tmp_dir = "/_tmp"
+    output_dir = "/_output"
+
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt | tr -d '\n'".format(
+        tmp=tmp_dir, output=output_dir, type=key_type
+    )
+
+    result = plan.exec(
+        service_name=egnkey_service_name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Generating " + key_type + " key",
+    )
+    password = result["output"]
+
+    file_artifact = plan.store_service_files(
+        service_name=egnkey_service_name,
+        src=output_dir + "/1." + key_type + ".key.json",
+        name=artifact_name,
+        description="Storing " + key_type + " key",
+    )
+    return file_artifact, password
