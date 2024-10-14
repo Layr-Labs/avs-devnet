@@ -133,5 +133,5 @@ def send_funds(plan, context, to):
         + http_rpc_url
         + " "
         + to,
-        description="Depositing funds into the account '" + to +"'",
+        description="Depositing funds into the account '" + to + "'",
     )
