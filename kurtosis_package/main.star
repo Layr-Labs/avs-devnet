@@ -212,39 +212,8 @@ def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
         ),
     )
 
-    output_dir = "/_output"
-    store_dir = "/_keys"
-    cmd = "mkdir -p {store} && egnkey generate --key-type ecdsa --num-keys 1 --output-dir {output} && mv {output}/keys/1.ecdsa.key.json {store}/test.ecdsa.key.json ; cat {output}/password.txt".format(output=output_dir, store=store_dir)
-
-    result = plan.exec(
-        service_name=generator_service.name,
-        recipe=ExecRecipe(command=["sh", "-c", cmd]),
-        description="Generating ECDSA key",
-    )
-    ecdsa_password = result["output"]
-
-    operator_ecdsa_keystore = plan.store_service_files(
-        service_name=generator_service.name,
-        src=store_dir + "/test.ecdsa.key.json",
-        name="operator_ecdsa_keystore",
-        description="Storing ECDSA key",
-    )
-
-    cmd = "rm -rf {output} ; mkdir -p {store} && egnkey generate --key-type bls --num-keys 1 --output-dir {output} && mv {output}/keys/1.bls.key.json {store}/test.bls.key.json ; cat {output}/password.txt".format(output=output_dir, store=store_dir)
-
-    result = plan.exec(
-        service_name=generator_service.name,
-        recipe=ExecRecipe(command=["sh", "-c", cmd]),
-        description="Generating BLS key",
-    )
-    bls_password = result["output"]
-
-    plan.store_service_files(
-        service_name=generator_service.name,
-        src=store_dir + "/test.bls.key.json",
-        name="operator_bls_keystore",
-        description="Storing BLS key",
-    )
+    operator_ecdsa_keystore, ecdsa_password = generate_key(plan, generator_service.name, "ecdsa", "operator_ecdsa_keystore")
+    operator_bls_keystore, bls_password = generate_key(plan, generator_service.name, "bls", "operator_bls_keystore")
 
     plan.remove_service(generator_service.name)
 
@@ -342,3 +311,26 @@ def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
         name="operator-config",
         description="Generating operator configuration file",
     )
+
+
+def generate_key(plan, egnkey_service_name, key_type, artifact_name):
+    tmp_dir = "/_tmp"
+    output_dir = "/_output"
+
+    # TODO: rename keystore file
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output}/test.{type}.key.json ; cat {tmp}/password.txt".format(tmp=tmp_dir, output=output_dir, type=key_type)
+
+    result = plan.exec(
+        service_name=egnkey_service_name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Generating " + key_type + " key",
+    )
+    password = result["output"].strip()
+
+    file_artifact = plan.store_service_files(
+        service_name=egnkey_service_name,
+        src=output_dir + "/test." + key_type + ".key.json",
+        name=artifact_name,
+        description="Storing " + key_type + " key",
+    )
+    return file_artifact, password
