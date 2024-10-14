@@ -193,6 +193,11 @@ def generate_keystores(plan, context, keystores):
         name = keystore["name"]
         key_type = keystore["type"]
         _, password = generate_key(plan, generator_service.name, key_type, name)
+
+        if key_type == "ecdsa":
+            address = service_utils.read_json_artifact(plan, name, ".address")
+            service_utils.send_funds(plan, context, address)
+
         context.passwords[name] = password
 
     plan.remove_service(generator_service.name)

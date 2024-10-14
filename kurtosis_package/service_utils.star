@@ -4,20 +4,7 @@ def add_service(plan, service_args, context):
     address = service_args.get("address", None)
 
     if address != None:
-        http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
-        funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-        plan.run_sh(
-            image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-            run="cast send --value 10ether --private-key "
-            + funded_private_key
-            + " --rpc-url "
-            + http_rpc_url
-            + " "
-            + address,
-            description="Depositing funds into the account of service '{}'".format(
-                name
-            ),
-        )
+        send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
     env_vars = generate_env_vars(context, service_args.get("env", {}))
@@ -130,3 +117,21 @@ def expand(context, value):
 
     artifact = value[1:].rstrip("_password")
     return context.passwords[artifact]
+
+
+def send_funds(plan, context, to):
+    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
+    funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
+    amount = "10ether"
+    plan.run_sh(
+        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
+        run="cast send --value "
+        + amount
+        + " --private-key "
+        + funded_private_key
+        + " --rpc-url "
+        + http_rpc_url
+        + " "
+        + to,
+        description="Depositing funds into the account '" + to +"'",
+    )
