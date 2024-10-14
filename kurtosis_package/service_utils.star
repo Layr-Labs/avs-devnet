@@ -1,6 +1,11 @@
+shared_utils = import_module("shared_utils.star")
+
+
 def add_service(plan, service_args, context):
     name = service_args["name"]
-    files = generate_service_files(plan, context, service_args.get("input", {}))
+    files = shared_utils.generate_input_files(
+        plan, context, service_args.get("input", {})
+    )
     address = service_args.get("address", None)
 
     if address != None:
@@ -22,53 +27,6 @@ def add_service(plan, service_args, context):
     )
     context.services[name] = service
     context.data["Service_" + name] = service.ip_address
-
-
-# TODO: merge with `generate_input_files`
-def generate_service_files(plan, context, input_args):
-    files = {}
-
-    for path, artifact_names in input_args.items():
-        if len(artifact_names) == 0:
-            continue
-        for artifact_name in artifact_names:
-            if artifact_name not in context.artifacts:
-                continue
-            if context.artifacts[artifact_name].get("generated", False):
-                continue
-            generate_artifact(plan, context, artifact_name)
-        files[path] = Directory(artifact_names=artifact_names)
-
-    return files
-
-
-def generate_artifact(plan, context, artifact_name):
-    artifact_files = context.artifacts[artifact_name].get("files", {})
-    additional_data = context.artifacts[artifact_name].get("additional_data", {})
-    data = dict(context.data)
-    for artifact, vars in additional_data.items():
-        for varname, json_field in vars.items():
-            data[varname] = read_json_artifact(plan, artifact, json_field)
-    config = {}
-    for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=data)
-    plan.render_templates(
-        config=config,
-        name=artifact_name,
-        description="Generating '{}'".format(artifact_name),
-    )
-    context.artifacts[artifact_name]["generated"] = True
-
-
-def read_json_artifact(plan, artifact_name, json_field):
-    input_dir = "/_input"
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
-        files={input_dir: artifact_name},
-        wait="1s",
-    )
-    return result.output
 
 
 def generate_port_specs(ports):

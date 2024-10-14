@@ -1,6 +1,7 @@
 # Import remote code from another package using an absolute import
 ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.star")
 service_utils = import_module("./service_utils.star")
+shared_utils = import_module("./shared_utils.star")
 contract_deployer = import_module("./contract_deployer.star")
 
 
@@ -141,7 +142,7 @@ def generate_keystores(plan, context, keystores):
         _, password = generate_key(plan, generator_service.name, key_type, name)
 
         if key_type == "ecdsa":
-            address = service_utils.read_json_artifact(plan, name, ".address")
+            address = shared_utils.read_json_artifact(plan, name, ".address")
             service_utils.send_funds(plan, context, address)
 
         context.passwords[name] = password

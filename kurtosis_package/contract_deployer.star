@@ -1,3 +1,6 @@
+shared_utils = import_module("shared_utils.star")
+
+
 def deploy(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
@@ -7,7 +10,16 @@ def deploy(plan, context, deployment):
 
     root = "/app/" + contracts_path + "/"
 
-    input_files = generate_input_files(plan, context, root, deployment.get("input", {}))
+    def file_mapper(path):
+        return expand_path(context, root, path)
+
+    input_files = shared_utils.generate_input_files(
+        plan,
+        context,
+        deployment.get("input", {}),
+        mapper=file_mapper,
+        allow_dirs=False,
+    )
     store_specs = generate_store_specs(context, root, deployment.get("output", {}))
     deployer_img = gen_deployer_img(repo, ref, contracts_path)
 
@@ -17,7 +29,8 @@ def deploy(plan, context, deployment):
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
         image=deployer_img,
-        run="forge script --rpc-url ${HTTP_RPC_URL} --private-key 0x${PRIVATE_KEY} --broadcast -vvv " + script_path,
+        run="forge script --rpc-url ${HTTP_RPC_URL} --private-key 0x${PRIVATE_KEY} --broadcast -vvv "
+        + script_path,
         env_vars={
             "HTTP_RPC_URL": http_rpc_url,
             "PRIVATE_KEY": private_key,
@@ -26,6 +39,7 @@ def deploy(plan, context, deployment):
         store=store_specs,
         description="Deploying '{}'".format(deployment_name),
     )
+
 
 def gen_deployer_img(repo, ref, path):
     name = repo.rstrip(".git").split("/")[-1]
@@ -44,17 +58,6 @@ def gen_deployer_img(repo, ref, path):
             "CONTRACTS_PATH": path,
         },
     )
-
-
-# TODO: merge with `generate_service_files`
-def generate_input_files(plan, context, root_dir, input_args):
-    files = {}
-
-    for path, artifact_name in input_args.items():
-        expanded_path = expand_path(context, root_dir, path)
-        files[expanded_path] = artifact_name
-
-    return files
 
 
 def generate_store_specs(context, root_dir, output_args):
