@@ -24,6 +24,7 @@ def add_service(plan, service_args, context):
     context.data["Service_" + name] = service.ip_address
 
 
+# TODO: merge with `generate_input_files`
 def generate_service_files(plan, context, input_args):
     files = {}
 

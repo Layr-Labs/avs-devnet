@@ -7,6 +7,12 @@ deployments:
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref: "master"
     contracts_path: "contracts"
+    script: script/IncredibleSquaringDeployer.s.sol
+    # NOTE: input/output key-value order is destination-source
+    input:
+      script/output/{chain_id}: eigenlayer_addresses
+    output:
+      avs_addresses: "script/output/{chain_id}/credible_squaring_avs_deployment_output.json"
 
 keystores:
   - name: "operator1_bls_keystore"
