@@ -6,6 +6,12 @@ avs_repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
 avs_ref: "master"
 avs_path: "contracts"
 
+keystores:
+  - name: "operator1_bls_keystore"
+    type: "bls"
+  - name: "operator1_ecdsa_keystore"
+    type: "ecdsa"
+
 # TODO: document this
 artifacts:
   aggregator-config:
@@ -21,7 +27,7 @@ artifacts:
   operator-config:
     # TODO: maybe add this eagerly
     additional_data:
-      operator_ecdsa_keystore:
+      operator1_ecdsa_keystore:
         OperatorAddress: ".address"
       avs_addresses:
         AvsRegistryCoordinatorAddress: ".addresses.registryCoordinator"
@@ -72,8 +78,11 @@ services:
     input:
       /usr/src/app/config-files/:
         - operator-config
-        - operator_bls_keystore
-        - operator_ecdsa_keystore
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
+    env:
+      OPERATOR_ECDSA_KEY_PASSWORD: $operator1_ecdsa_keystore_password
+      OPERATOR_BLS_KEY_PASSWORD: $operator1_bls_keystore_password
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 ethereum_params:

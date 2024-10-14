@@ -20,10 +20,12 @@ def add_service(plan, service_args, context):
         )
 
     ports = generate_port_specs(service_args.get("ports", {}))
+    env_vars = generate_env_vars(context, service_args.get("env", {}))
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
         files=files,
+        env_vars=env_vars,
         cmd=service_args.get("cmd", []),
     )
     plan.print(config)
@@ -112,3 +114,16 @@ def new_port_spec(
         application_protocol=application_protocol,
         wait=wait,
     )
+
+def generate_env_vars(context, env_vars):
+    return {
+        env_var_name: expand(context, env_var_value)
+        for env_var_name, env_var_value in env_vars.items()
+    }
+
+def expand(context, value):
+    if not value.startswith("$"):
+        return value
+
+    artifact = value[1:].rstrip("_password")
+    return context.passwords[artifact]

@@ -151,9 +151,6 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
-    # TODO: remove
-    generate_keys(plan)
-
     # Default to an empty dict
     args["artifacts"] = args.get("artifacts", {})
     data = {
@@ -162,15 +159,16 @@ def run(plan, args={}):
     }
 
     service_specs = args.get("services", [])
-    context = struct(artifacts=args["artifacts"], services={}, ethereum=ethereum_output, data=data)
+    context = struct(artifacts=args["artifacts"], services={}, ethereum=ethereum_output, data=data, passwords={})
+
+    generate_keystores(plan, context, args.get("keystores", []))
 
     for service in service_specs:
         service_utils.add_service(plan, service, context)
 
     return ethereum_output
 
-
-def generate_keys(plan):
+def generate_keystores(plan, context, keystores):
     generator_service = plan.add_service(
         "egnkey-service",
         config=ServiceConfig(
@@ -184,8 +182,11 @@ def generate_keys(plan):
         ),
     )
 
-    operator_ecdsa_keystore, ecdsa_password = generate_key(plan, generator_service.name, "ecdsa", "operator_ecdsa_keystore")
-    operator_bls_keystore, bls_password = generate_key(plan, generator_service.name, "bls", "operator_bls_keystore")
+    for keystore in keystores:
+        name = keystore["name"]
+        key_type = keystore["type"]
+        _, password = generate_key(plan, generator_service.name, key_type, name)
+        context.passwords[name] = password
 
     plan.remove_service(generator_service.name)
 
@@ -193,14 +194,14 @@ def generate_key(plan, egnkey_service_name, key_type, artifact_name):
     tmp_dir = "/_tmp"
     output_dir = "/_output"
 
-    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt".format(tmp=tmp_dir, output=output_dir, type=key_type)
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt | tr -d '\n'".format(tmp=tmp_dir, output=output_dir, type=key_type)
 
     result = plan.exec(
         service_name=egnkey_service_name,
         recipe=ExecRecipe(command=["sh", "-c", cmd]),
         description="Generating " + key_type + " key",
     )
-    password = result["output"].strip()
+    password = result["output"]
 
     file_artifact = plan.store_service_files(
         service_name=egnkey_service_name,
