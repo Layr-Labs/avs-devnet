@@ -43,7 +43,7 @@ def generate_service_files(plan, context, input_args):
 
 def generate_artifact(plan, context, artifact_name):
     artifact_files = context.artifacts[artifact_name].get("files", {})
-    additional_data = context.artifacts[artifact_name].get("additional_data", {}) or {}
+    additional_data = context.artifacts[artifact_name].get("additional_data", {})
     data = dict(context.data)
     for artifact, vars in additional_data.items():
         for varname, json_field in vars.items():
@@ -56,6 +56,7 @@ def generate_artifact(plan, context, artifact_name):
         name=artifact_name,
         description="Generating '{}'".format(artifact_name),
     )
+    context.artifacts[artifact_name]["generated"] = True
 
 
 def read_json_artifact(plan, artifact_name, json_field):
