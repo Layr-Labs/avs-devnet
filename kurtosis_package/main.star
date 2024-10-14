@@ -159,7 +159,13 @@ def run(plan, args={}):
     }
 
     service_specs = args.get("services", [])
-    context = struct(artifacts=args["artifacts"], services={}, ethereum=ethereum_output, data=data, passwords={})
+    context = struct(
+        artifacts=args["artifacts"],
+        services={},
+        ethereum=ethereum_output,
+        data=data,
+        passwords={},
+    )
 
     generate_keystores(plan, context, args.get("keystores", []))
 
@@ -167,6 +173,7 @@ def run(plan, args={}):
         service_utils.add_service(plan, service, context)
 
     return ethereum_output
+
 
 def generate_keystores(plan, context, keystores):
     generator_service = plan.add_service(
@@ -190,11 +197,14 @@ def generate_keystores(plan, context, keystores):
 
     plan.remove_service(generator_service.name)
 
+
 def generate_key(plan, egnkey_service_name, key_type, artifact_name):
     tmp_dir = "/_tmp"
     output_dir = "/_output"
 
-    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt | tr -d '\n'".format(tmp=tmp_dir, output=output_dir, type=key_type)
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt | tr -d '\n'".format(
+        tmp=tmp_dir, output=output_dir, type=key_type
+    )
 
     result = plan.exec(
         service_name=egnkey_service_name,

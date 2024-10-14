@@ -53,6 +53,7 @@ def generate_service_files(plan, context, input_args):
 
     return files
 
+
 def generate_artifact(plan, context, artifact_name):
     artifact_files = context.artifacts[artifact_name].get("files", {})
     additional_data = context.artifacts[artifact_name].get("additional_data", {}) or {}
@@ -69,6 +70,7 @@ def generate_artifact(plan, context, artifact_name):
         description="Generating '{}'".format(artifact_name),
     )
 
+
 def read_json_artifact(plan, artifact_name, json_field):
     input_dir = "/_input"
     # get registryCoordinator
@@ -79,6 +81,7 @@ def read_json_artifact(plan, artifact_name, json_field):
         wait="1s",
     )
     return result.output
+
 
 def generate_port_specs(ports):
     return {
@@ -113,11 +116,13 @@ def new_port_spec(
         wait=wait,
     )
 
+
 def generate_env_vars(context, env_vars):
     return {
         env_var_name: expand(context, env_var_value)
         for env_var_name, env_var_value in env_vars.items()
     }
+
 
 def expand(context, value):
     if not value.startswith("$"):
