@@ -60,7 +60,6 @@ def generate_artifact(plan, context, artifact_name):
 
 def read_json_artifact(plan, artifact_name, json_field):
     input_dir = "/_input"
-    # get registryCoordinator
     result = plan.run_sh(
         image="badouralix/curl-jq",
         run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
