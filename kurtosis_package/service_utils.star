@@ -62,7 +62,7 @@ def generate_artifact(plan, context, artifact_name):
             data[varname] = read_json_artifact(plan, artifact, json_field)
     config = {}
     for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=context.data)
+        config[name] = struct(template=template, data=data)
     plan.render_templates(
         config=config,
         name=artifact_name,
@@ -75,9 +75,7 @@ def read_json_artifact(plan, artifact_name, json_field):
     result = plan.run_sh(
         image="badouralix/curl-jq",
         run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
-        files={
-            input_dir: artifact_name,
-        },
+        files={input_dir: artifact_name},
         wait="1s",
     )
     return result.output
