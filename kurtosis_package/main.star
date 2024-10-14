@@ -222,37 +222,13 @@ def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
         description="Getting AVS addresses file",
     )
     # get registryCoordinator
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.registryCoordinator /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    registry_coordinator_address = result.output
+    registry_coordinator_address = read_json_artifact(plan, avs_addresses, ".addresses.registryCoordinator")
 
     # get operatorStateRetriever
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.operatorStateRetriever /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    operator_state_retriever = result.output
+    operator_state_retriever = read_json_artifact(plan, avs_addresses, ".addresses.operatorStateRetriever")
 
     # get tokenStrategy
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .addresses.erc20MockStrategy /usr/src/app/config-files/credible_squaring_avs_deployment_output.json",
-        files={
-            "/usr/src/app/config-files/": avs_addresses,
-        },
-        wait="1s",
-    )
-    token_strategy = result.output
+    token_strategy = read_json_artifact(plan, avs_addresses, ".addresses.erc20MockStrategy")
 
     # get operator address
     result = plan.run_sh(
@@ -334,3 +310,16 @@ def generate_key(plan, egnkey_service_name, key_type, artifact_name):
         description="Storing " + key_type + " key",
     )
     return file_artifact, password
+
+def read_json_artifact(plan, artifact_name, json_field):
+    input_dir = "/_input"
+    # get registryCoordinator
+    result = plan.run_sh(
+        image="badouralix/curl-jq",
+        run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
+        files={
+            input_dir: artifact_name,
+        },
+        wait="1s",
+    )
+    return result.output
