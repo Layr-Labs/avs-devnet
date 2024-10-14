@@ -151,54 +151,26 @@ def run(plan, args={}):
         description="Deploying Incredible Squaring contracts",
     )
 
+    # TODO: remove
+    generate_keys(plan)
+
+    # Default to an empty dict
+    args["artifacts"] = args.get("artifacts", {})
     data = {
         "HttpRpcUrl": http_rpc_url,
         "WsUrl": ws_url,
     }
 
-    for artifact_name, files in args.get("artifacts", {}).items():
-        config = {}
-        for name, template in files.items():
-            config[name] = struct(
-                template=template,
-                data=data,
-            )
-        plan.render_templates(
-            config=config,
-            name=artifact_name,
-            description="Generating '{}'".format(artifact_name),
-        )
-
     service_specs = args.get("services", [])
-    services = {}
+    context = struct(artifacts=args["artifacts"], services={}, ethereum=ethereum_output, data=data)
 
-    for service in service_specs[:1]:
-        service_name = service["name"]
-        services[service_name] = service_utils.add_service(
-            plan, service, ethereum_output
-        )
-
-    # TODO: remove this once we generalize operator
-    aggregator = services["aggregator"]
-
-    # We reconstruct the aggregator address (ip + port)
-    aggregator_ip_port = (
-        aggregator.ip_address + ":" + str(aggregator.ports["rpc"].number)
-    )
-
-    setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port)
-
-    # TODO: add input-output chains between services
-    for service in service_specs[1:]:
-        service_name = service["name"]
-        services[service_name] = service_utils.add_service(
-            plan, service, ethereum_output
-        )
+    for service in service_specs:
+        service_utils.add_service(plan, service, context)
 
     return ethereum_output
 
 
-def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
+def generate_keys(plan):
     generator_service = plan.add_service(
         "egnkey-service",
         config=ServiceConfig(
@@ -217,84 +189,11 @@ def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
 
     plan.remove_service(generator_service.name)
 
-    avs_addresses = plan.get_files_artifact(
-        name="avs_addresses",
-        description="Getting AVS addresses file",
-    )
-    # get registryCoordinator
-    registry_coordinator_address = read_json_artifact(plan, avs_addresses, ".addresses.registryCoordinator")
-
-    # get operatorStateRetriever
-    operator_state_retriever = read_json_artifact(plan, avs_addresses, ".addresses.operatorStateRetriever")
-
-    # get tokenStrategy
-    token_strategy = read_json_artifact(plan, avs_addresses, ".addresses.erc20MockStrategy")
-
-    # get operator address
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j .address /usr/src/app/config-files/test.ecdsa.key.json",
-        files={
-            "/usr/src/app/config-files/": operator_ecdsa_keystore,
-        },
-        wait="1s",
-    )
-    operator_address = result.output
-
-    template_data = {
-        "Production": False,
-        "OperatorAddress": operator_address,
-        "AvsRegistryCoordinatorAddress": registry_coordinator_address,
-        "OperatorStateRetrieverAddress": operator_state_retriever,
-        "EthRpcUrl": http_rpc_url,
-        "EthWsUrl": ws_url,
-        "EcdsaPrivateKeyStorePath": "/usr/src/app/config-files/test.ecdsa.key.json",
-        "BlsPrivateKeyStorePath": "/usr/src/app/config-files/test.bls.key.json",
-        "AggregatorServerIpPortAddress": aggregator_ip_port,
-        "EigenMetricsIpPortAddress": "10",
-        "EnableMetrics": False,
-        "NodeApiIpPortAddress": "12",
-        "EnableNodeApi": False,
-        "RegisterOperatorOnStartup": True,
-        "TokenStrategyAddr": token_strategy,
-    }
-
-    artifact_name = plan.render_templates(
-        config={
-            "operator-config.yaml": struct(
-                template="\n".join(
-                    [
-                        "production: {{.Production}}",
-                        "operator_address: {{.OperatorAddress}}",
-                        "avs_registry_coordinator_address: {{.AvsRegistryCoordinatorAddress}}",
-                        "operator_state_retriever_address: {{.OperatorStateRetrieverAddress}}",
-                        "eth_rpc_url: {{.EthRpcUrl}}",
-                        "eth_ws_url: {{.EthWsUrl}}",
-                        "ecdsa_private_key_store_path: {{.EcdsaPrivateKeyStorePath}}",
-                        "bls_private_key_store_path: {{.BlsPrivateKeyStorePath}}",
-                        "aggregator_server_ip_port_address: {{.AggregatorServerIpPortAddress}}",
-                        "eigen_metrics_ip_port_address: {{.EigenMetricsIpPortAddress}}",
-                        "enable_metrics: {{.EnableMetrics}}",
-                        "node_api_ip_port_address: {{.NodeApiIpPortAddress}}",
-                        "enable_node_api: {{.EnableNodeApi}}",
-                        "register_operator_on_startup: {{.RegisterOperatorOnStartup}}",
-                        "token_strategy_addr: {{.TokenStrategyAddr}}",
-                    ]
-                ),
-                data=template_data,
-            ),
-        },
-        name="operator-config",
-        description="Generating operator configuration file",
-    )
-
-
 def generate_key(plan, egnkey_service_name, key_type, artifact_name):
     tmp_dir = "/_tmp"
     output_dir = "/_output"
 
-    # TODO: rename keystore file
-    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output}/test.{type}.key.json ; cat {tmp}/password.txt".format(tmp=tmp_dir, output=output_dir, type=key_type)
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt".format(tmp=tmp_dir, output=output_dir, type=key_type)
 
     result = plan.exec(
         service_name=egnkey_service_name,
@@ -305,21 +204,8 @@ def generate_key(plan, egnkey_service_name, key_type, artifact_name):
 
     file_artifact = plan.store_service_files(
         service_name=egnkey_service_name,
-        src=output_dir + "/test." + key_type + ".key.json",
+        src=output_dir + "/1." + key_type + ".key.json",
         name=artifact_name,
         description="Storing " + key_type + " key",
     )
     return file_artifact, password
-
-def read_json_artifact(plan, artifact_name, json_field):
-    input_dir = "/_input"
-    # get registryCoordinator
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
-        files={
-            input_dir: artifact_name,
-        },
-        wait="1s",
-    )
-    return result.output
