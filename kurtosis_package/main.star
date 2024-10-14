@@ -199,14 +199,54 @@ def run(plan, args={}):
 
 
 def setup_operator_config(plan, http_rpc_url, ws_url, aggregator_ip_port):
-    operator_bls_keystore = plan.upload_files(
-        src="./test.bls.key.json",
-        name="operator_bls_keystore",
+    generator_service = plan.add_service(
+        "egnkey-service",
+        config=ServiceConfig(
+            image=ImageBuildSpec(
+                image_name="egnkey",
+                build_context_dir="./dockerfiles/",
+                build_file="egnkey.Dockerfile",
+            ),
+            entrypoint=["sleep", "99999"],
+            description="Spinning up EigenLayer key generator service",
+        ),
     )
-    operator_ecdsa_keystore = plan.upload_files(
-        src="./test.ecdsa.key.json",
+
+    output_dir = "/_output"
+    store_dir = "/_keys"
+    cmd = "mkdir -p {store} && egnkey generate --key-type ecdsa --num-keys 1 --output-dir {output} && mv {output}/keys/1.ecdsa.key.json {store}/test.ecdsa.key.json ; cat {output}/password.txt".format(output=output_dir, store=store_dir)
+
+    result = plan.exec(
+        service_name=generator_service.name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Generating ECDSA key",
+    )
+    ecdsa_password = result["output"]
+
+    operator_ecdsa_keystore = plan.store_service_files(
+        service_name=generator_service.name,
+        src=store_dir + "/test.ecdsa.key.json",
         name="operator_ecdsa_keystore",
+        description="Storing ECDSA key",
     )
+
+    cmd = "rm -rf {output} ; mkdir -p {store} && egnkey generate --key-type bls --num-keys 1 --output-dir {output} && mv {output}/keys/1.bls.key.json {store}/test.bls.key.json ; cat {output}/password.txt".format(output=output_dir, store=store_dir)
+
+    result = plan.exec(
+        service_name=generator_service.name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Generating BLS key",
+    )
+    bls_password = result["output"]
+
+    plan.store_service_files(
+        service_name=generator_service.name,
+        src=store_dir + "/test.bls.key.json",
+        name="operator_bls_keystore",
+        description="Storing BLS key",
+    )
+
+    plan.remove_service(generator_service.name)
 
     avs_addresses = plan.get_files_artifact(
         name="avs_addresses",
