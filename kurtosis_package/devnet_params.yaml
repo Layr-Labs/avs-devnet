@@ -9,11 +9,11 @@ deployments:
   #   contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
   #   script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
   #   extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
-  #   # NOTE: input/output key-value order is destination-source
   #   input:
-  #     script/output/{chain_id}: eigenlayer_addresses
+  #     script/output/3151908: eigenlayer_addresses
   #   output:
-  #     avs_addresses: "script/output/{chain_id}/credible_squaring_avs_deployment_output.json"
+  #     avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
+
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref: "master"
@@ -21,9 +21,9 @@ deployments:
     script: script/IncredibleSquaringDeployer.s.sol
     # NOTE: input/output key-value order is destination-source
     input:
-      script/output/{chain_id}: eigenlayer_addresses
+      script/output/3151908: eigenlayer_addresses
     output:
-      avs_addresses: "script/output/{chain_id}/credible_squaring_avs_deployment_output.json"
+      avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
 
 keystores:
   - name: "operator1_bls_keystore"

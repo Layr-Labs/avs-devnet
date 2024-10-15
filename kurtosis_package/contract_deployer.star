@@ -71,5 +71,4 @@ def generate_store_specs(context, root_dir, output_args):
 
 
 def expand_path(context, root_dir, path):
-    chain_id = context.ethereum.network_id
-    return (root_dir + path.format(chain_id=chain_id)).replace("//", "/")
+    return (root_dir + path).replace("//", "/")
