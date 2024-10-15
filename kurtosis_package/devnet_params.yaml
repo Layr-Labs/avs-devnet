@@ -3,16 +3,18 @@ eigenlayer_ref: "master"
 eigenlayer_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
 
 deployments:
-  # - name: EigenLayer
-  #   repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-  #   ref: "master"
-  #   contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
-  #   script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
-  #   extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
-  #   input:
-  #     script/output/3151908: eigenlayer_addresses
-  #   output:
-  #     avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
+  - name: EigenLayer
+    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+    ref: "master"
+    contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
+    script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
+    extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    input:
+      script/configs/devnet/: eigenlayer-deployment-input
+    output:
+      eigenlayer_addresses:
+        path: "script/output/devnet/M2_from_scratch_deployment_data.json"
+        rename: "eigenlayer_deployment_output.json"
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"

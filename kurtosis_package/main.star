@@ -63,35 +63,6 @@ def run(plan, args={}):
         )
     )
 
-    # NOTE: we're using `;` because using `&&` after `--` fails to execute following commands
-    cmd = "forge script ./script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2 \
-            --rpc-url ${HTTP_RPC_URL}  --private-key 0x${PRIVATE_KEY} --broadcast --sig 'run(string memory configFile)' \
-            -- deploy_from_scratch.config.json  ; \
-        mv ./script/output/devnet/M2_from_scratch_deployment_data.json /eigenlayer_deployment_output.json"
-
-    # Deploy the EigenLayer contracts
-    result = plan.run_sh(
-        image=eigenlayer_deployer_img,
-        run=cmd,
-        env_vars={
-            "HTTP_RPC_URL": http_rpc_url,
-            "PRIVATE_KEY": private_key,
-        },
-        files={
-            "/app/{}/script/configs/devnet/".format(
-                eigenlayer_path
-            ): deploy_config_file_artifact,
-        },
-        store=[
-            StoreSpec(
-                src="/eigenlayer_deployment_output.json",
-                name="eigenlayer_addresses",
-            )
-        ],
-        description="Deploying EigenLayer contracts",
-    )
-    eigenlayer_deployment_file = result.files_artifacts[0]
-
     # Default to an empty dict
     args["artifacts"] = args.get("artifacts", {})
     data = {

@@ -7,6 +7,7 @@ def deploy(plan, context, deployment):
     ref = deployment["ref"]
     contracts_path = deployment["contracts_path"]
     script_path = deployment["script"]
+    extra_args = deployment.get("extra_args", "")
 
     root = "/app/" + contracts_path + "/"
 
@@ -20,21 +21,17 @@ def deploy(plan, context, deployment):
         mapper=file_mapper,
         allow_dirs=False,
     )
-    store_specs = generate_store_specs(context, root, deployment.get("output", {}))
+    store_specs, renames = generate_store_specs(
+        context, root, deployment.get("output", {})
+    )
     deployer_img = gen_deployer_img(repo, ref, contracts_path)
 
-    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
-    private_key = context.ethereum.pre_funded_accounts[0].private_key
+    cmd = generate_cmd(context, script_path, extra_args, renames)
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
         image=deployer_img,
-        run="forge script --rpc-url ${HTTP_RPC_URL} --private-key 0x${PRIVATE_KEY} --broadcast -vvv "
-        + script_path,
-        env_vars={
-            "HTTP_RPC_URL": http_rpc_url,
-            "PRIVATE_KEY": private_key,
-        },
+        run=cmd,
         files=input_files,
         store=store_specs,
         description="Deploying '{}'".format(deployment_name),
@@ -62,13 +59,40 @@ def gen_deployer_img(repo, ref, path):
 
 def generate_store_specs(context, root_dir, output_args):
     output = []
+    renames = []
 
-    for artifact_name, path in output_args.items():
-        expanded_path = expand_path(context, root_dir, path)
+    for artifact_name, output_info in output_args.items():
+        if type(output_info) == type(""):
+            output_info = struct(path=output_info, rename=None)
+        else:
+            output_info = struct(
+                path=output_info["path"], rename=output_info.get("rename", None)
+            )
+
+        expanded_path = expand_path(context, root_dir, output_info.path)
+        if output_info.rename != None:
+            path_stem = expanded_path.rsplit("/", 1)[0]
+            renamed_file = path_stem + "/" + output_info.rename
+            renames.append((expanded_path, renamed_file))
+            expanded_path = renamed_file
+
         output.append(StoreSpec(src=expanded_path, name=artifact_name))
 
-    return output
+    return output, renames
 
 
 def expand_path(context, root_dir, path):
     return (root_dir + path).replace("//", "/")
+
+
+def generate_cmd(context, script_path, extra_args, renames):
+    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
+    private_key = context.ethereum.pre_funded_accounts[0].private_key
+    # We use 'set -e' to fail the script if any command fails
+    cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} --broadcast -vvv {} {}".format(
+        http_rpc_url, private_key, script_path, extra_args
+    )
+    rename_cmds = ["mv {} {}".format(src, dst) for src, dst in renames]
+    if len(rename_cmds) == 0:
+        return cmd
+    return cmd + " ; " + " && ".join(rename_cmds)
