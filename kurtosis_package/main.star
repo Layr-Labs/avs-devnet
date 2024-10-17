@@ -55,6 +55,9 @@ def run(plan, args={}):
         passwords={},
     )
 
+    keystores = args.get("keystores", [])
+    generate_keystores(plan, context, keystores)
+
     deployments = args.get("deployments", [])
 
     for deployment in deployments:
@@ -62,7 +65,6 @@ def run(plan, args={}):
 
     service_specs = args.get("services", [])
 
-    generate_keystores(plan, context, args.get("keystores", []))
 
     for service in service_specs:
         service_utils.add_service(plan, service, context)
