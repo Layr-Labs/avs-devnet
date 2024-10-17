@@ -26,32 +26,7 @@ def run(plan, args={}):
 
     pre_funded_account = ethereum_output.pre_funded_accounts[0]
     private_key = pre_funded_account.private_key
-    eth_address = pre_funded_account.address
-
-    el_config_template = read_file(
-        "static_files/deploy_from_scratch.config.json.template"
-    )
-
-    el_config_data = {
-        "OperationsMultisig": str(eth_address),
-        "PauserMultisig": str(eth_address),
-        "ExecutorMultisig": str(eth_address),
-    }
-
-    deploy_config_file_artifact = plan.render_templates(
-        config={
-            "deploy_from_scratch.config.json": struct(
-                template=el_config_template,
-                data=el_config_data,
-            )
-        },
-        name="eigenlayer-deployment-input",
-        description="Generating EigenLayer deployment configuration file",
-    )
-
-    eigenlayer_deployer_img = contract_deployer.gen_deployer_img(
-        eigenlayer_repo, eigenlayer_ref, eigenlayer_path
-    )
+    deployer_address = pre_funded_account.address
 
     plan.print(
         "\n".join(
@@ -59,6 +34,7 @@ def run(plan, args={}):
                 "Data used for deployment:",
                 " rpc: {} (docker internal)".format(http_rpc_url),
                 " private key: 0x{}".format(private_key),
+                " address: {}".format(deployer_address),
             ]
         )
     )
@@ -68,6 +44,7 @@ def run(plan, args={}):
     data = {
         "HttpRpcUrl": http_rpc_url,
         "WsUrl": ws_url,
+        "DeployerAddress": deployer_address,
     }
 
     context = struct(
