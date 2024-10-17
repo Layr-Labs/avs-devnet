@@ -11,6 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+env:
+  KURTOSIS_VERSION: '1.3.1'
+
 
 jobs:
   # TODO: fix package when running geth+lh
@@ -24,11 +27,7 @@ jobs:
   #       run: |
   #         echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
   #         sudo apt update
-  #         if [ '1.3.0' = "latest" ]; then
-  #           sudo apt install kurtosis-cli
-  #         else
-  #           sudo apt install kurtosis-cli='1.3.0'
-  #         fi
+  #         sudo apt install kurtosis-cli=${{ env.KURTOSIS_VERSION }}
   #         kurtosis analytics disable
   #         echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
   #       shell: bash
@@ -47,11 +46,7 @@ jobs:
         run: |
           echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
           sudo apt update
-          if [ '1.3.0' = "latest" ]; then
-            sudo apt install kurtosis-cli
-          else
-            sudo apt install kurtosis-cli='1.3.0'
-          fi
+          sudo apt install kurtosis-cli=${{ env.KURTOSIS_VERSION }}
           kurtosis analytics disable
           echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
         shell: bash
@@ -69,11 +64,7 @@ jobs:
         run: |
           echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
           sudo apt update
-          if [ '1.3.0' = "latest" ]; then
-            sudo apt install kurtosis-cli
-          else
-            sudo apt install kurtosis-cli='1.3.0'
-          fi
+          sudo apt install kurtosis-cli=${{ env.KURTOSIS_VERSION }}
           kurtosis analytics disable
           echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
         shell: bash
