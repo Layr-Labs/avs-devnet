@@ -77,5 +77,5 @@ def send_funds(plan, context, to, amount="10ether"):
         + http_rpc_url
         + " "
         + to,
-        description="Depositing funds into account '" + to + "'",
+        description="Depositing funds to account",
     )
