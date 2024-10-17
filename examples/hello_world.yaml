@@ -7,7 +7,7 @@ deployments:
     input:
       ./: hello-world-config
     output:
-      eigenlayer_addresses: "script/deployments/core/3151908.json"
+      eigenlayer_addresses: "deployments/core/3151908.json"
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
@@ -15,9 +15,10 @@ deployments:
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     input:
-      script/deployments/core/: eigenlayer_addresses
+      ./: hello-world-config
+      deployments/core/: eigenlayer_addresses
     output:
-      avs_addresses: "script/deployments/core/3151908.json"
+      avs_addresses: "deployments/core/3151908.json"
 
 artifacts:
   hello-world-config:
