@@ -1,6 +1,11 @@
+shared_utils = import_module("shared_utils.star")
+
+
 def add_service(plan, service_args, context):
     name = service_args["name"]
-    files = generate_service_files(plan, context, service_args.get("input", {}))
+    files = shared_utils.generate_input_files(
+        plan, context, service_args.get("input", {})
+    )
     address = service_args.get("address", None)
 
     if address != None:
@@ -24,76 +29,17 @@ def add_service(plan, service_args, context):
     context.data["Service_" + name] = service.ip_address
 
 
-def generate_service_files(plan, context, input_args):
-    files = {}
-
-    for path, artifact_names in input_args.items():
-        if len(artifact_names) == 0:
-            continue
-        for artifact_name in artifact_names:
-            if artifact_name not in context.artifacts:
-                continue
-            if context.artifacts[artifact_name].get("generated", False):
-                continue
-            generate_artifact(plan, context, artifact_name)
-        files[path] = Directory(artifact_names=artifact_names)
-
-    return files
-
-
-def generate_artifact(plan, context, artifact_name):
-    artifact_files = context.artifacts[artifact_name].get("files", {})
-    additional_data = context.artifacts[artifact_name].get("additional_data", {}) or {}
-    data = dict(context.data)
-    for artifact, vars in additional_data.items():
-        for varname, json_field in vars.items():
-            data[varname] = read_json_artifact(plan, artifact, json_field)
-    config = {}
-    for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=data)
-    plan.render_templates(
-        config=config,
-        name=artifact_name,
-        description="Generating '{}'".format(artifact_name),
-    )
-
-
-def read_json_artifact(plan, artifact_name, json_field):
-    input_dir = "/_input"
-    result = plan.run_sh(
-        image="badouralix/curl-jq",
-        run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
-        files={input_dir: artifact_name},
-        wait="1s",
-    )
-    return result.output
-
-
 def generate_port_specs(ports):
     return {
-        port_name: new_port_spec(
-            port_spec["number"],
-            port_spec["transport_protocol"],
-            port_spec.get("application_protocol", None),
-            port_spec.get("wait", None),
-        )
-        for port_name, port_spec in ports.items()
+        port_name: new_port_spec(port_spec) for port_name, port_spec in ports.items()
     }
 
 
-# Taken from ethereum-package
-def new_port_spec(
-    number,
-    transport_protocol,
-    application_protocol=None,
-    wait=None,
-):
-    if wait == None:
-        return PortSpec(
-            number=number,
-            transport_protocol=transport_protocol,
-            application_protocol=application_protocol or "",
-        )
+def new_port_spec(port_spec_args):
+    number = port_spec_args["number"]
+    transport_protocol = port_spec_args["transport_protocol"]
+    application_protocol = port_spec_args.get("application_protocol", None)
+    wait = port_spec_args.get("wait", "15s")
 
     return PortSpec(
         number=number,
@@ -114,14 +60,13 @@ def expand(context, value):
     if not value.startswith("$"):
         return value
 
-    artifact = value[1:].rstrip("_password")
+    artifact = value[1:].rstrip(".password")
     return context.passwords[artifact]
 
 
-def send_funds(plan, context, to):
+def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-    amount = "10ether"
     plan.run_sh(
         image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
         run="cast send --value "
@@ -132,5 +77,5 @@ def send_funds(plan, context, to):
         + http_rpc_url
         + " "
         + to,
-        description="Depositing funds into the account '" + to + "'",
+        description="Depositing funds to account",
     )
