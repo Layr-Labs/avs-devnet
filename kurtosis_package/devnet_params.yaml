@@ -1,7 +1,7 @@
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "master"
+    ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
     contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
     script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
@@ -14,7 +14,7 @@ deployments:
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "master"
+    ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
     contracts_path: "contracts"
     script: script/IncredibleSquaringDeployer.s.sol
     # NOTE: input/output key-value order is destination-source
