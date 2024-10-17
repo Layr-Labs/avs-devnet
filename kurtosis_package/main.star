@@ -10,16 +10,6 @@ def run(plan, args={}):
     ethereum_args = args.get("ethereum_params", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
-    # TODO: generalize this for any app
-    eigenlayer_repo = args.get(
-        "eigenlayer_repo", "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    )
-    eigenlayer_ref = args.get("eigenlayer_ref", "master")
-    eigenlayer_path = args.get(
-        "eigenlayer_path",
-        "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts",
-    )
-
     el_context = ethereum_output.all_participants[0].el_context
     http_rpc_url = el_context.rpc_http_url
     ws_url = el_context.ws_url
