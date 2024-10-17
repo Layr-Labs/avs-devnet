@@ -1,0 +1,37 @@
+deployments:
+  - name: EigenLayer
+    repo: "https://github.com/Layr-Labs/hello-world-avs.git"
+    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    contracts_path: "contracts"
+    script: script/DeployEigenLayerCore.s.sol
+    input:
+      ./: hello-world-config
+    output:
+      eigenlayer_addresses: "script/deployments/core/3151908.json"
+
+  - name: hello-world-avs
+    repo: "https://github.com/Layr-Labs/hello-world-avs.git"
+    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    contracts_path: "contracts"
+    script: script/HelloWorldDeployer.s.sol
+    input:
+      script/deployments/core/: eigenlayer_addresses
+    output:
+      avs_addresses: "script/deployments/core/3151908.json"
+
+artifacts:
+  hello-world-config:
+    files:
+      .env: |
+        PRIVATE_KEY={{.DeployerPrivateKey}}
+        HOLESKY_PRIVATE_KEY=
+        HOLESKY_RPC_URL=
+        ETHERSCAN_API_KEY=
+
+ethereum_params:
+  participants:
+    - el_type: reth
+      cl_type: teku
+  additional_services:
+    - blockscout
+    - dora
