@@ -33,8 +33,8 @@ def run(plan, args={}):
             [
                 "Data used for deployment:",
                 " rpc: {} (docker internal)".format(http_rpc_url),
-                " private key: 0x{}".format(private_key),
-                " address: {}".format(deployer_address),
+                " deployer private key: 0x{}".format(private_key),
+                " deployer address: {}".format(deployer_address),
             ]
         )
     )

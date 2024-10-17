@@ -13,9 +13,7 @@ def generate_input_files(plan, context, input_args, mapper=identity, allow_dirs=
         if len(artifact_names) == 1:
             artifact = generate_artifact(plan, context, artifact_names[0])
         elif allow_dirs:
-            artifacts = [
-                generate_artifact(plan, context, n) for n in artifact_names
-            ]
+            artifacts = [generate_artifact(plan, context, n) for n in artifact_names]
             artifact = Directory(artifact_names=artifacts)
         else:
             fail(

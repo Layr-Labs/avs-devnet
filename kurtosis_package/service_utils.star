@@ -31,29 +31,15 @@ def add_service(plan, service_args, context):
 
 def generate_port_specs(ports):
     return {
-        port_name: new_port_spec(
-            port_spec["number"],
-            port_spec["transport_protocol"],
-            port_spec.get("application_protocol", None),
-            port_spec.get("wait", None),
-        )
-        for port_name, port_spec in ports.items()
+        port_name: new_port_spec(port_spec) for port_name, port_spec in ports.items()
     }
 
 
-# Taken from ethereum-package
-def new_port_spec(
-    number,
-    transport_protocol,
-    application_protocol=None,
-    wait=None,
-):
-    if wait == None:
-        return PortSpec(
-            number=number,
-            transport_protocol=transport_protocol,
-            application_protocol=application_protocol or "",
-        )
+def new_port_spec(port_spec_args):
+    number = port_spec_args["number"]
+    transport_protocol = port_spec_args["transport_protocol"]
+    application_protocol = port_spec_args.get("application_protocol", None)
+    wait = port_spec_args.get("wait", "15s")
 
     return PortSpec(
         number=number,
@@ -74,14 +60,13 @@ def expand(context, value):
     if not value.startswith("$"):
         return value
 
-    artifact = value[1:].rstrip("_password")
+    artifact = value[1:].rstrip(".password")
     return context.passwords[artifact]
 
 
-def send_funds(plan, context, to):
+def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-    amount = "10ether"
     plan.run_sh(
         image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
         run="cast send --value "
@@ -92,5 +77,5 @@ def send_funds(plan, context, to):
         + http_rpc_url
         + " "
         + to,
-        description="Depositing funds into the account '" + to + "'",
+        description="Depositing funds into account '" + to + "'",
     )
