@@ -30,7 +30,16 @@ For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 
 ## How to Run
 
-We have a Makefile with some targets for usual tasks.
+To run it without cloning the repo, just use:
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave devnet --args-file github.com/kurtosis_package/devnet_params.yaml
+```
+
+> [!WARNING]  
+> Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
+
+We also have a Makefile with some targets for usual tasks.
 
 ### Starting the devnet
 
