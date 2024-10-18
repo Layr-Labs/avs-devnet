@@ -28,7 +28,7 @@ deployments:
     input:
       deployments/core/: eigenlayer_addresses
     output:
-      avs_addresses: "deployments/core/31337.json"
+      avs_addresses: "deployments/hello-world/31337.json"
 
 services:
   - name: "operator"
