@@ -38,6 +38,11 @@ jobs:
 
   run_with_args:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        args_file:
+          - './kurtosis_package/devnet_params.yaml'
+          - './examples/hello_world.yaml'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -51,9 +56,9 @@ jobs:
           echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
         shell: bash
 
-      - name: Run Package with args file './kurtosis_package/devnet_params.yaml'
+      - name: Run Package with args file '${{ matrix.args_file }}'
         run: |
-          kurtosis run ./kurtosis_package --args-file ./kurtosis_package/devnet_params.yaml
+          kurtosis run ./kurtosis_package --args-file ${{ matrix.args_file }}
 
   lint:
     runs-on: ubuntu-latest

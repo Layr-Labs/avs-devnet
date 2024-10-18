@@ -8,6 +8,7 @@ def deploy(plan, context, deployment):
     contracts_path = deployment["contracts_path"]
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
+    env_vars = deployment.get("env", {})
 
     root = "/app/" + contracts_path + "/"
 
@@ -34,6 +35,7 @@ def deploy(plan, context, deployment):
         run=cmd,
         files=input_files,
         store=store_specs,
+        env_vars=env_vars,
         description="Deploying '{}'".format(deployment_name),
     )
 

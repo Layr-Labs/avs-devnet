@@ -34,6 +34,7 @@ def run(plan, args={}):
     data = {
         "HttpRpcUrl": http_rpc_url,
         "WsUrl": ws_url,
+        "DeployerPrivateKey": "0x" + private_key,
         "DeployerAddress": deployer_address,
     }
 
@@ -62,6 +63,9 @@ def run(plan, args={}):
 
 
 def generate_keystores(plan, context, keystores):
+    if len(keystores) == 0:
+        return
+
     generator_service = plan.add_service(
         "egnkey-service",
         config=ServiceConfig(
