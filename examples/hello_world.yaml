@@ -4,8 +4,11 @@ deployments:
     ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
     contracts_path: "contracts"
     script: script/DeployEigenLayerCore.s.sol
-    input:
-      ./: hello-world-config
+    env:
+      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      HOLESKY_PRIVATE_KEY: ""
+      HOLESKY_RPC_URL: ""
+      ETHERSCAN_API_KEY: ""
     output:
       eigenlayer_addresses: "deployments/core/3151908.json"
 
@@ -14,20 +17,15 @@ deployments:
     ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
+    env:
+      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      HOLESKY_PRIVATE_KEY: ""
+      HOLESKY_RPC_URL: ""
+      ETHERSCAN_API_KEY: ""
     input:
-      ./: hello-world-config
       deployments/core/: eigenlayer_addresses
     output:
       avs_addresses: "deployments/core/3151908.json"
-
-artifacts:
-  hello-world-config:
-    files:
-      .env: |
-        PRIVATE_KEY={{.DeployerPrivateKey}}
-        HOLESKY_PRIVATE_KEY=
-        HOLESKY_RPC_URL=
-        ETHERSCAN_API_KEY=
 
 ethereum_params:
   participants:
