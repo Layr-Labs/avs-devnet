@@ -27,7 +27,7 @@ deployments:
     input:
       deployments/core/: eigenlayer_addresses
     output:
-      avs_addresses: "deployments/core/3151908.json"
+      avs_addresses: "deployments/hello-world/3151908.json"
 
 ethereum_params:
   participants:
