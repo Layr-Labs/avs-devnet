@@ -12,13 +12,14 @@ deployments:
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
     output:
-      eigenlayer_addresses: "deployments/core/3151908.json"
+      eigenlayer_addresses: "deployments/core/31337.json"
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
     ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
+    extra_args: "; sleep 15"
     env:
       PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
       HOLESKY_PRIVATE_KEY: ""
@@ -27,7 +28,32 @@ deployments:
     input:
       deployments/core/: eigenlayer_addresses
     output:
-      avs_addresses: "deployments/hello-world/3151908.json"
+      avs_addresses: "deployments/core/31337.json"
+
+services:
+  - name: "operator"
+    # NOTE: this image is build locally by the Makefile
+    image: "helloworld"
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC URL
+      RPC_URL: "$RPC_URL"
+      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+    cmd: ["npm", "run", "start:operator"]
+
+  - name: "traffic-generator"
+    # NOTE: this image is build locally by the Makefile
+    image: "helloworld"
+    input:
+      /app/contracts/deployments/core/: eigenlayer_addresses
+      /app/contracts/deployments/hello-world/: avs_addresses
+    env:
+      # This expands to the RPC URL
+      RPC_URL: "$RPC_URL"
+      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+    cmd: ["npm", "run", "start:traffic"]
 
 ethereum_params:
   participants:
@@ -36,3 +62,6 @@ ethereum_params:
   additional_services:
     - blockscout
     - dora
+  network_params:
+    # We use the chain ID hardcoded in the hello-world-avs example
+    network_id: "31337"
