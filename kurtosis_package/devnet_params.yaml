@@ -5,6 +5,8 @@ deployments:
     contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
     script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    # NOTE: storing files inside a populated directory will replace all contents with the artifact files.
+    # (see https://github.com/kurtosis-tech/kurtosis/issues/378)
     input:
       script/configs/devnet/: eigenlayer-deployment-input
     output:

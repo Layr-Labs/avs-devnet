@@ -5,6 +5,8 @@ deployments:
     contracts_path: "contracts"
     script: script/DeployEigenLayerCore.s.sol
     env:
+      # TODO: use magic variable for this
+      # This is the private key for the account that will deploy the contracts
       PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
