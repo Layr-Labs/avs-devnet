@@ -4,44 +4,38 @@
 We expect the library to be commonly used in place of mocks for automated testing of specific situations.
 The CLI tool, on the other hand, we expect to be used in place of bash scripts for end-to-end testing and local development.
 
-## Features
-
-### One line devnet setup
-
-To have a local devnet with EigenLayer core contracts deployed, just [install kurtosis](https://docs.kurtosis.com/install/) and run:
-
-```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave devnet --args-file github.com/Layr-Labs/avs-devnet/devnet_params.yaml
-```
-
-### Extensively configurable
-
-By having lots of tuning parameters for operators we can simulate complex situations.
-We’re going to start operator registration and stakes setup only, but a lot of this could be extended in the future.
-
-### Usable as a testing library
-
-Being able to use it on unit tests will make automated testing easier.
-With this, users won’t need to run complex setups before their tests.
-They can just use the library and set the initial required state.
+> [!NOTE]  
+> Currently, only the Kurtosis package is available.
+> Future versions may include the testing library and a CLI.
 
 ## Dependencies
 
 Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 
-## How to Run
-
-To run it without cloning the repo, just use:
-
-```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave devnet --args-file github.com/kurtosis_package/devnet_params.yaml
-```
+## How to use
 
 > [!WARNING]  
 > Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
 
-We also have a Makefile with some targets for usual tasks.
+[After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml) with:
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --args-file github.com/kurtosis_package/devnet_params.yaml
+```
+
+This spins up a local Ethereum devnet with a single node and EigenLayer core contracts deployed.
+To run a different configuration, you can write your own config file and pass it to the package like so:
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --args-file devnet_params.yaml
+```
+
+For example configurations, check [`examples`](examples/). For more information on the config file format, check [this](#configuration).
+
+## Local development
+
+We have a Makefile for some of the usual tasks.
 
 ### Starting the devnet
 
@@ -66,6 +60,17 @@ This stops the devnet, removing containers and file artifacts.
 
 ```sh
 make clean_devnet
+```
+
+### Starting an example
+
+Some of the targets run with the configurations under [examples](./examples/).
+
+```sh
+# https://github.com/Layr-Labs/incredible-squaring-avs
+make start_incredible_squaring
+# https://github.com/Layr-Labs/hello-world-avs
+make start_hello_world
 ```
 
 ## Configuration
