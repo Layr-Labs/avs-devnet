@@ -13,6 +13,12 @@ clean_devnet: stop_devnet
 format:
 	kurtosis lint --format
 
+# incredible-squaring-avs example
+
+start_incredible_squaring:
+	@echo "Starting devnet with incredible_squaring example..."
+	kurtosis run kurtosis_package/ --enclave=devnet --args-file=examples/incredible_squaring.yaml
+
 # hello-world-avs example
 
 examples/hello-world-avs:
