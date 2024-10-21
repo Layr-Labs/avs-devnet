@@ -148,7 +148,7 @@ artifacts:
         register_operator_on_startup: True
         token_strategy_addr: {{.TokenStrategyAddress}}
 
-ethereum_params:
+ethereum_package:
   participants:
     - el_type: reth
       cl_type: teku
