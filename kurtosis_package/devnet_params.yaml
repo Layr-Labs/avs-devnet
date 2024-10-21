@@ -1,7 +1,7 @@
 deployments:
   - name: "EigenLayer"
     repo: "https://github.com/Layr-Labs/eigenlayer-contracts.git"
-    ref: "v0.4.3-mainnet-rewards-foundation-incentives"
+    ref: "v0.4.2-mainnet-pepe"
     script: script/deploy/local/Deploy_From_Scratch.s.sol.s.sol:DeployFromScratch
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
     input:
@@ -19,10 +19,19 @@ artifacts:
           "maintainer": "example@example.org",
           "multisig_addresses": {
             "operationsMultisig": "{{.DeployerAddress}}",
+            "communityMultisig": "{{.DeployerAddress}}",
             "pauserMultisig": "{{.DeployerAddress}}",
-            "executorMultisig": "{{.DeployerAddress}}"
+            "executorMultisig": "{{.DeployerAddress}}",
+            "timelock": "{{.DeployerAddress}}"
           },
-          "strategies": [],
+          "strategies": [
+            {
+              "token_address": "0x0000000000000000000000000000000000000000",
+              "token_symbol": "WETH",
+              "max_per_deposit": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+              "max_deposits": 115792089237316195423570985008687907853269984665640564039457584007913129639935
+            }
+          ],
           "strategyManager": {
             "init_paused_status": 0,
             "init_withdrawal_delay_blocks": 1
@@ -55,7 +64,9 @@ artifacts:
             "rewards_updater_address": "{{.DeployerAddress}}",
             "activation_delay": 7200,
             "calculation_interval_seconds": 604800,
-            "global_operator_commission_bips": 1000
+            "global_operator_commission_bips": 1000,
+            "OPERATOR_SET_GENESIS_REWARDS_TIMESTAMP": 1720656000,
+            "OPERATOR_SET_MAX_RETROACTIVE_LENGTH": 2592000
           },
           "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
         }
