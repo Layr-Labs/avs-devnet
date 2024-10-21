@@ -1,5 +1,5 @@
 .PHONY: start_devnet stop_devnet clean_devnet format \
-	start_helloworld
+	start_hello_world build_hello_world_image
 
 start_devnet:
 	kurtosis run kurtosis_package/ --enclave=devnet --args-file=kurtosis_package/devnet_params.yaml
@@ -25,10 +25,10 @@ examples/hello-world-avs:
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
 
-build_helloworld_image: examples/hello-world-avs
-	@echo "Building helloworld docker image..."
-	docker build -t helloworld -f examples/hello-world-avs/Dockerfile examples/hello-world-avs
+build_hello_world_image: examples/hello-world-avs
+	@echo "Building hello_world docker image..."
+	docker build -t hello_world -f examples/hello-world-avs/Dockerfile examples/hello-world-avs
 
-start_helloworld: build_helloworld_image
-	@echo "Starting devnet with helloworld example..."
+start_hello_world: build_hello_world_image
+	@echo "Starting devnet with hello_world example..."
 	kurtosis run kurtosis_package/ --enclave=devnet --args-file=examples/hello_world.yaml
