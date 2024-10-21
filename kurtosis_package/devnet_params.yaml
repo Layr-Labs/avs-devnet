@@ -2,16 +2,21 @@ deployments:
   - name: "EigenLayer"
     repo: "https://github.com/Layr-Labs/eigenlayer-contracts.git"
     ref: "v0.4.2-mainnet-pepe"
-    script: script/deploy/local/Deploy_From_Scratch.s.sol.s.sol:DeployFromScratch
-    extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
+    extra_args: "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json"
+    # Uses the `eigenlayer_deployment_input` artifact as input, stored in `script/configs/devnet/`
     input:
-      script/configs/local/: eigenlayer_deployment_input
+      script/configs/devnet/: eigenlayer_deployment_input
+    # Produces a single file `script/output/devnet/M2_from_scratch_deployment_data.json`
+    # renamed to `eigenlayer_deployment_output.json` and stored as the `eigenlayer_addresses` artifact
     output:
       eigenlayer_addresses:
-        path: "script/output/local/M2_from_scratch_deployment_data.json"
-        rename: "eigenlayer_deployment_output.json"
+        path: script/output/devnet/M2_from_scratch_deployment_data.json
+        rename: eigenlayer_deployment_output.json
 
 artifacts:
+  # Initially produces a single file `deploy_from_scratch.config.json`
+  # and stores it as the artifact `eigenlayer_deployment_input`
   eigenlayer_deployment_input:
     files:
       deploy_from_scratch.config.json: |
@@ -19,19 +24,10 @@ artifacts:
           "maintainer": "example@example.org",
           "multisig_addresses": {
             "operationsMultisig": "{{.DeployerAddress}}",
-            "communityMultisig": "{{.DeployerAddress}}",
             "pauserMultisig": "{{.DeployerAddress}}",
-            "executorMultisig": "{{.DeployerAddress}}",
-            "timelock": "{{.DeployerAddress}}"
+            "executorMultisig": "{{.DeployerAddress}}"
           },
-          "strategies": [
-            {
-              "token_address": "0x0000000000000000000000000000000000000000",
-              "token_symbol": "WETH",
-              "max_per_deposit": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
-              "max_deposits": 115792089237316195423570985008687907853269984665640564039457584007913129639935
-            }
-          ],
+          "strategies": [],
           "strategyManager": {
             "init_paused_status": 0,
             "init_withdrawal_delay_blocks": 1
@@ -64,9 +60,7 @@ artifacts:
             "rewards_updater_address": "{{.DeployerAddress}}",
             "activation_delay": 7200,
             "calculation_interval_seconds": 604800,
-            "global_operator_commission_bips": 1000,
-            "OPERATOR_SET_GENESIS_REWARDS_TIMESTAMP": 1720656000,
-            "OPERATOR_SET_MAX_RETROACTIVE_LENGTH": 2592000
+            "global_operator_commission_bips": 1000
           },
           "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
         }
