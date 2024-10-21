@@ -2,44 +2,83 @@
 
 *AvsDevnet* is a library and CLI tool to start local devnets with specific operator states.
 We expect the library to be commonly used in place of mocks for automated testing of specific situations.
-The CLI tool, on the other hand, should be used in place of anvil-like solutions for end-to-end testing.
+The CLI tool, on the other hand, we expect to be used in place of bash scripts for end-to-end testing and local development.
 
-## Features
-
-### One line devnet setup
-
-Currently, to have a local devnet with EigenLayer contracts deployed, we need to deploy them manually or build our own scripts.
-This also includes deploying all of our AVS contracts.
-With AvsDevnet we could make this as simple as a one line command.
-
-### Extensively configurable
-
-By having lots of tuning parameters for operators we can simulate complex situations.
-We’re going to start operator registration and stakes setup only, but a lot of this could be extended in the future.
-
-### Usable as a testing library
-
-Being able to use it on unit tests will make automated testing easier.
-With this, users won’t need to run complex setups before their tests.
-They can just use the library and set the initial required state.
+> [!WARNING]  
+> Currently, only the Kurtosis package is available.
+> Future versions may include the testing library and a CLI.
 
 ## Dependencies
 
 Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 
-## How to Run
-
-To run it without cloning the repo, just use:
-
-```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave devnet --args-file github.com/kurtosis_package/devnet_params.yaml
-```
+## How to use
 
 > [!WARNING]  
 > Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
 
-We also have a Makefile with some targets for usual tasks.
+[After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [dora](https://github.com/ethpandaops/dora) and [blockscout](https://github.com/blockscout/blockscout) explorers.
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file github.com/kurtosis_package/devnet_params.yaml
+```
+
+What follows is a brief tutorial on Kurtosis CLI.
+For more information, you can check [the documentation](https://docs.kurtosis.com/).
+
+### Run a custom configuration
+
+To run a different configuration, you can write your own config file and pass it to the package like so:
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file devnet_params.yaml
+```
+
+For example configurations, check [`examples`](examples/). For more information on the config file format, check [Configuration](#configuration).
+
+### Stop the devnet
+
+In the past commands, we specified the name of the enclave with the `--enclave` flag.
+If no name was specified, Kurtosis will generate a random one.
+You can check existing enclaves with:
+
+```sh
+kurtosis enclave ls
+```
+
+Since we named our enclave `my_devnet`, you can stop it with:
+
+```sh
+kurtosis enclave stop my_devnet
+```
+
+For destroying a stopped enclave, you can use:
+
+```sh
+kurtosis enclave rm my_devnet
+```
+
+### Download file artifacts
+
+The devnet can generate various file artifacts (e.g. with contract addresses).
+You can see a list by running:
+
+```sh
+kurtosis enclave inspect my_devnet
+```
+
+To download this data from the Kurtosis engine, use:
+
+```sh
+kurtosis files download my_devnet <artifact name>
+```
+
+This produces a folder named like the artifact containing its files.
+
+## Local development
+
+We have a Makefile for some of the usual tasks.
 
 ### Starting the devnet
 
@@ -64,6 +103,25 @@ This stops the devnet, removing containers and file artifacts.
 
 ```sh
 make clean_devnet
+```
+
+### Formatting files
+
+To format the Starlark scripts, run:
+
+```sh
+make format
+```
+
+### Starting an example
+
+Some of the targets run with the configurations under [examples](./examples/).
+
+```sh
+# https://github.com/Layr-Labs/incredible-squaring-avs
+make start_incredible_squaring
+# https://github.com/Layr-Labs/hello-world-avs
+make start_hello_world
 ```
 
 ## Configuration

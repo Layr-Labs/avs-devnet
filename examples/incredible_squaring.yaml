@@ -1,3 +1,4 @@
+# Example devnet config file for the incredible-squaring-avs example
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
