@@ -2,15 +2,17 @@
 
 *AvsDevnet* is a library and CLI tool to start local devnets with specific operator states.
 We expect the library to be commonly used in place of mocks for automated testing of specific situations.
-The CLI tool, on the other hand, should be used in place of anvil-like solutions for end-to-end testing.
+The CLI tool, on the other hand, we expect to be used in place of bash scripts for end-to-end testing and local development.
 
 ## Features
 
 ### One line devnet setup
 
-Currently, to have a local devnet with EigenLayer contracts deployed, we need to deploy them manually or build our own scripts.
-This also includes deploying all of our AVS contracts.
-With AvsDevnet we could make this as simple as a one line command.
+To have a local devnet with EigenLayer core contracts deployed, just [install kurtosis](https://docs.kurtosis.com/install/) and run:
+
+```sh
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave devnet --args-file github.com/Layr-Labs/avs-devnet/devnet_params.yaml
+```
 
 ### Extensively configurable
 
