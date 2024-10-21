@@ -5,7 +5,7 @@ def deploy(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
     ref = deployment["ref"]
-    contracts_path = deployment["contracts_path"]
+    contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
     env_vars = deployment.get("env", {})

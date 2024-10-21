@@ -41,6 +41,7 @@ jobs:
     strategy:
       matrix:
         example:
+          - devnet
           - incredible_squaring
           - hello_world
     steps:
