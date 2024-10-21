@@ -1,15 +1,14 @@
 name: CI
 
 on:
-  merge_group:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
     branches: [ '**' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   KURTOSIS_VERSION: '1.3.1'
