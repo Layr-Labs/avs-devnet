@@ -60,6 +60,12 @@ def expand(context, value):
     if not value.startswith("$"):
         return value
 
+    # $RPC_URL expands to the RPC URL of the first Ethereum node
+    # TODO: store this in some other place
+    if value.startswith("$RPC_URL"):
+        return context.ethereum.all_participants[0].el_context.rpc_http_url
+
+    # $name.password expands to the password of the keystore named `name`
     artifact = value[1:].rstrip(".password")
     return context.passwords[artifact]
 
