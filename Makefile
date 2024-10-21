@@ -1,5 +1,5 @@
 .PHONY: start_devnet stop_devnet clean_devnet format \
-	start_hello_world build_hello_world_image
+	start_incredible_squaring start_hello_world build_hello_world_image
 
 start_devnet:
 	kurtosis run kurtosis_package/ --enclave=devnet --args-file=kurtosis_package/devnet_params.yaml
@@ -12,6 +12,12 @@ clean_devnet: stop_devnet
 
 format:
 	kurtosis lint --format
+
+# incredible-squaring-avs example
+
+start_incredible_squaring:
+	@echo "Starting devnet with incredible_squaring example..."
+	kurtosis run kurtosis_package/ --enclave=devnet --args-file=examples/incredible_squaring.yaml
 
 # hello-world-avs example
 

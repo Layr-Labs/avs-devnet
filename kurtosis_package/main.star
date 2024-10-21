@@ -7,7 +7,7 @@ contract_deployer = import_module("./contract_deployer.star")
 
 def run(plan, args={}):
     # Run the Ethereum package first
-    ethereum_args = args.get("ethereum_params", {})
+    ethereum_args = args.get("ethereum_package", {})
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
     el_context = ethereum_output.all_participants[0].el_context

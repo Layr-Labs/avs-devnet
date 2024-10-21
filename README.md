@@ -178,7 +178,7 @@ artifacts:
 
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
-ethereum_params:
+ethereum_package:
   participants:
     - el_type: reth
       cl_type: teku
