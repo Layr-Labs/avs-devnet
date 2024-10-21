@@ -35,7 +35,7 @@ deployments:
 services:
   - name: "operator"
     # NOTE: this image is build locally by the Makefile
-    image: "helloworld"
+    image: "hello_world"
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
@@ -47,7 +47,7 @@ services:
 
   - name: "traffic-generator"
     # NOTE: this image is build locally by the Makefile
-    image: "helloworld"
+    image: "hello_world"
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
