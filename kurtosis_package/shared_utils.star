@@ -59,3 +59,19 @@ def read_json_artifact(plan, artifact_name, json_field):
         wait="1s",
     )
     return result.output
+
+def send_funds(plan, context, to, amount="10ether"):
+    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
+    funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
+    plan.run_sh(
+        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
+        run="cast send --value "
+        + amount
+        + " --private-key "
+        + funded_private_key
+        + " --rpc-url "
+        + http_rpc_url
+        + " "
+        + to,
+        description="Depositing funds to account",
+    )
