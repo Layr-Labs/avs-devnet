@@ -40,8 +40,8 @@ services:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
-      # This expands to the RPC URL
-      RPC_URL: "$RPC_URL"
+      # This expands to the RPC node's URL
+      RPC_URL: "$http_rpc_url"
       PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
     cmd: ["npm", "run", "start:operator"]
 
@@ -52,8 +52,8 @@ services:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
-      # This expands to the RPC URL
-      RPC_URL: "$RPC_URL"
+      # This expands to the RPC node's URL
+      RPC_URL: "$http_rpc_url"
       PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
     cmd: ["npm", "run", "start:traffic"]
 
