@@ -57,20 +57,20 @@ def generate_env_vars(context, env_vars):
     }
 
 
-def expand(context, value):
+def expand(context, var):
     """
     Replaces values starting with `$` to their dynamically evaluated counterpart.
     Values starting with `$$` are not expanded, and the leading `$` is removed.
 
     Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
     """
-    if not value.startswith("$"):
-        return value
+    if not var.startswith("$"):
+        return var
 
-    if value.startswith("$$"):
-        return value[1:]
+    if var.startswith("$$"):
+        return var[1:]
 
-    path = value[1:].split(".")
+    path = var[1:].split(".")
     value = context.data
     for field in path:
         value = value.get(field, None)
@@ -78,6 +78,6 @@ def expand(context, value):
             break
 
     if value == None or type(value) == type({}):
-        fail("Invalid path: " + value)
+        fail("Invalid path: " + var)
 
     return value
