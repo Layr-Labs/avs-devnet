@@ -27,6 +27,17 @@ deployments:
     output:
       avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
 
+  - name: Batcher Payment Service
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "docker-compose"
+    contracts_path: "contracts"
+    script: script/deploy/BatcherPaymentServiceDeployer.s.sol
+    extra_args: >-
+      --sig "run(string batcherConfigPath)"
+      ./script/deploy/config/devnet/batcher.devnet.config.json
+    input:
+      script/deploy/config/devnet/: batcher_config
+
 artifacts:
   deployment_config:
     files:
@@ -122,6 +133,27 @@ artifacts:
             }
           ],
           "uri": ""
+        }
+
+  batcher_config:
+    additional_data:
+      avs_addresses:
+        AlignedLayerServiceManager: ".addresses.alignedLayerServiceManager"
+    files:
+      batcher.devnet.config.json: |
+        {
+          "address": {
+            "batcherWallet": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+            "batcherPrivateKey": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
+            "alignedLayerServiceManager": "{{.AlignedLayerServiceManager}}"
+          },
+          "amounts": {
+            "gasForAggregator": "300000",
+            "gasPerProof": "21000"
+          },
+          "permissions": {
+            "owner": "{{.DeployerAddress}}"
+          }
         }
 
 ethereum_package:
