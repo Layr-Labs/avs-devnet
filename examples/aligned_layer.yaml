@@ -1,0 +1,133 @@
+# Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
+deployments:
+  - name: EigenLayer
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "docker-compose"
+    contracts_path: "contracts"
+    script: script/deploy/EigenLayerDeployer.s.sol
+    extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
+    input:
+      script/deploy/config/devnet/: deployment_config
+    output:
+      eigenlayer_addresses: "script/output/devnet/eigenlayer_deployment_output.json"
+
+  - name: Aligned
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "docker-compose"
+    contracts_path: "contracts"
+    script: script/deploy/AlignedLayerDeployer.s.sol
+    extra_args: >-
+      --sig "run(string memory existingDeploymentInfoPath, string memory deployConfigPath, string memory outputPath)"
+      ./script/output/devnet/eigenlayer_deployment_output.json
+      ./script/deploy/config/devnet/aligned.devnet.config.json
+      ./script/output/devnet/alignedlayer_deployment_output.json
+    input:
+      script/deploy/config/devnet/: deployment_config
+      script/output/devnet/: eigenlayer_addresses
+    output:
+      avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
+
+artifacts:
+  deployment_config:
+    files:
+      eigen.devnet.config.json: |
+        {
+          "chainInfo": {
+            "chainId": 3151908
+          },
+          "multisig_addresses": {
+            "pauserMultisig": "{{.DeployerAddress}}",
+            "communityMultisig": "{{.DeployerAddress}}",
+            "operationsMultisig": "{{.DeployerAddress}}",
+            "executorMultisig": "{{.DeployerAddress}}",
+            "timelock": "{{.DeployerAddress}}"
+          },
+          "strategies": {
+            "numStrategies": 0,
+            "MAX_PER_DEPOSIT": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "MAX_TOTAL_DEPOSITS": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "strategiesToDeploy": []
+          },
+          "strategyManager": {
+            "init_strategy_whitelister": "{{.DeployerAddress}}",
+            "init_paused_status": 0
+          },
+          "delegationManager": {
+            "init_paused_status": 0,
+            "init_minWithdrawalDelayBlocks": 10
+          },
+          "rewardsCoordinator": {
+            "init_paused_status": 0,
+            "CALCULATION_INTERVAL_SECONDS": 604800,
+            "MAX_REWARDS_DURATION": 6048000,
+            "MAX_RETROACTIVE_LENGTH": 7776000,
+            "MAX_FUTURE_LENGTH": 2592000,
+            "GENESIS_REWARDS_TIMESTAMP": 1710979200,
+            "rewards_updater_address": "{{.DeployerAddress}}",
+            "activation_delay": 7200,
+            "calculation_interval_seconds": 604800,
+            "global_operator_commission_bips": 1000
+          },
+          "avsDirectory": {
+            "init_paused_status": 0
+          },
+          "slasher": {
+            "init_paused_status": 0
+          },
+          "eigenPod": {
+            "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": 32000000000,
+            "GENESIS_TIME": 1695902400
+          },
+          "eigenPodManager": {
+            "init_paused_status": 0,
+            "deneb_fork_timestamp": "1707305664"
+          },
+          "delayedWithdrawalRouter": {
+            "init_paused_status": 0,
+            "init_withdrawalDelayBlocks": 10
+          },
+          "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
+          "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
+        }
+      aligned.devnet.config.json: |
+        {
+          "chainInfo": {
+            "chainId": 3151908
+          },
+          "permissions": {
+            "owner": "{{.DeployerAddress}}",
+            "aggregator": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+            "upgrader": "{{.DeployerAddress}}",
+            "churner": "{{.DeployerAddress}}",
+            "ejector": "{{.DeployerAddress}}",
+            "deployer": "{{.DeployerAddress}}",
+            "initalPausedStatus": 0
+          },
+          "minimumStakes": [
+            1
+          ],
+          "strategyWeights": [
+            [
+              {
+                "0_strategy": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
+                "1_multiplier": 1e+18
+              }
+            ]
+          ],
+          "operatorSetParams": [
+            {
+              "0_maxOperatorCount": 200,
+              "1_kickBIPsOfOperatorStake": 11000,
+              "2_kickBIPsOfTotalStake": 50
+            }
+          ],
+          "uri": ""
+        }
+
+ethereum_package:
+  participants:
+    - el_type: reth
+      cl_type: teku
+  additional_services:
+    - blockscout
+    - dora

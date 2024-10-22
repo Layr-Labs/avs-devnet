@@ -107,3 +107,9 @@ build_hello_world_image: examples/hello-world-avs
 kurtosis_hello_world: build_hello_world_image ## 🚀 Start the devnet with the Hello World AVS example (Kurtosis)
 	@echo "Starting devnet with hello_world example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/hello_world.yaml
+
+# Aligned Layer example
+
+start_aligned_layer:
+	@echo "Starting devnet with Aligned Layer example..."
+	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/aligned_layer.yaml
