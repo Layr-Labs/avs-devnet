@@ -147,7 +147,7 @@ deployments:
     input:
       # Key: destination to insert the files in
       # Value: name of the artifact containing the files
-      script/configs/devnet/: eigenlayer-deployment-input
+      script/configs/devnet/: eigenlayer_deployment_input
       # Multiple artifacts can be specified and all artifact files will be stored
       # in the directory
       some/other/dir/: 
@@ -212,7 +212,7 @@ keystores:
 # Lists artifacts to be generated at startup
 artifacts:
   # Artifact name
-  eigenlayer-deployment-input:
+  eigenlayer_deployment_input:
     # Data from other artifacts to use in the generation
     additional_data:
       # Artifact name to fetch data from
@@ -220,7 +220,7 @@ artifacts:
         # Key: name of the variable to populate
         # Value: JSONPath to the data
         # NOTE: this assumes that the data inside the artifact is a single JSON file
-        SomeVariable: ".field1.foo[0]"
+        some_variable: ".field1.foo[0]"
 
     # List of files to store inside the artifact
     files:
@@ -228,10 +228,12 @@ artifacts:
       # Value: a string to be the file's contents.
       # The string is assumed to be a Go template
       # (see https://pkg.go.dev/text/template for more information).
+      # There are also some dynamically populated fields like 'deployer_address'
       someconfig.config.json: |
         {
           "a": 5,
-          "someVariable": {{.SomeVariable}}
+          "someVariable": {{.some_variable}},
+          "deployerAddress": {{.deployer_address}}
         }
 
 # Args to pass on to ethereum-package.

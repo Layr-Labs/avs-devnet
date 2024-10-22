@@ -30,32 +30,31 @@ def run(plan, args={}):
         )
     )
 
-    # Default to an empty dict
-    args["artifacts"] = args.get("artifacts", {})
+    artifacts = args.get("artifacts", {})
+    keystores = args.get("keystores", [])
+    deployments = args.get("deployments", [])
+    service_specs = args.get("services", [])
+
     data = {
-        "HttpRpcUrl": http_rpc_url,
-        "WsUrl": ws_url,
-        "DeployerPrivateKey": "0x" + private_key,
-        "DeployerAddress": deployer_address,
+        "http_rpc_url": http_rpc_url,
+        "ws_rpc_url": ws_url,
+        "deployer_private_key": "0x" + private_key,
+        "deployer_address": deployer_address,
+        "services": {},
+        "keystores": {},
     }
 
     context = struct(
-        artifacts=args["artifacts"],
+        artifacts=artifacts,
         services={},
         ethereum=ethereum_output,
         data=data,
-        passwords={},
     )
 
-    keystores = args.get("keystores", [])
     keystore.generate_all_keystores(plan, context, keystores)
-
-    deployments = args.get("deployments", [])
 
     for deployment in deployments:
         contract_deployer.deploy(plan, context, deployment)
-
-    service_specs = args.get("services", [])
 
     for service in service_specs:
         service_utils.add_service(plan, service, context)

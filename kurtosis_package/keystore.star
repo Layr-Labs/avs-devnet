@@ -3,6 +3,7 @@ shared_utils = import_module("./shared_utils.star")
 def generate_all_keystores(plan, context, keystores):
     if len(keystores) == 0:
         return
+    keystore_data = context.data.get("keystores", {})
 
     generator_service = plan.add_service(
         "egnkey-service",
@@ -20,13 +21,12 @@ def generate_all_keystores(plan, context, keystores):
     for keystore in keystores:
         name = keystore["name"]
         key_type = keystore["type"]
-        _, password = generate_keystore(plan, generator_service.name, key_type, name)
+        info = generate_keystore(plan, generator_service.name, key_type, name)
 
         if key_type == "ecdsa":
-            address = shared_utils.read_json_artifact(plan, name, ".address")
-            shared_utils.send_funds(plan, context, address)
+            shared_utils.send_funds(plan, context, info["address"])
 
-        context.passwords[name] = password
+        keystore_data[name] = info
 
     plan.remove_service(generator_service.name)
 
@@ -46,10 +46,20 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
     )
     password = result["output"]
 
-    file_artifact = plan.store_service_files(
+    _file_artifact = plan.store_service_files(
         service_name=egnkey_service_name,
         src=output_dir + "/1." + key_type + ".key.json",
         name=artifact_name,
         description="Storing " + key_type + " key",
     )
-    return file_artifact, password
+    keystore_info = {
+        "name": artifact_name,
+        "type": key_type,
+        "password": password,
+    }
+
+    if key_type == "ecdsa":
+        address = shared_utils.read_json_artifact(plan, artifact_name, ".address")
+        keystore_info["address"] = address
+
+    return keystore_info
