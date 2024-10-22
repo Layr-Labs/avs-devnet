@@ -26,7 +26,8 @@ def add_service(plan, service_args, context):
         config=config,
     )
     context.services[name] = service
-    context.data["services"][name] = service
+    # TODO: we could expose more service data here
+    context.data["services"][name] = {"ip_address": service.ip_address}
 
 
 def generate_port_specs(ports):
