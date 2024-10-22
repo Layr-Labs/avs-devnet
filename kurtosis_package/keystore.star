@@ -1,5 +1,6 @@
 shared_utils = import_module("./shared_utils.star")
 
+
 def generate_all_keystores(plan, context, keystores):
     if len(keystores) == 0:
         return

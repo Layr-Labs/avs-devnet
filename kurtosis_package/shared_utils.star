@@ -60,6 +60,7 @@ def read_json_artifact(plan, artifact_name, json_field):
     )
     return result.output
 
+
 def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
