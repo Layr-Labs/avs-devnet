@@ -2,7 +2,7 @@
 deployments:
   - name: EigenLayer
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose"
+    ref: "docker-compose-test-concurrency"
     contracts_path: "contracts"
     script: script/deploy/EigenLayerDeployer.s.sol
     extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
@@ -13,7 +13,7 @@ deployments:
 
   - name: Aligned
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose"
+    ref: "docker-compose-test-concurrency"
     contracts_path: "contracts"
     script: script/deploy/AlignedLayerDeployer.s.sol
     extra_args: >-
@@ -29,7 +29,7 @@ deployments:
 
   - name: Batcher Payment Service
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose"
+    ref: "docker-compose-test-concurrency"
     contracts_path: "contracts"
     script: script/deploy/BatcherPaymentServiceDeployer.s.sol
     extra_args: >-
@@ -62,12 +62,33 @@ services:
     cmd:
       - "aligned-layer-aggregator"
       - "--config"
-      - "config-files/config-aggregator.yaml"
+      - "./config-files/config-aggregator.yaml"
+
+  - name: "operator1"
+    # NOTE: this image is build locally
+    image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
+    cmd:
+      - "aligned-layer-operator"
+      - "start"
+      - "--config"
+      - "./config-files/config-docker.yaml"
 
 keystores:
   - name: "aggregator_bls_keystore"
     type: "bls"
   - name: "aggregator_ecdsa_keystore"
+    type: "ecdsa"
+  - name: "operator1_bls_keystore"
+    type: "bls"
+  - name: "operator1_ecdsa_keystore"
     type: "ecdsa"
 
 artifacts:
@@ -229,6 +250,56 @@ artifacts:
           garbage_collector_period: 2m #The period of the GC process. Suggested value for Prod: '168h' (7 days)
           garbage_collector_tasks_age: 20 #The age of tasks that will be removed by the GC, in blocks. Suggested value for prod: '216000' (30 days)
           garbage_collector_tasks_interval: 10 #The interval of queried blocks to get an old batch. Suggested value for prod: '900' (3 hours)
+
+  operator_config:
+    additional_data:
+      eigenlayer_addresses:
+        el_delegation_manager_address: ".addresses.delegationManager"
+      avs_addresses:
+        AlignedLayerServiceManager: ".addresses.alignedLayerServiceManager"
+    files:
+      config-docker.yaml: |
+        # Common variables for all the services
+        # 'production' only prints info and above. 'development' also prints debug
+        environment: "production"
+        aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
+        eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
+        eth_rpc_url: "{{.http_rpc_url}}"
+        eth_rpc_url_fallback: "{{.http_rpc_url}}"
+        eth_ws_url: "{{.ws_rpc_url}}"
+        eth_ws_url_fallback: "{{.ws_rpc_url}}"
+        eigen_metrics_ip_port_address: "localhost:9090"
+
+        ## ECDSA Configurations
+        ecdsa:
+          private_key_store_path: "keystores/1.ecdsa.key.json"
+          private_key_store_password: "{{.keystores.operator1_ecdsa_keystore.password}}"
+
+        ## BLS Configurations
+        bls:
+          private_key_store_path: "keystores/1.bls.key.json"
+          private_key_store_password: "{{.keystores.operator1_bls_keystore.password}}"
+
+        ## Operator Configurations
+        operator:
+          aggregator_rpc_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
+          operator_tracker_ip_port_address: http://localhost:3030
+          address: {{.keystores.operator1_ecdsa_keystore.address}}
+          earnings_receiver_address: {{.keystores.operator1_ecdsa_keystore.address}}
+          delegation_approver_address: "0x0000000000000000000000000000000000000000"
+          staker_opt_out_window_blocks: 0
+          metadata_url: "https://yetanotherco.github.io/operator_metadata/metadata.json"
+          enable_metrics: true
+          metrics_ip_port_address: localhost:9092
+          max_batch_size: 268435456 # 256 MiB
+          last_processed_batch_filepath: config-files/operator.last_processed_batch.json
+
+        # Operators variables needed for register it in EigenLayer
+        el_delegation_manager_address: "{{.el_delegation_manager_address}}"
+        private_key_store_path: keystores/1.ecdsa.key.json
+        bls_private_key_store_path: keystores/1.bls.key.json
+        signer_type: local_keystore
+        chain_id: 3151908
 
 ethereum_package:
   participants:
