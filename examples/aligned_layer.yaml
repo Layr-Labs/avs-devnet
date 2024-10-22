@@ -38,8 +38,17 @@ deployments:
     input:
       script/deploy/config/devnet/: batcher_config
 
+keystores:
+  - name: "aggregator_bls_keystore"
+    type: "bls"
+  - name: "aggregator_ecdsa_keystore"
+    type: "ecdsa"
+
 artifacts:
   deployment_config:
+    additional_data:
+      aggregator_ecdsa_keystore:
+        AggregatorAddress: ".address"
     files:
       eigen.devnet.config.json: |
         {
@@ -107,7 +116,7 @@ artifacts:
           },
           "permissions": {
             "owner": "{{.DeployerAddress}}",
-            "aggregator": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+            "aggregator": "{{.AggregatorAddress}}",
             "upgrader": "{{.DeployerAddress}}",
             "churner": "{{.DeployerAddress}}",
             "ejector": "{{.DeployerAddress}}",
