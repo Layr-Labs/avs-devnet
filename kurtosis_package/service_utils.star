@@ -12,7 +12,7 @@ def add_service(plan, service_args, context):
         shared_utils.send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
-    env_vars = generate_env_vars(plan, context, service_args.get("env", {}))
+    env_vars = generate_env_vars(context, service_args.get("env", {}))
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
@@ -26,7 +26,6 @@ def add_service(plan, service_args, context):
         config=config,
     )
     context.services[name] = service
-    # TODO: expose more service information
     context.data["services"][name] = service
 
 
@@ -50,14 +49,14 @@ def new_port_spec(port_spec_args):
     )
 
 
-def generate_env_vars(plan, context, env_vars):
+def generate_env_vars(context, env_vars):
     return {
-        env_var_name: expand(plan, context, env_var_value)
+        env_var_name: expand(context, env_var_value)
         for env_var_name, env_var_value in env_vars.items()
     }
 
 
-def expand(plan, context, value):
+def expand(context, value):
     """
     Replaces values starting with `$` to their dynamically evaluated counterpart.
     Values starting with `$$` are not expanded, and the leading `$` is removed.
@@ -78,6 +77,6 @@ def expand(plan, context, value):
             break
 
     if value == None or type(value) == type({}):
-        plan.fail("Invalid path: " + value)
+        fail("Invalid path: " + value)
 
     return value
