@@ -61,6 +61,7 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
 
     if key_type == "ecdsa":
         address = shared_utils.read_json_artifact(plan, artifact_name, ".address")
-        keystore_info["address"] = address
+        # Prepend the address with "0x" manually
+        keystore_info["address"] = "0x" + address
 
     return keystore_info
