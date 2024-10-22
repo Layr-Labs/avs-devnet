@@ -193,12 +193,12 @@ services:
       key: value
     # Used to specify environment variables to pass to the image
     env:
-      # Key: variable name
-      # Value: variable's value
+      # Key: env variable name
+      # Value: env variable's value
       key: value
-      # These special values can be used to retrieve the password of a generated keystore
-      # Syntax is $<keystore_name>.password
-      ECDSA_KEY_PASSWORD: $ecdsa_keystore.password
+      # Values starting with `$` can be used to retrieve context information
+      # This example expands to the `ecdsa_keystore` keystore's password
+      ECDSA_KEY_PASSWORD: $keystores.ecdsa_keystore.password
     # Command to use when running the docker image
     cmd: ["some", "option", "here"]
 

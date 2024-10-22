@@ -53,8 +53,8 @@ services:
         - operator1_bls_keystore
         - operator1_ecdsa_keystore
     env:
-      OPERATOR_ECDSA_KEY_PASSWORD: $operator1_ecdsa_keystore.password
-      OPERATOR_BLS_KEY_PASSWORD: $operator1_bls_keystore.password
+      OPERATOR_ECDSA_KEY_PASSWORD: $keystores.operator1_ecdsa_keystore.password
+      OPERATOR_BLS_KEY_PASSWORD: $keystores.operator1_bls_keystore.password
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 keystores:

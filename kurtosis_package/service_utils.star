@@ -12,7 +12,7 @@ def add_service(plan, service_args, context):
         shared_utils.send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
-    env_vars = generate_env_vars(context, service_args.get("env", {}))
+    env_vars = generate_env_vars(plan, context, service_args.get("env", {}))
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
@@ -50,22 +50,34 @@ def new_port_spec(port_spec_args):
     )
 
 
-def generate_env_vars(context, env_vars):
+def generate_env_vars(plan, context, env_vars):
     return {
-        env_var_name: expand(context, env_var_value)
+        env_var_name: expand(plan, context, env_var_value)
         for env_var_name, env_var_value in env_vars.items()
     }
 
 
-def expand(context, value):
+def expand(plan, context, value):
+    """
+    Replaces values starting with `$` to their dynamically evaluated counterpart.
+    Values starting with `$$` are not expanded, and the leading `$` is removed.
+
+    Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
+    """
     if not value.startswith("$"):
         return value
 
-    # $RPC_URL expands to the RPC URL of the first Ethereum node
-    # TODO: store this in some other place
-    if value.startswith("$RPC_URL"):
-        return context.ethereum.all_participants[0].el_context.rpc_http_url
+    if value.startswith("$$"):
+        return value[1:]
 
-    # $name.password expands to the password of the keystore named `name`
-    artifact = value[1:].rstrip(".password")
-    return context.passwords[artifact]
+    path = value[1:].split(".")
+    value = context.data
+    for field in path:
+        value = value.get(field, None)
+        if value == None:
+            break
+
+    if value == None or type(value) == type({}):
+        plan.fail("Invalid path: " + value)
+
+    return value
