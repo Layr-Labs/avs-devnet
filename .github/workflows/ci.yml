@@ -38,6 +38,7 @@ jobs:
   run_examples:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         example:
           - devnet

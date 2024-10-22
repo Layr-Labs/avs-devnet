@@ -1,4 +1,4 @@
-shared_utils = import_module("shared_utils.star")
+shared_utils = import_module("./shared_utils.star")
 
 
 def add_service(plan, service_args, context):
@@ -9,7 +9,7 @@ def add_service(plan, service_args, context):
     address = service_args.get("address", None)
 
     if address != None:
-        send_funds(plan, context, address)
+        shared_utils.send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
     env_vars = generate_env_vars(context, service_args.get("env", {}))
@@ -26,7 +26,8 @@ def add_service(plan, service_args, context):
         config=config,
     )
     context.services[name] = service
-    context.data["Service_" + name] = service.ip_address
+    # TODO: we could expose more service data here
+    context.data["services"][name] = {"ip_address": service.ip_address}
 
 
 def generate_port_specs(ports):
@@ -56,32 +57,27 @@ def generate_env_vars(context, env_vars):
     }
 
 
-def expand(context, value):
-    if not value.startswith("$"):
-        return value
+def expand(context, var):
+    """
+    Replaces values starting with `$` to their dynamically evaluated counterpart.
+    Values starting with `$$` are not expanded, and the leading `$` is removed.
 
-    # $RPC_URL expands to the RPC URL of the first Ethereum node
-    # TODO: store this in some other place
-    if value.startswith("$RPC_URL"):
-        return context.ethereum.all_participants[0].el_context.rpc_http_url
+    Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
+    """
+    if not var.startswith("$"):
+        return var
 
-    # $name.password expands to the password of the keystore named `name`
-    artifact = value[1:].rstrip(".password")
-    return context.passwords[artifact]
+    if var.startswith("$$"):
+        return var[1:]
 
+    path = var[1:].split(".")
+    value = context.data
+    for field in path:
+        value = value.get(field, None)
+        if value == None:
+            break
 
-def send_funds(plan, context, to, amount="10ether"):
-    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
-    funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-    plan.run_sh(
-        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-        run="cast send --value "
-        + amount
-        + " --private-key "
-        + funded_private_key
-        + " --rpc-url "
-        + http_rpc_url
-        + " "
-        + to,
-        description="Depositing funds to account",
-    )
+    if value == None or type(value) == type({}):
+        fail("Invalid path: " + var)
+
+    return value

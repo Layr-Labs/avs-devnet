@@ -23,9 +23,9 @@ artifacts:
         {
           "maintainer": "example@example.org",
           "multisig_addresses": {
-            "operationsMultisig": "{{.DeployerAddress}}",
-            "pauserMultisig": "{{.DeployerAddress}}",
-            "executorMultisig": "{{.DeployerAddress}}"
+            "operationsMultisig": "{{.deployer_address}}",
+            "pauserMultisig": "{{.deployer_address}}",
+            "executorMultisig": "{{.deployer_address}}"
           },
           "strategies": [],
           "strategyManager": {
@@ -57,7 +57,7 @@ artifacts:
             "MAX_RETROACTIVE_LENGTH": 7776000,
             "MAX_FUTURE_LENGTH": 2592000,
             "GENESIS_REWARDS_TIMESTAMP": 1710979200,
-            "rewards_updater_address": "{{.DeployerAddress}}",
+            "rewards_updater_address": "{{.deployer_address}}",
             "activation_delay": 7200,
             "calculation_interval_seconds": 604800,
             "global_operator_commission_bips": 1000

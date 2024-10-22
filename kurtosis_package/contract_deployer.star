@@ -1,4 +1,4 @@
-shared_utils = import_module("shared_utils.star")
+shared_utils = import_module("./shared_utils.star")
 
 
 def deploy(plan, context, deployment):
