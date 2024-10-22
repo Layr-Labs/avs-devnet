@@ -40,9 +40,11 @@ def run(plan, args={}):
         "ws_rpc_url": ws_url,
         "deployer_private_key": "0x" + private_key,
         "deployer_address": deployer_address,
-        "services": {},
-        "keystores": {},
     }
+    plan.print("Initial data: " + json.indent(json.encode(data)))
+
+    # Append fields that will be populated later
+    data.update({"services": {}, "keystores": {}})
 
     context = struct(
         artifacts=artifacts,
