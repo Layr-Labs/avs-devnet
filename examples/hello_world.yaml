@@ -4,13 +4,13 @@
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    ref: "910cb540bcbed3c90df0659a4a20823eb13c551e"
     contracts_path: "contracts"
     script: script/DeployEigenLayerCore.s.sol
     env:
-      # TODO: use magic variable for this
-      # This is the private key for the account that will deploy the contracts
+      # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "$deployer_private_key"
+      # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
@@ -19,11 +19,13 @@ deployments:
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    ref: "910cb540bcbed3c90df0659a4a20823eb13c551e"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:
+      # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "$deployer_private_key"
+      # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""

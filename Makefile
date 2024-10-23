@@ -21,13 +21,15 @@ start_incredible_squaring:
 
 # hello-world-avs example
 
+HELLO_WORLD_REF:=ed1b7e80c465f858c7fc5478f7979ddcb23c0c40
+
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
 	@mkdir -p examples/hello-world-avs
 	@cd examples/hello-world-avs && \
 		git init . && \
 		git remote add origin https://github.com/Layr-Labs/hello-world-avs.git && \
-		git fetch --depth 1 origin bbd6ea74d7ee419c77b3a1983ff5f1685aac5231 && \
+		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
 
