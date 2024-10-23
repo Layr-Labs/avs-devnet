@@ -64,22 +64,87 @@ services:
       - "--config"
       - "./config-files/config-aggregator.yaml"
 
-  - name: "operator1"
-    # NOTE: this image is build locally
-    image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
+  # One-shot services to perform tasks
+  - name: "operator1-register-operator-eigenlayer"
+    image: ghcr.io/yetanotherco/aligned_layer/eigenlayer-cli:latest
+    input:
+      /go/config-files/: operator_config
+      /go/keystores/: operator1_ecdsa_keystore
+    env:
+      PASSWORD: "$keystores.operator1_ecdsa_keystore.password"
+    cmd:
+      - "sh"
+      - "-c"
+      - 'echo "$PASSWORD" | eigenlayer operator register ./config-files/config-docker.yaml'
+
+  - name: "operator1-mint-mock-tokens"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    input:
+      /config-files/: operator_config
+      /addresses/: eigenlayer_addresses
+      /keystores/: operator1_ecdsa_keystore
+    env:
+      DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
+      RPC_URL: "$http_rpc_url"
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        cast send
+        $(cast call --rpc-url $RPC_URL $(awk '/\"MOCK\": \"(.*)\"/{ print $2 }' addresses/eigenlayer_deployment_output.json) 'underlyingToken()(address)')
+        'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
+        --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL --gas-price $(cast gas-price --rpc-url $RPC_URL)
+
+  - name: "operator1-deposit-into-mock-strategy"
+    image: ghcr.io/yetanotherco/aligned_layer/operator:latest
     input:
       /aligned_layer/config-files/: operator_config
-      /aligned_layer/contracts/script/output/devnet/:
-        - eigenlayer_addresses
-        - avs_addresses
-      /aligned_layer/keystores/:
-        - operator1_bls_keystore
-        - operator1_ecdsa_keystore
+      /aligned_layer/addresses/: eigenlayer_addresses
+      /aligned_layer/keystores/: operator1_ecdsa_keystore
+    env:
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
     cmd:
-      - "aligned-layer-operator"
-      - "start"
-      - "--config"
-      - "./config-files/config-docker.yaml"
+      - "sh"
+      - "-c"
+      - >-
+        aligned-layer-operator deposit-into-strategy --config ./config-files/config-docker.yaml
+        --strategy-address $(awk ''/"MOCK": "(.*)"/{ print $2 }'' addresses/eigenlayer_deployment_output.json) --amount 100000000000000000
+
+  - name: "operator1-whitelist-devnet"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    input:
+      /config-files/: operator_config
+      /addresses/: eigenlayer_addresses
+      /keystores/: operator1_ecdsa_keystore
+    env:
+      DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
+      RPC_URL: "$http_rpc_url"
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        cast send --private-key $DEPLOYER_PRIVATE_KEY
+        $(awk ''/"registryCoordinator": "(.*)"/{ print $2 }'' addresses/eigenlayer_deployment_output.json)
+        'add(address)' $OPERATOR_ADDRESS --rpc-url $RPC_URL --gas-price $(cast gas-price --rpc-url $RPC_URL)
+
+  # - name: "operator1"
+  #   # NOTE: this image is build locally
+  #   image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
+  #   input:
+  #     /aligned_layer/config-files/: operator_config
+  #     /aligned_layer/contracts/script/output/devnet/:
+  #       - eigenlayer_addresses
+  #       - avs_addresses
+  #     /aligned_layer/keystores/:
+  #       - operator1_bls_keystore
+  #       - operator1_ecdsa_keystore
+  #   cmd:
+  #     - "aligned-layer-operator"
+  #     - "start"
+  #     - "--config"
+  #     - "./config-files/config-docker.yaml"
 
 keystores:
   - name: "aggregator_bls_keystore"
@@ -100,7 +165,7 @@ artifacts:
       eigen.devnet.config.json: |
         {
           "chainInfo": {
-            "chainId": 3151908
+            "chainId": 31337
           },
           "multisig_addresses": {
             "pauserMultisig": "{{.deployer_address}}",
@@ -159,7 +224,7 @@ artifacts:
       aligned.devnet.config.json: |
         {
           "chainInfo": {
-            "chainId": 3151908
+            "chainId": 31337
           },
           "permissions": {
             "owner": "{{.deployer_address}}",
@@ -299,7 +364,7 @@ artifacts:
         private_key_store_path: keystores/1.ecdsa.key.json
         bls_private_key_store_path: keystores/1.bls.key.json
         signer_type: local_keystore
-        chain_id: 3151908
+        chain_id: 31337
 
 ethereum_package:
   participants:
@@ -308,3 +373,6 @@ ethereum_package:
   additional_services:
     - blockscout
     - dora
+  network_params:
+    # We use anvil's chain ID because 3151908 is not supported by eigenlayer-cli
+    network_id: "31337"
