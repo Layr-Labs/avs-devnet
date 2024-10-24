@@ -92,8 +92,8 @@ HELLO_WORLD_REF:=9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
-	@mkdir -p examples/hello-world-avs
-	@cd examples/hello-world-avs && \
+	@mkdir -p $<
+	@cd $< && \
 		git init . && \
 		git remote add origin https://github.com/Layr-Labs/hello-world-avs.git && \
 		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \
@@ -110,6 +110,23 @@ kurtosis_hello_world: build_hello_world_image ## 🚀 Start the devnet with the 
 
 # Aligned Layer example
 
-start_aligned_layer:
+ALIGNED_REF:=75297ce11815a0272d4c9641e545cc60703e7306
+
+examples/aligned_layer:
+	@echo "Cloning aligned_layer repo..."
+	@mkdir -p $@
+	@cd $@ && \
+		git init . && \
+		git remote add origin https://github.com/yetanotherco/aligned_layer.git && \
+		git fetch --depth 1 origin $(ALIGNED_REF) && \
+		git checkout FETCH_HEAD && \
+		git submodule update --init --recursive --depth 1
+
+build_aligned_layer_image: examples/aligned_layer
+	@echo "Building aligned_layer docker image..."
+	# This might fail
+	cd $< && make docker_build
+
+kurtosis_aligned_layer: build_aligned_layer_image
 	@echo "Starting devnet with Aligned Layer example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/aligned_layer.yaml
