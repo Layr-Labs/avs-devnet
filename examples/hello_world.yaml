@@ -10,7 +10,7 @@ deployments:
     env:
       # TODO: use magic variable for this
       # This is the private key for the account that will deploy the contracts
-      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      PRIVATE_KEY: "$deployer_private_key"
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
@@ -23,7 +23,7 @@ deployments:
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:
-      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      PRIVATE_KEY: "$deployer_private_key"
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
@@ -42,7 +42,7 @@ services:
     env:
       # This expands to the RPC node's URL
       RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      PRIVATE_KEY: "$deployer_private_key"
     cmd: ["npm", "run", "start:operator"]
 
   - name: "traffic-generator"
@@ -54,7 +54,7 @@ services:
     env:
       # This expands to the RPC node's URL
       RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31"
+      PRIVATE_KEY: "$deployer_private_key"
     cmd: ["npm", "run", "start:traffic"]
 
 ethereum_package:
