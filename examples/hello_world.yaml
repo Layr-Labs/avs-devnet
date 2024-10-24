@@ -1,6 +1,4 @@
 # Example devnet config file for the hello-world-avs example
-# TODO: the operator and task spammer show a lot of errors. Fix this.
-# It seems to happen even if we run them manually but pointing to a Kurtosis devnet RPC.
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
