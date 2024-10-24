@@ -45,7 +45,8 @@ jobs:
           - kurtosis_start
           - kurtosis_incredible_squaring
           - kurtosis_hello_world
-          - kurtosis_aligned_layer
+          # TODO: uncomment once images can be downloaded
+          # - kurtosis_aligned_layer
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
