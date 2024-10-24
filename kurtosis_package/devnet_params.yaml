@@ -1,69 +1,88 @@
 deployments:
-  - name: "EigenLayer"
-    repo: "https://github.com/Layr-Labs/eigenlayer-contracts.git"
-    ref: "v0.4.2-mainnet-pepe"
-    script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
-    extra_args: "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json"
-    # Uses the `eigenlayer_deployment_input` artifact as input, stored in `script/configs/devnet/`
-    input:
-      script/configs/devnet/: eigenlayer_deployment_input
-    # Produces a single file `script/output/devnet/M2_from_scratch_deployment_data.json`
-    # renamed to `eigenlayer_deployment_output.json` and stored as the `eigenlayer_addresses` artifact
-    output:
-      eigenlayer_addresses:
-        path: script/output/devnet/M2_from_scratch_deployment_data.json
-        rename: eigenlayer_deployment_output.json
+  - type: EigenLayer
+    ref: v0.4.2-mainnet-pepe
+    # This creates a single strategy named strategy1, which uses a mock-token
+    # strategies: [strategy1]
+    # operators:
+    #   # TODO: rename `$keystores` to `$keys`
+    #   # TODO: autogenerate keystore from operator name
+    #   - address: $keystores.operator1_ecdsa_keystore.address
+    #     private_key: $keystores.operator1_ecdsa_keystore.private_key
+    #     strategies:
+    #       # strategy_name: number_of_shares
+    #       strategy1: 100000000000000000
 
-artifacts:
-  # Initially produces a single file `deploy_from_scratch.config.json`
-  # and stores it as the artifact `eigenlayer_deployment_input`
-  eigenlayer_deployment_input:
-    files:
-      deploy_from_scratch.config.json: |
-        {
-          "maintainer": "example@example.org",
-          "multisig_addresses": {
-            "operationsMultisig": "{{.deployer_address}}",
-            "pauserMultisig": "{{.deployer_address}}",
-            "executorMultisig": "{{.deployer_address}}"
-          },
-          "strategies": [],
-          "strategyManager": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "eigenPod": {
-            "PARTIAL_WITHDRAWAL_FRAUD_PROOF_PERIOD_BLOCKS": 1,
-            "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": "32000000000"
-          },
-          "eigenPodManager": {
-            "init_paused_status": 30
-          },
-          "delayedWithdrawalRouter": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "slasher": {
-            "init_paused_status": 0
-          },
-          "delegation": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "rewardsCoordinator": {
-            "init_paused_status": 0,
-            "CALCULATION_INTERVAL_SECONDS": 604800,
-            "MAX_REWARDS_DURATION": 6048000,
-            "MAX_RETROACTIVE_LENGTH": 7776000,
-            "MAX_FUTURE_LENGTH": 2592000,
-            "GENESIS_REWARDS_TIMESTAMP": 1710979200,
-            "rewards_updater_address": "{{.deployer_address}}",
-            "activation_delay": 7200,
-            "calculation_interval_seconds": 604800,
-            "global_operator_commission_bips": 1000
-          },
-          "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
-        }
+  # - name: "EigenLayer"
+  #   repo: "https://github.com/Layr-Labs/eigenlayer-contracts.git"
+  #   ref: "v0.4.2-mainnet-pepe"
+  #   script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
+  #   extra_args: "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json"
+  #   # Uses the `eigenlayer_deployment_input` artifact as input, stored in `script/configs/devnet/`
+  #   input:
+  #     script/configs/devnet/: eigenlayer_deployment_input
+  #   # Produces a single file `script/output/devnet/M2_from_scratch_deployment_data.json`
+  #   # renamed to `eigenlayer_deployment_output.json` and stored as the `eigenlayer_addresses` artifact
+  #   output:
+  #     eigenlayer_addresses:
+  #       path: script/output/devnet/M2_from_scratch_deployment_data.json
+  #       rename: eigenlayer_deployment_output.json
+
+# keystores:
+#   - name: operator1_bls_keystore
+#     type: bls
+#   - name: operator1_ecdsa_keystore
+#     type: ecdsa
+
+# artifacts:
+#   # Initially produces a single file `deploy_from_scratch.config.json`
+#   # and stores it as the artifact `eigenlayer_deployment_input`
+#   eigenlayer_deployment_input:
+#     files:
+#       deploy_from_scratch.config.json: |
+#         {
+#           "maintainer": "example@example.org",
+#           "multisig_addresses": {
+#             "operationsMultisig": "{{.deployer_address}}",
+#             "pauserMultisig": "{{.deployer_address}}",
+#             "executorMultisig": "{{.deployer_address}}"
+#           },
+#           "strategies": [],
+#           "strategyManager": {
+#             "init_paused_status": 0,
+#             "init_withdrawal_delay_blocks": 1
+#           },
+#           "eigenPod": {
+#             "PARTIAL_WITHDRAWAL_FRAUD_PROOF_PERIOD_BLOCKS": 1,
+#             "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": "32000000000"
+#           },
+#           "eigenPodManager": {
+#             "init_paused_status": 30
+#           },
+#           "delayedWithdrawalRouter": {
+#             "init_paused_status": 0,
+#             "init_withdrawal_delay_blocks": 1
+#           },
+#           "slasher": {
+#             "init_paused_status": 0
+#           },
+#           "delegation": {
+#             "init_paused_status": 0,
+#             "init_withdrawal_delay_blocks": 1
+#           },
+#           "rewardsCoordinator": {
+#             "init_paused_status": 0,
+#             "CALCULATION_INTERVAL_SECONDS": 604800,
+#             "MAX_REWARDS_DURATION": 6048000,
+#             "MAX_RETROACTIVE_LENGTH": 7776000,
+#             "MAX_FUTURE_LENGTH": 2592000,
+#             "GENESIS_REWARDS_TIMESTAMP": 1710979200,
+#             "rewards_updater_address": "{{.deployer_address}}",
+#             "activation_delay": 7200,
+#             "calculation_interval_seconds": 604800,
+#             "global_operator_commission_bips": 1000
+#           },
+#           "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
+#         }
 
 ethereum_package:
   participants:
