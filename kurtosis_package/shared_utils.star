@@ -77,11 +77,13 @@ def send_funds(plan, context, to, amount="10ether"):
         description="Depositing funds to account",
     )
 
+
 def generate_env_vars(context, env_vars):
     return {
         env_var_name: expand(context, env_var_value)
         for env_var_name, env_var_value in env_vars.items()
     }
+
 
 def expand(context, var):
     """
