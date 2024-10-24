@@ -7,7 +7,7 @@ deployments:
     script: script/deploy/EigenLayerDeployer.s.sol
     extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
     input:
-      script/deploy/config/devnet/: deployment_config
+      script/deploy/config/devnet/: eigenlayer_deployment_config
     output:
       eigenlayer_addresses: "script/output/devnet/eigenlayer_deployment_output.json"
 
@@ -22,7 +22,7 @@ deployments:
       ./script/deploy/config/devnet/aligned.devnet.config.json
       ./script/output/devnet/alignedlayer_deployment_output.json
     input:
-      script/deploy/config/devnet/: deployment_config
+      script/deploy/config/devnet/: aligned_deployment_config
       script/output/devnet/: eigenlayer_addresses
     output:
       avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
@@ -40,7 +40,6 @@ deployments:
 
 services:
   - name: "aggregator"
-    # NOTE: this image is build locally
     image: "ghcr.io/yetanotherco/aligned_layer/aggregator:latest"
     ports:
       rpc:
@@ -91,31 +90,39 @@ services:
       - "sh"
       - "-c"
       - >-
-        cast send
-        $(cast call --rpc-url $RPC_URL $(awk '/\"MOCK\": \"(.*)\"/{ print $2 }' addresses/eigenlayer_deployment_output.json) 'underlyingToken()(address)')
-        'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
-        --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL --gas-price $(cast gas-price --rpc-url $RPC_URL)
+        STRATEGY_ADDR=$(awk '/"MOCK": "(.*)"/{ print $2 }' addresses/eigenlayer_deployment_output.json | tr -d '"\n,') &&
+        sleep 12 &&
+        TOKEN_ADDR=$(cast call --rpc-url $RPC_URL $STRATEGY_ADDR 'underlyingToken()(address)') &&
+        cast send $TOKEN_ADDR 'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
+        --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL
 
   - name: "operator1-deposit-into-mock-strategy"
     image: ghcr.io/yetanotherco/aligned_layer/operator:latest
     input:
       /aligned_layer/config-files/: operator_config
-      /aligned_layer/addresses/: eigenlayer_addresses
-      /aligned_layer/keystores/: operator1_ecdsa_keystore
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
     env:
       OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
     cmd:
       - "sh"
       - "-c"
       - >-
+        EL_ADDRESSES_FILE=contracts/script/output/devnet/eigenlayer_deployment_output.json &&
+        STRATEGY_ADDR=$(awk '/"MOCK": "(.*)"/{ print $2 }' $EL_ADDRESSES_FILE | tr -d '"\n,') &&
+        sleep 24 &&
         aligned-layer-operator deposit-into-strategy --config ./config-files/config-docker.yaml
-        --strategy-address $(awk ''/"MOCK": "(.*)"/{ print $2 }'' addresses/eigenlayer_deployment_output.json) --amount 100000000000000000
+        --strategy-address $STRATEGY_ADDR --amount 100000000000000000
 
   - name: "operator1-whitelist-devnet"
     image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
     input:
       /config-files/: operator_config
-      /addresses/: eigenlayer_addresses
+      /addresses/: avs_addresses
       /keystores/: operator1_ecdsa_keystore
     env:
       DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
@@ -125,26 +132,40 @@ services:
       - "sh"
       - "-c"
       - >-
-        cast send --private-key $DEPLOYER_PRIVATE_KEY
-        $(awk ''/"registryCoordinator": "(.*)"/{ print $2 }'' addresses/eigenlayer_deployment_output.json)
-        'add(address)' $OPERATOR_ADDRESS --rpc-url $RPC_URL --gas-price $(cast gas-price --rpc-url $RPC_URL)
+        REGISTRY_ADDR=$(awk '/"registryCoordinator": "(.*)"/{ print $2 }' addresses/alignedlayer_deployment_output.json | tr -d '"\n,') &&
+        echo "Registry address: $REGISTRY_ADDR" &&
+        sleep 36 &&
+        cast send  $REGISTRY_ADDR 'add(address)' $OPERATOR_ADDRESS --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY
 
-  # - name: "operator1"
-  #   # NOTE: this image is build locally
-  #   image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
-  #   input:
-  #     /aligned_layer/config-files/: operator_config
-  #     /aligned_layer/contracts/script/output/devnet/:
-  #       - eigenlayer_addresses
-  #       - avs_addresses
-  #     /aligned_layer/keystores/:
-  #       - operator1_bls_keystore
-  #       - operator1_ecdsa_keystore
-  #   cmd:
-  #     - "aligned-layer-operator"
-  #     - "start"
-  #     - "--config"
-  #     - "./config-files/config-docker.yaml"
+  - name: operator-register-with-aligned-layer
+    image: ghcr.io/yetanotherco/aligned_layer/operator:latest
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
+    cmd:
+      - "sh"
+      - "-c"
+      - "sleep 48 && aligned-layer-operator register --config ./config-files/config-docker.yaml"
+
+  - name: "operator1"
+    image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls_keystore
+        - operator1_ecdsa_keystore
+    cmd:
+      - "sh"
+      - "-c"
+      - "sleep 60 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
 
 keystores:
   - name: "aggregator_bls_keystore"
@@ -157,10 +178,7 @@ keystores:
     type: "ecdsa"
 
 artifacts:
-  deployment_config:
-    additional_data:
-      aggregator_ecdsa_keystore:
-        AggregatorAddress: ".address"
+  eigenlayer_deployment_config:
     files:
       eigen.devnet.config.json: |
         {
@@ -221,6 +239,13 @@ artifacts:
           "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
           "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
         }
+  aligned_deployment_config:
+    additional_data:
+      aggregator_ecdsa_keystore:
+        AggregatorAddress: ".address"
+      eigenlayer_addresses:
+        mock_strategy_address: ".addresses.strategies.MOCK"
+    files:
       aligned.devnet.config.json: |
         {
           "chainInfo": {
@@ -241,7 +266,7 @@ artifacts:
           "strategyWeights": [
             [
               {
-                "0_strategy": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
+                "0_strategy": "{{.mock_strategy_address}}",
                 "1_multiplier": 1e+18
               }
             ]
