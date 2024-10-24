@@ -7,8 +7,10 @@ keystore = import_module("./keystore.star")
 
 
 def run(plan, args={}):
-    # Run the Ethereum package first
     ethereum_args = args.get("ethereum_package", {})
+    args = parse_args(plan, args)
+
+    # Run the Ethereum package first
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
     el_context = ethereum_output.all_participants[0].el_context
@@ -18,11 +20,6 @@ def run(plan, args={}):
     pre_funded_account = ethereum_output.pre_funded_accounts[0]
     private_key = pre_funded_account.private_key
     deployer_address = pre_funded_account.address
-
-    artifacts = args.get("artifacts", {})
-    keystores = args.get("keystores", [])
-    deployments = args.get("deployments", [])
-    service_specs = args.get("services", [])
 
     data = {
         "http_rpc_url": http_rpc_url,
@@ -36,18 +33,32 @@ def run(plan, args={}):
     data.update({"services": {}, "keystores": {}})
 
     context = struct(
-        artifacts=artifacts,
+        artifacts=args.artifacts,
         services={},
         ethereum=ethereum_output,
         data=data,
     )
 
-    keystore.generate_all_keystores(plan, context, keystores)
+    keystore.generate_all_keystores(plan, context, args.keystores)
 
-    for deployment in deployments:
+    for deployment in args.deployments:
         contract_deployer.deploy(plan, context, deployment)
 
-    for service in service_specs:
+    for service in args.services:
         service_utils.add_service(plan, service, context)
 
-    return ethereum_output
+    return context
+
+
+def parse_args(plan, args):
+    artifacts = args.get("artifacts", {})
+    keystores = args.get("keystores", [])
+    deployments = args.get("deployments", [])
+    services = args.get("services", [])
+
+    return struct(
+        artifacts=artifacts,
+        keystores=keystores,
+        deployments=deployments,
+        services=services,
+    )
