@@ -3,11 +3,38 @@ utils = import_module("./utils.star")
 
 def deploy(plan, context, deployment):
     plan.print("Initiating EigenLayer deployment")
+    strategies = deployment.get("strategies", [])
+    if len(strategies) > 0:
+        deploy_mocktoken(plan, context)
 
     generate_el_config(plan, context, deployment)
     el_args = dict(EL_DEFAULT)
     el_args.update(deployment)
     utils.deploy_generic_contract(plan, context, el_args)
+
+
+def deploy_mocktoken(plan, context):
+    repo = "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+    ref = "83e64c8f11439028186380ef0ed35eea6316ec47"
+    path = "contracts"
+    deployer_img = utils.gen_deployer_img(repo, ref, path)
+    http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
+    private_key = context.ethereum.pre_funded_accounts[0].private_key
+    cmd = "set -e ; forge create --rpc-url {} --private-key 0x{} src/ERC20Mock.sol:ERC20Mock \
+    | awk '/Deployed to: .*/{ print $3 }' | tr -d '\"\n'".format(
+        http_rpc_url,
+        private_key,
+    )
+    result = plan.run_sh(
+        image=deployer_img,
+        run=cmd,
+        env_vars=env_vars,
+        description="Deploying 'ERC20Mock'",
+    )
+    token_address = result["output"]
+    context.data["addresses"]["mocktoken"] = token_address
+
+    return token_address
 
 
 def generate_el_config(plan, context, deployment):
