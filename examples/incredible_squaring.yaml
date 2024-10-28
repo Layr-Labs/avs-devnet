@@ -99,7 +99,7 @@ artifacts:
         enable_metrics: False
         node_api_ip_port_address: "0.0.0.0:8080"
         enable_node_api: True
-        register_operator_on_startup: False
+        register_operator_on_startup: True
         token_strategy_addr: {{.token_strategy_addr}}
 
 ethereum_package:
