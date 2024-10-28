@@ -1,17 +1,8 @@
 # Example devnet config file for the incredible-squaring-avs example
 deployments:
-  - name: EigenLayer
-    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
-    contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
-    script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
-    extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
-    input:
-      script/configs/devnet/: eigenlayer-deployment-input
-    output:
-      eigenlayer_addresses:
-        path: "script/output/devnet/M2_from_scratch_deployment_data.json"
-        rename: "eigenlayer_deployment_output.json"
+  - type: EigenLayer
+    # This commit corresponds to the incredible-squaring commit below
+    ref: "f13e1c21c5c4a90f1550fb80c132428bbacd731c"
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
@@ -125,8 +116,6 @@ artifacts:
   operator-config:
     # TODO: maybe add this eagerly
     additional_data:
-      operator1_ecdsa_keystore:
-        OperatorAddress: ".address"
       avs_addresses:
         avs_registry_coordinator_address: ".addresses.registryCoordinator"
         operator_state_retriever_address: ".addresses.operatorStateRetriever"
@@ -134,7 +123,7 @@ artifacts:
     files:
       operator-config.yaml: |
         production: False
-        operator_address: {{.OperatorAddress}}
+        operator_address: {{.keystores.operator1_ecdsa_keystore.address}}
         avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}
