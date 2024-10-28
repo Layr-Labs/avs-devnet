@@ -8,9 +8,9 @@ deployments:
       # TODO: autogenerate keystore from operator name
       - name: operator1
         keystore: operator1_ecdsa_keystore
-        # strategies:
-        #   # strategy_name: number_of_shares
-        #   MockETH: 100000000000000000
+        strategies:
+          # strategy_name: number_of_tokens
+          MockETH: 100000000000000000
 
 keystores:
   - name: operator1_ecdsa_keystore

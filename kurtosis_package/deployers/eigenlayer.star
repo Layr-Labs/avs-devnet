@@ -91,10 +91,14 @@ def format_strategies(context, strategies):
 
 
 def read_addresses(plan, context, output_name, strategies):
-    delegation = shared_utils.read_json_artifact(
+    # TODO: store these in a sub-dict inside the context
+    addresses = context.data["addresses"]
+    addresses["delegation"] = shared_utils.read_json_artifact(
         plan, output_name, ".addresses.delegation"
     )
-    context.data["addresses"]["delegation"] = delegation
+    addresses["strategy_manager"] = shared_utils.read_json_artifact(
+        plan, output_name, ".addresses.strategyManager"
+    )
     for strategy in strategies:
         name = strategy["name"]
         address = shared_utils.read_json_artifact(
@@ -113,23 +117,48 @@ def register_operators(plan, context, operators):
     for operator in operators:
         operator_name = operator["name"]
         keystore_name = operator["keystore"]
-        operator_keystore = data["keystores"][keystore_name]
+        strategies = operator.get("strategies", [])
 
-        cmd = " ; ".join(
-            [
-                "set -e",
-                "cast send --rpc-url {rpc} --private-key {pk} {addr} 'registerAsOperator((address,address,uint32),string)' \"(0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0)\" {metadata}".format(
-                    rpc=data["http_rpc_url"],
-                    pk=operator_keystore["private_key"],
-                    addr=data["addresses"]["delegation"],
-                    metadata=DEFAULT_METADATA_URI,
-                ),
-            ]
+        operator_keystore = data["keystores"][keystore_name]
+        addresses = data["addresses"]
+
+        send_cmd = "cast send --rpc-url {rpc} --private-key {pk}".format(
+            rpc=data["http_rpc_url"], pk=operator_keystore["private_key"]
         )
+        cmds = ["set -e"]
+        cmds.append(
+            "{} {addr} 'registerAsOperator((address,address,uint32),string)' \"(0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0)\" {metadata}".format(
+                send_cmd,
+                addr=addresses["delegation"],
+                metadata=DEFAULT_METADATA_URI,
+            )
+        )
+
+        manager_addr = addresses["strategy_manager"]
+        # TODO: allow other tokens
+        token = addresses["mocktoken"]
+        for strategy, amount in strategies.items():
+            strategy_addr = addresses[strategy]
+            # Approve token transfer
+            cmds.append(
+                "{} {addr} 'approve(address,uint256)(bool)' {strategy} {amount}".format(
+                    send_cmd, addr=token, strategy=manager_addr, amount=amount
+                )
+            )
+            # Perform deposit
+            cmds.append(
+                "{} {addr} 'depositIntoStrategy(address,address,uint256)(uint256)' {strategy} {token} {amount}".format(
+                    send_cmd,
+                    addr=manager_addr,
+                    strategy=strategy_addr,
+                    token=token,
+                    amount=amount,
+                )
+            )
 
         plan.run_sh(
             image=foundry_image,
-            run=cmd,
+            run=" ; ".join(cmds),
             description="Registering operator '{}'".format(operator_name),
         )
 
