@@ -3,6 +3,12 @@ deployments:
   - type: EigenLayer
     # This commit corresponds to the incredible-squaring commit below
     ref: "f13e1c21c5c4a90f1550fb80c132428bbacd731c"
+    strategies: [MockEigen]
+    operators:
+      - name: operator1
+        keystore: operator1_ecdsa_keystore
+        strategies:
+          MockEigen: 100000000000000000
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
@@ -135,7 +141,7 @@ artifacts:
         enable_metrics: False
         node_api_ip_port_address: "12"
         enable_node_api: False
-        register_operator_on_startup: True
+        register_operator_on_startup: False
         token_strategy_addr: {{.token_strategy_addr}}
 
 ethereum_package:
