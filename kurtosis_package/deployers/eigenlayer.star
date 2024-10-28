@@ -1,6 +1,12 @@
 shared_utils = import_module("../shared_utils.star")
 utils = import_module("./utils.star")
 
+FOUNDRY_IMAGE = ImageBuildSpec(
+    image_name="Layr-Labs/foundry",
+    build_context_dir="../dockerfiles/",
+    build_file="foundry.Dockerfile",
+)
+
 
 def deploy(plan, context, deployment):
     plan.print("Initiating EigenLayer deployment")
@@ -123,15 +129,10 @@ def whitelist_strategies(plan, context, strategies):
         strategy_params=strategy_params,
         flag_params=flag_params,
     )
-    plan.run_sh(run=cmd, description="Whitelisting strategies")
+    plan.run_sh(image=FOUNDRY_IMAGE, run=cmd, description="Whitelisting strategies")
 
 
 def register_operators(plan, context, operators):
-    foundry_image = ImageBuildSpec(
-        image_name="Layr-Labs/foundry",
-        build_context_dir="../dockerfiles/",
-        build_file="foundry.Dockerfile",
-    )
     data = context.data
     for operator in operators:
         operator_name = operator["name"]
@@ -176,7 +177,7 @@ def register_operators(plan, context, operators):
             )
 
         plan.run_sh(
-            image=foundry_image,
+            image=FOUNDRY_IMAGE,
             run=" ; ".join(cmds),
             description="Registering operator '{}'".format(operator_name),
         )
