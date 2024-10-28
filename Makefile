@@ -21,7 +21,7 @@ start_incredible_squaring:
 
 # hello-world-avs example
 
-HELLO_WORLD_REF:=fix/blocknumber-check
+HELLO_WORLD_REF:=9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
