@@ -36,7 +36,9 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
     tmp_dir = "/_tmp"
     output_dir = "/_output"
 
-    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; cat {tmp}/password.txt | tr -d '\n'".format(
+    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} \
+    --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; \
+    cat {tmp}/password.txt | tr -d '\n'".format(
         tmp=tmp_dir, output=output_dir, type=key_type
     )
 
@@ -53,10 +55,22 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
         name=artifact_name,
         description="Storing " + key_type + " key",
     )
+
+    cmd = "cat {tmp}/private_key_hex.txt | tr -d '\n'".format(tmp=tmp_dir)
+
+    result = plan.exec(
+        service_name=egnkey_service_name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Extracting private key",
+    )
+    # NOTE: this is in hexa for ECDSA and decimal for BLS
+    private_key = result["output"]
+
     keystore_info = {
         "name": artifact_name,
         "type": key_type,
         "password": password,
+        "private_key": private_key,
     }
 
     if key_type == "ecdsa":
