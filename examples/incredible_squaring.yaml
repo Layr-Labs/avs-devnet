@@ -3,12 +3,7 @@ deployments:
   - type: EigenLayer
     # This commit corresponds to the incredible-squaring commit below
     ref: "f13e1c21c5c4a90f1550fb80c132428bbacd731c"
-    strategies: [MockEigen]
-    operators:
-      - name: operator1
-        keystore: operator1_ecdsa_keystore
-        strategies:
-          MockEigen: 100000000000000000
+    # NOTE: operator registration is done at operator startup
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
