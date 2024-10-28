@@ -127,7 +127,7 @@ artifacts:
         avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}
-        eth_ws_url: {{.http_ws_url}}
+        eth_ws_url: {{.ws_rpc_url}}
         ecdsa_private_key_store_path: /usr/src/app/config-files/1.ecdsa.key.json
         bls_private_key_store_path: /usr/src/app/config-files/1.bls.key.json
         aggregator_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
