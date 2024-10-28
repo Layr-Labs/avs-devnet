@@ -19,17 +19,6 @@ def run(plan, args={}):
     private_key = pre_funded_account.private_key
     deployer_address = pre_funded_account.address
 
-    plan.print(
-        "\n".join(
-            [
-                "Data used for deployment:",
-                " rpc: {} (docker internal)".format(http_rpc_url),
-                " deployer private key: 0x{}".format(private_key),
-                " deployer address: {}".format(deployer_address),
-            ]
-        )
-    )
-
     artifacts = args.get("artifacts", {})
     keystores = args.get("keystores", [])
     deployments = args.get("deployments", [])

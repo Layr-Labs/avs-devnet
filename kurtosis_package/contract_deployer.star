@@ -8,7 +8,7 @@ def deploy(plan, context, deployment):
     contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
-    env_vars = deployment.get("env", {})
+    env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
 
     root = "/app/" + contracts_path + "/"
 

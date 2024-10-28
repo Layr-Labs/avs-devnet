@@ -76,3 +76,36 @@ def send_funds(plan, context, to, amount="10ether"):
         + to,
         description="Depositing funds to account",
     )
+
+
+def generate_env_vars(context, env_vars):
+    return {
+        env_var_name: expand(context, env_var_value)
+        for env_var_name, env_var_value in env_vars.items()
+    }
+
+
+def expand(context, var):
+    """
+    Replaces values starting with `$` to their dynamically evaluated counterpart.
+    Values starting with `$$` are not expanded, and the leading `$` is removed.
+
+    Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
+    """
+    if not var.startswith("$"):
+        return var
+
+    if var.startswith("$$"):
+        return var[1:]
+
+    path = var[1:].split(".")
+    value = context.data
+    for field in path:
+        value = value.get(field, None)
+        if value == None:
+            break
+
+    if value == None or type(value) == type({}):
+        fail("Invalid path: " + var)
+
+    return value

@@ -12,7 +12,7 @@ def add_service(plan, service_args, context):
         shared_utils.send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
-    env_vars = generate_env_vars(context, service_args.get("env", {}))
+    env_vars = shared_utils.generate_env_vars(context, service_args.get("env", {}))
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
@@ -48,36 +48,3 @@ def new_port_spec(port_spec_args):
         application_protocol=application_protocol,
         wait=wait,
     )
-
-
-def generate_env_vars(context, env_vars):
-    return {
-        env_var_name: expand(context, env_var_value)
-        for env_var_name, env_var_value in env_vars.items()
-    }
-
-
-def expand(context, var):
-    """
-    Replaces values starting with `$` to their dynamically evaluated counterpart.
-    Values starting with `$$` are not expanded, and the leading `$` is removed.
-
-    Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
-    """
-    if not var.startswith("$"):
-        return var
-
-    if var.startswith("$$"):
-        return var[1:]
-
-    path = var[1:].split(".")
-    value = context.data
-    for field in path:
-        value = value.get(field, None)
-        if value == None:
-            break
-
-    if value == None or type(value) == type({}):
-        fail("Invalid path: " + var)
-
-    return value
