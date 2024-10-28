@@ -7,9 +7,10 @@ def deploy(plan, context, deployment):
     if len(strategies) > 0:
         deploy_mocktoken(plan, context)
 
-    generate_el_config(plan, context, deployment)
-    el_args = dict(EL_DEFAULT)
-    el_args.update(deployment)
+    config_name = generate_el_config(plan, context, deployment)
+    el_args = EL_DEFAULT | deployment
+    # TODO: insert as list if user specifies same path
+    el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
     utils.deploy_generic_contract(plan, context, el_args)
 
 
@@ -21,27 +22,60 @@ def deploy_mocktoken(plan, context):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     cmd = "set -e ; forge create --rpc-url {} --private-key 0x{} src/ERC20Mock.sol:ERC20Mock \
-    | awk '/Deployed to: .*/{ print $3 }' | tr -d '\"\n'".format(
+    | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
         http_rpc_url,
         private_key,
     )
     result = plan.run_sh(
         image=deployer_img,
         run=cmd,
-        env_vars=env_vars,
         description="Deploying 'ERC20Mock'",
     )
-    token_address = result["output"]
+    token_address = result.output
     context.data["addresses"]["mocktoken"] = token_address
 
     return token_address
 
 
 def generate_el_config(plan, context, deployment):
-    # TODO: generate it manually to allow for more customization
-    context.artifacts["eigenlayer_deployment_input"] = {
-        "files": {"deploy_from_scratch.config.json": EL_CONFIG_TEMPLATE}
+    strategies = format_strategies(context, deployment.get("strategies", []))
+    data = {
+        "deployer_address": context.data["deployer_address"],
+        "strategies": strategies,
     }
+    artifact_name = plan.render_templates(
+        config={
+            "deploy_from_scratch.config.json": struct(
+                template=EL_CONFIG_TEMPLATE,
+                data=data,
+            )
+        },
+        description="Generating EigenLayer deployment config",
+    )
+    return artifact_name
+
+
+MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+
+def format_strategies(context, strategies):
+    formatted_strategies = []
+    for strategy in strategies:
+        if type(strategy) == type(""):
+            strategy = {"name": strategy}
+
+        formatted_strategies.append(
+            json.encode(
+                {
+                    "max_deposits": strategy.get("max_deposits", MAX_UINT256),
+                    "max_per_deposit": strategy.get("max_per_deposit", MAX_UINT256),
+                    "token_address": context.data["addresses"]["mocktoken"],
+                    # This is the associated name in the output file
+                    "token_symbol": strategy["name"],
+                }
+            )
+        )
+    return ", ".join(formatted_strategies)
 
 
 # CONSTANTS
@@ -53,7 +87,7 @@ EL_DEFAULT = {
     "contracts_path": ".",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "input": {"script/configs/devnet/": "eigenlayer_deployment_input"},
+    "input": {},
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
@@ -70,7 +104,7 @@ EL_CONFIG_TEMPLATE = """
     "pauserMultisig": "{{.deployer_address}}",
     "executorMultisig": "{{.deployer_address}}"
   },
-  "strategies": [],
+  "strategies": [{{.strategies}}],
   "strategyManager": {
     "init_paused_status": 0,
     "init_withdrawal_delay_blocks": 1
