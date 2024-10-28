@@ -1,17 +1,35 @@
+shared_utils = import_module("../shared_utils.star")
 utils = import_module("./utils.star")
 
 
 def deploy(plan, context, deployment):
     plan.print("Initiating EigenLayer deployment")
-    strategies = deployment.get("strategies", [])
+    strategies = parse_strategies(deployment.get("strategies", []))
     if len(strategies) > 0:
         deploy_mocktoken(plan, context)
 
-    config_name = generate_el_config(plan, context, deployment)
+    config_name = generate_el_config(plan, context, strategies)
     el_args = EL_DEFAULT | deployment
     # TODO: insert as list if user specifies same path
     el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
+
     utils.deploy_generic_contract(plan, context, el_args)
+
+    read_addresses(plan, context, "eigenlayer_addresses", strategies)
+
+    register_operators(plan, context, deployment.get("operators", []))
+
+
+def parse_strategies(raw_strategies):
+    parsed_strategies = []
+    for strategy in raw_strategies:
+        parsed = dict(DEFAULT_STRATEGY)
+        if type(strategy) == type(""):
+            parsed["name"] = strategy
+        else:
+            parsed.update(strategy)
+        parsed_strategies.append(parsed)
+    return parsed_strategies
 
 
 def deploy_mocktoken(plan, context):
@@ -37,11 +55,11 @@ def deploy_mocktoken(plan, context):
     return token_address
 
 
-def generate_el_config(plan, context, deployment):
-    strategies = format_strategies(context, deployment.get("strategies", []))
+def generate_el_config(plan, context, strategies):
+    formatted_strategies = format_strategies(context, strategies)
     data = {
         "deployer_address": context.data["deployer_address"],
-        "strategies": strategies,
+        "strategies": formatted_strategies,
     }
     artifact_name = plan.render_templates(
         config={
@@ -55,20 +73,14 @@ def generate_el_config(plan, context, deployment):
     return artifact_name
 
 
-MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-
-
 def format_strategies(context, strategies):
     formatted_strategies = []
     for strategy in strategies:
-        if type(strategy) == type(""):
-            strategy = {"name": strategy}
-
         formatted_strategies.append(
             json.encode(
                 {
-                    "max_deposits": strategy.get("max_deposits", MAX_UINT256),
-                    "max_per_deposit": strategy.get("max_per_deposit", MAX_UINT256),
+                    "max_deposits": strategy["max_deposits"],
+                    "max_per_deposit": strategy["max_per_deposit"],
                     "token_address": context.data["addresses"]["mocktoken"],
                     # This is the associated name in the output file
                     "token_symbol": strategy["name"],
@@ -78,7 +90,59 @@ def format_strategies(context, strategies):
     return ", ".join(formatted_strategies)
 
 
+def read_addresses(plan, context, output_name, strategies):
+    delegation = shared_utils.read_json_artifact(
+        plan, output_name, ".addresses.delegation"
+    )
+    context.data["addresses"]["delegation"] = delegation
+    for strategy in strategies:
+        name = strategy["name"]
+        address = shared_utils.read_json_artifact(
+            plan, output_name, ".addresses.strategies." + name
+        )
+        context.data["addresses"][name] = address
+
+
+def register_operators(plan, context, operators):
+    foundry_image = ImageBuildSpec(
+        image_name="Layr-Labs/foundry",
+        build_context_dir="../dockerfiles/",
+        build_file="foundry.Dockerfile",
+    )
+    data = context.data
+    for operator in operators:
+        operator_name = operator["name"]
+        keystore_name = operator["keystore"]
+        operator_keystore = data["keystores"][keystore_name]
+
+        cmd = " ; ".join(
+            [
+                "set -e",
+                "cast send --rpc-url {rpc} --private-key {pk} {addr} 'registerAsOperator((address,address,uint32),string)' \"(0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0)\" {metadata}".format(
+                    rpc=data["http_rpc_url"],
+                    pk=operator_keystore["private_key"],
+                    addr=data["addresses"]["delegation"],
+                    metadata=DEFAULT_METADATA_URI,
+                ),
+            ]
+        )
+
+        plan.run_sh(
+            image=foundry_image,
+            run=cmd,
+            description="Registering operator '{}'".format(operator_name),
+        )
+
+
 # CONSTANTS
+
+MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+DEFAULT_METADATA_URI = "https://raw.githubusercontent.com/Layr-Labs/eigenlayer-cli/79add3518f856c71faa3b95b383e35df370bcc52/pkg/operator/config/metadata-example.json"
+
+DEFAULT_STRATEGY = {
+    "max_deposits": MAX_UINT256,
+    "max_per_deposit": MAX_UINT256,
+}
 
 EL_DEFAULT = {
     "name": "EigenLayer",
