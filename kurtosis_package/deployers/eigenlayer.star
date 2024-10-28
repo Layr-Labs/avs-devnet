@@ -17,6 +17,8 @@ def deploy(plan, context, deployment):
 
     read_addresses(plan, context, "eigenlayer_addresses", strategies)
 
+    whitelist_strategies(plan, context, strategies)
+
     register_operators(plan, context, deployment.get("operators", []))
 
 
@@ -105,6 +107,23 @@ def read_addresses(plan, context, output_name, strategies):
             plan, output_name, ".addresses.strategies." + name
         )
         context.data["addresses"][name] = address
+
+
+def whitelist_strategies(plan, context, strategies):
+    data = context.data
+    strategy_params = ",".join(
+        [data["addresses"][strategy["name"]] for strategy in strategies]
+    )
+    flag_params = ",".join(["true" for _ in strategies])
+    cmd = "set -e ; cast send --rpc-url {rpc} --private-key {pk} \
+    {addr} 'addStrategiesToDepositWhitelist(address[],bool[])' '[{strategy_params}]' '[{flag_params}]'".format(
+        rpc=data["http_rpc_url"],
+        pk=data["deployer_private_key"],
+        addr=data["addresses"]["strategy_manager"],
+        strategy_params=strategy_params,
+        flag_params=flag_params,
+    )
+    plan.run_sh(run=cmd, description="Whitelisting strategies")
 
 
 def register_operators(plan, context, operators):
