@@ -160,6 +160,15 @@ def register_operators(plan, context, operators):
         token = addresses["mocktoken"]
         for strategy, amount in strategies.items():
             strategy_addr = addresses[strategy]
+            # Mint tokens
+            cmds.append(
+                "{} {token} 'mint(address,uint256)' {addr} {amount}".format(
+                    send_cmd,
+                    token=token,
+                    addr=operator_keystore["address"],
+                    amount=amount,
+                )
+            )
             # Approve token transfer
             cmds.append(
                 "{} {addr} 'approve(address,uint256)(bool)' {strategy} {amount}".format(
