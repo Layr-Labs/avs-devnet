@@ -1,16 +1,14 @@
 # Example devnet config file for the hello-world-avs example
-# TODO: the operator and task spammer show a lot of errors. Fix this.
-# It seems to happen even if we run them manually but pointing to a Kurtosis devnet RPC.
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    ref: "9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600"
     contracts_path: "contracts"
     script: script/DeployEigenLayerCore.s.sol
     env:
-      # TODO: use magic variable for this
-      # This is the private key for the account that will deploy the contracts
+      # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "$deployer_private_key"
+      # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
@@ -19,11 +17,13 @@ deployments:
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "bbd6ea74d7ee419c77b3a1983ff5f1685aac5231"
+    ref: "9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:
+      # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "$deployer_private_key"
+      # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
