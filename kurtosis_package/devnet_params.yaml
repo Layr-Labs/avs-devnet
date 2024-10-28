@@ -25,5 +25,3 @@ ethereum_package:
   additional_services:
     - blockscout
     - dora
-  network_params:
-    network_id: "31337"
