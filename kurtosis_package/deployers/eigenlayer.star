@@ -1,6 +1,7 @@
 shared_utils = import_module("../shared_utils.star")
 utils = import_module("./utils.star")
 
+# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
 FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry",
     build_context_dir="../dockerfiles/",
