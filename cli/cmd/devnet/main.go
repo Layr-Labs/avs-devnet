@@ -18,7 +18,7 @@ var configFlag = cli.StringFlag{
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "avs-devnet"
+	app.Name = "devnet"
 	app.Usage = "start an AVS development network"
 	app.Version = version
 
