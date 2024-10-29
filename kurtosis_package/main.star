@@ -30,7 +30,7 @@ def run(plan, args={}):
     plan.print("Initial data: " + json.indent(json.encode(data)))
 
     # Append fields that will be populated later
-    data.update({"services": {}, "keystores": {}})
+    data.update({"services": {}, "keystores": {}, "addresses": {}})
 
     context = struct(
         artifacts=args.artifacts,

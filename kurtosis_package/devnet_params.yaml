@@ -1,16 +1,22 @@
 deployments:
   - type: EigenLayer
     ref: v0.4.2-mainnet-pepe
-    # This creates a single strategy named strategy1, which uses a mock-token
-    # strategies: [strategy1]
-    # operators:
-    #   # TODO: rename `$keystores` to `$keys`
-    #   # TODO: autogenerate keystore from operator name
-    #   - address: $keystores.operator1_ecdsa_keystore.address
-    #     private_key: $keystores.operator1_ecdsa_keystore.private_key
-    #     strategies:
-    #       # strategy_name: number_of_shares
-    #       strategy1: 100000000000000000
+    # This creates a single strategy named MockETH, which uses a mock-token
+    strategies: [MockETH]
+    operators:
+      # TODO: rename `$keystores` to `$keys`
+      # TODO: autogenerate keystore from operator name
+      - name: operator1
+        keystore: operator1_ecdsa_keystore
+        strategies:
+          # strategy_name: number_of_tokens
+          MockETH: 100000000000000000
+
+keystores:
+  - name: operator1_ecdsa_keystore
+    type: ecdsa
+  - name: operator1_bls_keystore
+    type: bls
 
 ethereum_package:
   participants:
