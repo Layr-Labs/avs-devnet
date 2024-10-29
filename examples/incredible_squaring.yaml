@@ -1,17 +1,9 @@
 # Example devnet config file for the incredible-squaring-avs example
 deployments:
-  - name: EigenLayer
-    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
-    contracts_path: "contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts"
-    script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
-    extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
-    input:
-      script/configs/devnet/: eigenlayer-deployment-input
-    output:
-      eigenlayer_addresses:
-        path: "script/output/devnet/M2_from_scratch_deployment_data.json"
-        rename: "eigenlayer_deployment_output.json"
+  - type: EigenLayer
+    # This commit corresponds to the incredible-squaring commit below
+    ref: "f13e1c21c5c4a90f1550fb80c132428bbacd731c"
+    # NOTE: operator registration is done at operator startup
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
@@ -31,7 +23,7 @@ services:
         number: 8090
         transport_protocol: "TCP"
         application_protocol: "http"
-        wait: "10s"
+    # NOTE: aggregator key-pair is hardcoded in the deployment scripts
     address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
     input:
       /usr/src/app/config-files/:
@@ -47,6 +39,12 @@ services:
 
   - name: "operator1"
     image: "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest"
+    ports:
+      node:
+        number: 8080
+        transport_protocol: "TCP"
+        application_protocol: "http"
+        wait: "3m"
     input:
       /usr/src/app/config-files/:
         - operator-config
@@ -64,54 +62,6 @@ keystores:
     type: "ecdsa"
 
 artifacts:
-  eigenlayer-deployment-input:
-    files:
-      deploy_from_scratch.config.json: |
-        {
-          "maintainer": "example@example.org",
-          "multisig_addresses": {
-            "operationsMultisig": "{{.deployer_address}}",
-            "pauserMultisig": "{{.deployer_address}}",
-            "executorMultisig": "{{.deployer_address}}"
-          },
-          "strategies": [],
-          "strategyManager": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "eigenPod": {
-            "PARTIAL_WITHDRAWAL_FRAUD_PROOF_PERIOD_BLOCKS": 1,
-            "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": "32000000000"
-          },
-          "eigenPodManager": {
-            "init_paused_status": 30
-          },
-          "delayedWithdrawalRouter": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "slasher": {
-            "init_paused_status": 0
-          },
-          "delegation": {
-            "init_paused_status": 0,
-            "init_withdrawal_delay_blocks": 1
-          },
-          "rewardsCoordinator": {
-            "init_paused_status": 0,
-            "CALCULATION_INTERVAL_SECONDS": 604800,
-            "MAX_REWARDS_DURATION": 6048000,
-            "MAX_RETROACTIVE_LENGTH": 7776000,
-            "MAX_FUTURE_LENGTH": 2592000,
-            "GENESIS_REWARDS_TIMESTAMP": 1710979200,
-            "rewards_updater_address": "{{.deployer_address}}",
-            "activation_delay": 7200,
-            "calculation_interval_seconds": 604800,
-            "global_operator_commission_bips": 1000
-          },
-          "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
-        }
-
   aggregator-config:
     files:
       aggregator-config.yaml: |
@@ -125,8 +75,6 @@ artifacts:
   operator-config:
     # TODO: maybe add this eagerly
     additional_data:
-      operator1_ecdsa_keystore:
-        OperatorAddress: ".address"
       avs_addresses:
         avs_registry_coordinator_address: ".addresses.registryCoordinator"
         operator_state_retriever_address: ".addresses.operatorStateRetriever"
@@ -134,18 +82,18 @@ artifacts:
     files:
       operator-config.yaml: |
         production: False
-        operator_address: {{.OperatorAddress}}
+        operator_address: {{.keystores.operator1_ecdsa_keystore.address}}
         avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}
-        eth_ws_url: {{.http_ws_url}}
+        eth_ws_url: {{.ws_rpc_url}}
         ecdsa_private_key_store_path: /usr/src/app/config-files/1.ecdsa.key.json
         bls_private_key_store_path: /usr/src/app/config-files/1.bls.key.json
         aggregator_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
-        eigen_metrics_ip_port_address: "10"
+        eigen_metrics_ip_port_address: "0.0.0.0:8081"
         enable_metrics: False
-        node_api_ip_port_address: "12"
-        enable_node_api: False
+        node_api_ip_port_address: "0.0.0.0:8080"
+        enable_node_api: True
         register_operator_on_startup: True
         token_strategy_addr: {{.token_strategy_addr}}
 

@@ -148,7 +148,8 @@ def register_operators(plan, context, operators):
         )
         cmds = ["set -e"]
         cmds.append(
-            "{} {addr} 'registerAsOperator((address,address,uint32),string)' \"(0x0000000000000000000000000000000000000000,0x0000000000000000000000000000000000000000,0)\" {metadata}".format(
+            # NOTE: we don't use the zero address for backwards compatibility
+            "{} {addr} 'registerAsOperator((address,address,uint32),string)' \"(0x000000000000000000000000000000000000de4d,0x0000000000000000000000000000000000000000,0)\" {metadata}".format(
                 send_cmd,
                 addr=addresses["delegation"],
                 metadata=DEFAULT_METADATA_URI,
