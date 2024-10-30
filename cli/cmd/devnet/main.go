@@ -39,23 +39,33 @@ func main() {
 }
 
 func start(ctx *cli.Context) error {
-	argsFile := ctx.Args().First()
-	if argsFile == "" {
-		return cli.Exit("No args file provided", 1)
+	argsFile, devnetName, err := parseArgs(ctx)
+	if err != nil {
+		return err
 	}
-	devnetName := nameFromArgsFile(argsFile)
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
 }
 
 func stop(ctx *cli.Context) error {
-	argsFile := ctx.Args().First()
-	if argsFile == "" {
-		return cli.Exit("No args file provided", 1)
+	_, devnetName, err := parseArgs(ctx)
+	if err != nil {
+		return err
 	}
-	devnetName := nameFromArgsFile(argsFile)
 
 	return kurtosisRun("enclave", "rm", "-f", devnetName)
+}
+
+func parseArgs(ctx *cli.Context) (string, string, error) {
+	args := ctx.Args()
+	if args.Len() > 1 {
+		return "", "", cli.Exit("Expected exactly 1 argument: <config-file>", 1)
+	}
+	argsFile := args.First()
+	if argsFile == "" {
+		return "devnet.yaml", "devnet", nil
+	}
+	return argsFile, nameFromArgsFile(argsFile), nil
 }
 
 func nameFromArgsFile(argsFile string) string {
