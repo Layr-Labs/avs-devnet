@@ -3,79 +3,59 @@ package main
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/urfave/cli/v2"
-	"gopkg.in/yaml.v3"
 )
 
 var version = "development"
 
-var configFlag = cli.StringFlag{
-	Name:    "config",
-	Aliases: []string{"c"},
-	Usage:   "Load devnet configuration from `FILE`",
-}
-
 func main() {
 	app := cli.NewApp()
 	app.Name = "devnet"
-	app.Usage = "start an AVS development network"
+	app.Usage = "start an AVS devnet"
 	app.Version = version
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:   "run",
-		Flags:  []cli.Flag{&configFlag},
-		Action: run,
+		Name:   "start",
+		Usage:  "Start the devnet",
+		Flags:  []cli.Flag{},
+		Action: start,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:   "clean",
-		Flags:  []cli.Flag{&configFlag},
-		Action: clean,
+		Name:   "stop",
+		Usage:  "Stop the devnet",
+		Flags:  []cli.Flag{},
+		Action: stop,
 	})
 
 	app.Run(os.Args)
 }
 
-func run(ctx *cli.Context) error {
-	argsFile := ctx.String(configFlag.Name)
-	devnetName, err := getDevnetName(argsFile)
-	if err != nil {
-		return err
-	}
+func start(ctx *cli.Context) error {
+	argsFile := ctx.Args().First()
+	devnetName := nameFromArgsFile(argsFile)
 
-	cmd := exec.Command("kurtosis", "run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
+	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
+}
+
+func stop(ctx *cli.Context) error {
+	argsFile := ctx.Args().First()
+	devnetName := nameFromArgsFile(argsFile)
+
+	return kurtosisRun("enclave", "rm", "-f", devnetName)
+}
+
+func nameFromArgsFile(argsFile string) string {
+	base := filepath.Base(argsFile)
+	return strings.Split(base, ".")[0]
+}
+
+func kurtosisRun(args ...string) error {
+	cmd := exec.Command("kurtosis", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
-}
-
-func clean(ctx *cli.Context) error {
-	argsFile := ctx.String(configFlag.Name)
-	devnetName, err := getDevnetName(argsFile)
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command("kurtosis", "enclave", "rm", "-f", devnetName)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
-}
-
-func getDevnetName(filePath string) (string, error) {
-	if filePath == "" {
-		return "devnet", nil
-	}
-	file, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", err
-	}
-	var devnetConfig struct {
-		Name *string
-	}
-	err = yaml.Unmarshal(file, &devnetConfig)
-	if devnetConfig.Name == nil {
-		return "devnet", err
-	}
-	return *devnetConfig.Name, err
 }
