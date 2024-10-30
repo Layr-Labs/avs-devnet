@@ -14,10 +14,6 @@ def run(plan, args={}):
     ethereum_output = ethereum_package.run(plan, ethereum_args)
 
     el_context = ethereum_output.all_participants[0].el_context
-
-    if el_context.client_name == "geth":
-        fail("Geth is not supported yet. See this issue for more details: https://github.com/Layr-Labs/avs-devnet/issues/22")
-
     http_rpc_url = el_context.rpc_http_url
     ws_url = el_context.ws_url
 
