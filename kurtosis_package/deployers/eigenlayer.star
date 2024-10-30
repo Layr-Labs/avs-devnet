@@ -45,13 +45,18 @@ def deploy_mocktoken(plan, context):
     repo = "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref = "83e64c8f11439028186380ef0ed35eea6316ec47"
     path = "contracts"
+
     deployer_img = utils.gen_deployer_img(repo, ref, path)
+
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
-    cmd = "set -e ; forge create --rpc-url {} --private-key 0x{} src/ERC20Mock.sol:ERC20Mock \
+    verify_args = utils.get_verify_args(context)
+
+    cmd = "set -e ; forge create --rpc-url {} --private-key 0x{} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
     | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
         http_rpc_url,
         private_key,
+        verify_args,
     )
     result = plan.run_sh(
         image=deployer_img,
