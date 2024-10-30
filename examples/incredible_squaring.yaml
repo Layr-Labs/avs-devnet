@@ -99,8 +99,7 @@ artifacts:
 
 ethereum_package:
   participants:
-    - el_type: reth
-      cl_type: teku
+    - el_type: erigon
   additional_services:
     - blockscout
     - dora
