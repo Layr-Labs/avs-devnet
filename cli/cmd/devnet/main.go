@@ -18,17 +18,21 @@ func main() {
 	app.Version = version
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:   "start",
-		Usage:  "Start the devnet",
-		Flags:  []cli.Flag{},
-		Action: start,
+		Name:      "start",
+		Usage:     "Start the devnet",
+		Args:      true,
+		ArgsUsage: "[<config-file>]",
+		Flags:     []cli.Flag{},
+		Action:    start,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:   "stop",
-		Usage:  "Stop the devnet",
-		Flags:  []cli.Flag{},
-		Action: stop,
+		Name:      "stop",
+		Usage:     "Stop the devnet",
+		Args:      true,
+		ArgsUsage: "[<config-file>]",
+		Flags:     []cli.Flag{},
+		Action:    stop,
 	})
 
 	app.Run(os.Args)
@@ -36,6 +40,9 @@ func main() {
 
 func start(ctx *cli.Context) error {
 	argsFile := ctx.Args().First()
+	if argsFile == "" {
+		return cli.Exit("No args file provided", 1)
+	}
 	devnetName := nameFromArgsFile(argsFile)
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
@@ -43,6 +50,9 @@ func start(ctx *cli.Context) error {
 
 func stop(ctx *cli.Context) error {
 	argsFile := ctx.Args().First()
+	if argsFile == "" {
+		return cli.Exit("No args file provided", 1)
+	}
 	devnetName := nameFromArgsFile(argsFile)
 
 	return kurtosisRun("enclave", "rm", "-f", devnetName)

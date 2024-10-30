@@ -12,11 +12,11 @@ make install  # installs the project
 ## Starting the devnet
 
 ```sh
-devnet run -c <config-path>
+devnet start <config-file>
 ```
 
 ## Stopping the devnet
 
 ```sh
-devnet clean -c <config-path>
+devnet stop <config-file>
 ```
