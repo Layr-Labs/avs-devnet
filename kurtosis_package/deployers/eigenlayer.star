@@ -13,7 +13,7 @@ def deploy(plan, context, deployment):
     plan.print("Initiating EigenLayer deployment")
     strategies = parse_strategies(deployment.get("strategies", []))
     if len(strategies) > 0:
-        deploy_mocktoken(plan, context)
+        deploy_mocktoken(plan, context, deployment.get("verify", False))
 
     config_name = generate_el_config(plan, context, strategies)
     el_args = EL_DEFAULT | deployment
@@ -41,7 +41,7 @@ def parse_strategies(raw_strategies):
     return parsed_strategies
 
 
-def deploy_mocktoken(plan, context):
+def deploy_mocktoken(plan, context, verify):
     repo = "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref = "83e64c8f11439028186380ef0ed35eea6316ec47"
     path = "contracts"
@@ -50,7 +50,8 @@ def deploy_mocktoken(plan, context):
 
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
-    verify_args = utils.get_verify_args(context)
+
+    verify_args = utils.get_verify_args(context) if verify else ""
 
     cmd = "set -e ; forge create --rpc-url {} --private-key 0x{} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
     | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
