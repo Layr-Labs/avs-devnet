@@ -9,6 +9,7 @@ def deploy_generic_contract(plan, context, deployment):
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
     env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
+    verify = deployment.get("verify", False)
 
     root = "/app/" + contracts_path + "/"
 
@@ -27,7 +28,7 @@ def deploy_generic_contract(plan, context, deployment):
     )
     deployer_img = gen_deployer_img(repo, ref, contracts_path)
 
-    cmd = generate_cmd(context, script_path, extra_args, renames)
+    cmd = generate_cmd(context, script_path, extra_args, renames, verify)
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
@@ -37,6 +38,7 @@ def deploy_generic_contract(plan, context, deployment):
         store=store_specs,
         env_vars=env_vars,
         description="Deploying '{}'".format(deployment_name),
+        wait="600s",
     )
     return result
 
@@ -88,14 +90,22 @@ def expand_path(context, root_dir, path):
     return (root_dir + path).replace("//", "/")
 
 
-def generate_cmd(context, script_path, extra_args, renames):
+def generate_cmd(context, script_path, extra_args, renames, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
+    verify_args = get_verify_args(context) if verify else ""
     # We use 'set -e' to fail the script if any command fails
-    cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} --broadcast -vvv {} {}".format(
-        http_rpc_url, private_key, script_path, extra_args
+    cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
+        http_rpc_url, private_key, verify_args, script_path, extra_args
     )
     rename_cmds = ["mv {} {}".format(src, dst) for src, dst in renames]
     if len(rename_cmds) == 0:
         return cmd
     return cmd + " ; " + " && ".join(rename_cmds)
+
+
+def get_verify_args(context):
+    verify_url = context.ethereum.blockscout_sc_verif_url
+    if verify_url == "":
+        return ""
+    return "--verify --verifier blockscout --verifier-url {}/api?".format(verify_url)
