@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,10 +63,17 @@ func parseArgs(ctx *cli.Context) (string, string, error) {
 		return "", "", cli.Exit("Expected exactly 1 argument: <config-file>", 1)
 	}
 	argsFile := args.First()
+	var devnetName string
 	if argsFile == "" {
-		return "devnet.yaml", "devnet", nil
+		argsFile = "devnet.yaml"
+		devnetName = "devnet"
+	} else {
+		devnetName = nameFromArgsFile(argsFile)
 	}
-	return argsFile, nameFromArgsFile(argsFile), nil
+	if _, err := os.Stat(argsFile); errors.Is(err, os.ErrNotExist) {
+		return "", "", cli.Exit("Config file doesn't exist: "+argsFile, 2)
+	}
+	return argsFile, devnetName, nil
 }
 
 func nameFromArgsFile(argsFile string) string {
