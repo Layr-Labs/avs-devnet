@@ -37,6 +37,7 @@ def deploy_generic_contract(plan, context, deployment):
         store=store_specs,
         env_vars=env_vars,
         description="Deploying '{}'".format(deployment_name),
+        wait="600s",
     )
     return result
 
