@@ -128,9 +128,7 @@ def rename_input_files(input_files):
         cmd1 = "mkdir -p {}".format(dst_path)
         # Copy the artifact to the directory
         cmd2 = "cp -RT {} {}".format(src_path, dst_path)
-        # Remove the temporary directory
-        cmd3 = "rm -rf {}".format(src_path)
-        cmds.extend([cmd1, cmd2, cmd3])
+        cmds.extend([cmd1, cmd2])
 
     return " && ".join(cmds), renamed_input_files
 
