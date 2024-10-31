@@ -10,6 +10,7 @@ def deploy_generic_contract(plan, context, deployment):
     env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
+    output = deployment.get("output", {})
 
     root = "/app/" + contracts_path + "/"
 
@@ -17,9 +18,7 @@ def deploy_generic_contract(plan, context, deployment):
 
     deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
 
-    store_specs, output_renames = generate_store_specs(
-        context, root, deployment.get("output", {})
-    )
+    store_specs, output_renames = generate_store_specs(root, output)
 
     pre_cmd, input_files = rename_input_files(input_files)
     deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
@@ -60,13 +59,26 @@ def gen_deployer_img(repo, ref, path):
 
 
 def generate_input_files(plan, context, input, root):
-    input_files = shared_utils.generate_input_files(
-        plan, context, input, allow_dirs=False
-    )
-    return {expand_path(context, root, path): art for path, art in input_files.items()}
+    artifacts, files = parse_input_files(input, root)
+    shared_utils.generate_artifacts(plan, context, artifacts)
+    return files
 
 
-def generate_store_specs(context, root_dir, output_args):
+def parse_input_files(input_args, root_dir):
+    artifacts = []
+    files = []
+    for path, artifact_names in input_args.items():
+        if type(artifact_names) == type(""):
+            artifact_names = [artifact_names]
+
+        expanded_path = expand_path(root_dir, path)
+        artifacts.extend(artifact_names)
+        files.extend([(expanded_path, art) for art in artifact_names])
+
+    return artifacts, files
+
+
+def generate_store_specs(root_dir, output_args):
     output = []
     renames = []
 
@@ -78,7 +90,7 @@ def generate_store_specs(context, root_dir, output_args):
                 path=output_info["path"], rename=output_info.get("rename", None)
             )
 
-        expanded_path = expand_path(context, root_dir, output_info.path)
+        expanded_path = expand_path(root_dir, output_info.path)
         if output_info.rename != None:
             path_stem = expanded_path.rsplit("/", 1)[0]
             renamed_file = path_stem + "/" + output_info.rename
@@ -90,14 +102,14 @@ def generate_store_specs(context, root_dir, output_args):
     return output, renames
 
 
-def expand_path(context, root_dir, path):
+def expand_path(root_dir, path):
     return (root_dir + path).replace("//", "/")
 
 
 def rename_input_files(input_files):
     renamed_input_files = {}
     cmds = []
-    for dst_path, artifact_name in input_files.items():
+    for dst_path, artifact_name in input_files:
         src_path = "/var/__" + artifact_name
         renamed_input_files[src_path] = artifact_name
         # Create the directory if it doesn't exist

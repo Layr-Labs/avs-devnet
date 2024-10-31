@@ -3,9 +3,7 @@ shared_utils = import_module("./shared_utils.star")
 
 def add_service(plan, service_args, context):
     name = service_args["name"]
-    files = shared_utils.generate_input_files(
-        plan, context, service_args.get("input", {})
-    )
+    files = generate_input_files(plan, context, service_args.get("input", {}))
     address = service_args.get("address", None)
 
     if address != None:
@@ -28,6 +26,27 @@ def add_service(plan, service_args, context):
     context.services[name] = service
     # TODO: we could expose more service data here
     context.data["services"][name] = {"ip_address": service.ip_address}
+
+
+def generate_input_files(plan, context, input_args):
+    files = {}
+
+    for path, artifact_names in input_args.items():
+        if type(artifact_names) == type(""):
+            artifact_names = [artifact_names]
+        if len(artifact_names) == 0:
+            continue
+        if len(artifact_names) == 1:
+            artifact = shared_utils.generate_artifact(plan, context, artifact_names[0])
+        else:
+            artifacts = [
+                shared_utils.generate_artifact(plan, context, n) for n in artifact_names
+            ]
+            artifact = Directory(artifact_names=artifacts)
+
+        files[path] = artifact
+
+    return files
 
 
 def generate_port_specs(ports):

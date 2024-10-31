@@ -1,26 +1,6 @@
-def generate_input_files(plan, context, input_args, allow_dirs=True):
-    files = {}
-
-    for path, artifact_names in input_args.items():
-        if type(artifact_names) == type(""):
-            artifact_names = [artifact_names]
-        if len(artifact_names) == 0:
-            continue
-        if len(artifact_names) == 1:
-            artifact = generate_artifact(plan, context, artifact_names[0])
-        elif allow_dirs:
-            artifacts = [generate_artifact(plan, context, n) for n in artifact_names]
-            artifact = Directory(artifact_names=artifacts)
-        else:
-            fail(
-                "Only single artifacts allowed: '{}' (specified: {})".format(
-                    path, artifact_names
-                )
-            )
-
-        files[path] = artifact
-
-    return files
+def generate_artifacts(plan, context, artifacts):
+    for artifact_name in artifacts:
+        generate_artifact(plan, context, artifact_name)
 
 
 def generate_artifact(plan, context, artifact_name):
