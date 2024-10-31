@@ -19,41 +19,98 @@ func main() {
 	app.Version = version
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:      "start",
-		Usage:     "Start the devnet",
+		Name:      "init",
+		Usage:     "Initialize a devnet configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    start,
+		Action:    InitCmd,
+	})
+
+	app.Commands = append(app.Commands, &cli.Command{
+		Name:      "start",
+		Usage:     "Start devnet from configuration file",
+		Args:      true,
+		ArgsUsage: "[<config-file>]",
+		Flags:     []cli.Flag{},
+		Action:    StartCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
 		Name:      "stop",
-		Usage:     "Stop the devnet",
+		Usage:     "Stop devnet from configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    stop,
+		Action:    StopCmd,
 	})
 
 	app.Run(os.Args)
 }
 
-func start(ctx *cli.Context) error {
+var DefaultConfig = `deployments:
+  # Deploy EigenLayer
+  - type: EigenLayer
+    ref: v0.4.2-mainnet-pepe
+    # Whitelist a single strategy named MockETH, backed by a mock-token
+    strategies: [MockETH]
+    operators:
+      # Register a single operator with EigenLayer
+      - name: operator1
+        keystore: operator1_ecdsa_keystore
+        # Deposit 1e17 tokens into the MockETH strategy
+        strategies:
+          MockETH: 100000000000000000
+
+# Specify keys to generate
+keystores:
+  - name: operator1_ecdsa_keystore
+    type: ecdsa
+  - name: operator1_bls_keystore
+    type: bls
+
+# ethereum-package configuration
+ethereum_package:
+  participants:
+    - el_type: erigon
+  additional_services:
+    - blockscout
+    - dora
+`
+
+func InitCmd(ctx *cli.Context) error {
+	argsFile, _, err := parseArgs(ctx)
+	if err != nil {
+		return err
+	}
+	if fileExists(argsFile) {
+		return cli.Exit("Config file already exists: "+argsFile, 2)
+	}
+	file, err := os.Create(argsFile)
+	if err != nil {
+		return err
+	}
+	file.WriteString(DefaultConfig)
+	return file.Close()
+}
+
+func StartCmd(ctx *cli.Context) error {
 	argsFile, devnetName, err := parseArgs(ctx)
 	if err != nil {
 		return err
+	}
+	if !fileExists(argsFile) {
+		return cli.Exit("Config file doesn't exist: "+argsFile, 2)
 	}
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
 }
 
-func stop(ctx *cli.Context) error {
+func StopCmd(ctx *cli.Context) error {
 	_, devnetName, err := parseArgs(ctx)
 	if err != nil {
 		return err
 	}
-
 	return kurtosisRun("enclave", "rm", "-f", devnetName)
 }
 
@@ -70,10 +127,12 @@ func parseArgs(ctx *cli.Context) (string, string, error) {
 	} else {
 		devnetName = nameFromArgsFile(argsFile)
 	}
-	if _, err := os.Stat(argsFile); errors.Is(err, os.ErrNotExist) {
-		return "", "", cli.Exit("Config file doesn't exist: "+argsFile, 2)
-	}
 	return argsFile, devnetName, nil
+}
+
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !errors.Is(err, os.ErrNotExist)
 }
 
 func nameFromArgsFile(argsFile string) string {
