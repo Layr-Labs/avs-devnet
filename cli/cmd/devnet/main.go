@@ -130,6 +130,8 @@ func StartCmd(ctx *cli.Context) error {
 		return err
 	}
 
+	alreadyUploaded := make(map[string]bool)
+
 	for _, deployment := range config.Deployments {
 		repoUrl, err := url.Parse(deployment.Repo)
 		if err != nil {
@@ -138,11 +140,15 @@ func StartCmd(ctx *cli.Context) error {
 		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
 			continue
 		}
+		if alreadyUploaded[repoUrl.Path] {
+			continue
+		}
 		path := repoUrl.Path
 		// Upload the file with the path as the name
 		if err := kurtosisRun("files", "add", "--name", path, devnetName, path); err != nil {
 			return err
 		}
+		alreadyUploaded[repoUrl.Path] = true
 	}
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
