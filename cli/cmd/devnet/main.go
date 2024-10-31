@@ -152,7 +152,7 @@ func StartCmd(ctx *cli.Context) error {
 		}
 		path := repoUrl.Path
 		// Upload the file with the path as the name
-		if err := kurtosisRun("files", "add", "--name", path, devnetName, path); err != nil {
+		if err := kurtosisRun("files", "upload", "--name", path, devnetName, path); err != nil {
 			return cli.Exit(err, 7)
 		}
 		alreadyUploaded[repoUrl.Path] = true
@@ -173,7 +173,7 @@ func StopCmd(ctx *cli.Context) error {
 func parseArgs(ctx *cli.Context) (string, string, error) {
 	args := ctx.Args()
 	if args.Len() > 1 {
-		return "", "", cli.Exit("Expected exactly 1 argument: <config-file>", 1)
+		return "", "", errors.New("expected exactly 1 argument: <config-file>")
 	}
 	argsFile := args.First()
 	var devnetName string
