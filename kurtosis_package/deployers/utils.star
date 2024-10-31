@@ -21,7 +21,7 @@ def deploy_generic_contract(plan, context, deployment):
         context, root, deployment.get("output", {})
     )
 
-    pre_cmd = ""
+    pre_cmd, input_files = rename_input_files(input_files)
     deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
@@ -59,7 +59,7 @@ def gen_deployer_img(repo, ref, path):
     )
 
 
-def generate_input_files(plan, context, input, root_dir):
+def generate_input_files(plan, context, input, root):
     input_files = shared_utils.generate_input_files(
         plan, context, input, allow_dirs=False
     )
@@ -92,6 +92,23 @@ def generate_store_specs(context, root_dir, output_args):
 
 def expand_path(context, root_dir, path):
     return (root_dir + path).replace("//", "/")
+
+
+def rename_input_files(input_files):
+    renamed_input_files = {}
+    cmds = []
+    for dst_path, artifact_name in input_files.items():
+        src_path = "/var/__" + artifact_name
+        renamed_input_files[src_path] = artifact_name
+        # Create the directory if it doesn't exist
+        cmd1 = "mkdir -p {}".format(dst_path)
+        # Copy the artifact to the directory
+        cmd2 = "cp -RT {} {}".format(src_path, dst_path)
+        # Remove the temporary directory
+        cmd3 = "rm -rf {}".format(src_path)
+        cmds.extend([cmd1, cmd2, cmd3])
+
+    return " && ".join(cmds), renamed_input_files
 
 
 def generate_deploy_cmd(context, script_path, extra_args, verify):
