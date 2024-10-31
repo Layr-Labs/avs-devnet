@@ -55,10 +55,10 @@ var DefaultConfig = `deployments:
     # Whitelist a single strategy named MockETH, backed by a mock-token
     strategies: [MockETH]
     operators:
-	  # Register a single operator with EigenLayer
+      # Register a single operator with EigenLayer
       - name: operator1
         keystore: operator1_ecdsa_keystore
-		# Deposit 1e17 tokens into the MockETH strategy
+        # Deposit 1e17 tokens into the MockETH strategy
         strategies:
           MockETH: 100000000000000000
 
