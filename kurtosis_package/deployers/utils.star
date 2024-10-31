@@ -17,11 +17,15 @@ def deploy_generic_contract(plan, context, deployment):
 
     deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
 
-    store_specs, renames = generate_store_specs(
+    store_specs, output_renames = generate_store_specs(
         context, root, deployment.get("output", {})
     )
 
-    cmd = generate_cmd(context, script_path, extra_args, renames, verify)
+    pre_cmd = ""
+    deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
+    post_cmd = generate_post_cmd(output_renames)
+
+    cmd = generate_cmd([pre_cmd, deploy_cmd, post_cmd])
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
@@ -90,7 +94,7 @@ def expand_path(context, root_dir, path):
     return (root_dir + path).replace("//", "/")
 
 
-def generate_cmd(context, script_path, extra_args, renames, verify):
+def generate_deploy_cmd(context, script_path, extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
@@ -98,10 +102,15 @@ def generate_cmd(context, script_path, extra_args, renames, verify):
     cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
         http_rpc_url, private_key, verify_args, script_path, extra_args
     )
-    rename_cmds = ["mv {} {}".format(src, dst) for src, dst in renames]
-    if len(rename_cmds) == 0:
-        return cmd
-    return cmd + " ; " + " && ".join(rename_cmds)
+    return cmd
+
+
+def generate_post_cmd(renames):
+    return " && ".join(["mv {} {}".format(src, dst) for src, dst in renames])
+
+
+def generate_cmd(cmds):
+    return " ; ".join([c for c in cmds if c != ""])
 
 
 def get_verify_args(context):
