@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -123,6 +124,25 @@ func StartCmd(ctx *cli.Context) error {
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
 		return err
+	}
+
+	if err := kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
+		return err
+	}
+
+	for _, deployment := range config.Deployments {
+		repoUrl, err := url.Parse(deployment.Repo)
+		if err != nil {
+			return err
+		}
+		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
+			continue
+		}
+		path := repoUrl.Path
+		// Upload the file with the path as the name
+		if err := kurtosisRun("files", "add", "--name", path, devnetName, path); err != nil {
+			return err
+		}
 	}
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
