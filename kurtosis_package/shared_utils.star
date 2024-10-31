@@ -1,8 +1,4 @@
-def identity(x):
-    return x
-
-
-def generate_input_files(plan, context, input_args, mapper=identity, allow_dirs=True):
+def generate_input_files(plan, context, input_args, allow_dirs=True):
     files = {}
 
     for path, artifact_names in input_args.items():
@@ -22,7 +18,7 @@ def generate_input_files(plan, context, input_args, mapper=identity, allow_dirs=
                 )
             )
 
-        files[mapper(path)] = artifact
+        files[path] = artifact
 
     return files
 

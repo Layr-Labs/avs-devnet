@@ -4,29 +4,22 @@ shared_utils = import_module("../shared_utils.star")
 def deploy_generic_contract(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
-    ref = deployment["ref"]
     contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
     env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
     verify = deployment.get("verify", False)
+    input = deployment.get("input", {})
 
     root = "/app/" + contracts_path + "/"
 
-    def file_mapper(path):
-        return expand_path(context, root, path)
+    input_files = generate_input_files(plan, context, input, root)
 
-    input_files = shared_utils.generate_input_files(
-        plan,
-        context,
-        deployment.get("input", {}),
-        mapper=file_mapper,
-        allow_dirs=False,
-    )
+    deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
+
     store_specs, renames = generate_store_specs(
         context, root, deployment.get("output", {})
     )
-    deployer_img = gen_deployer_img(repo, ref, contracts_path)
 
     cmd = generate_cmd(context, script_path, extra_args, renames, verify)
 
@@ -60,6 +53,13 @@ def gen_deployer_img(repo, ref, path):
             "CONTRACTS_PATH": path,
         },
     )
+
+
+def generate_input_files(plan, context, input, root_dir):
+    input_files = shared_utils.generate_input_files(
+        plan, context, input, allow_dirs=False
+    )
+    return {expand_path(context, root, path): art for path, art in input_files.items()}
 
 
 def generate_store_specs(context, root_dir, output_args):
