@@ -8,9 +8,22 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v3"
 )
 
 var version = "development"
+
+type Deployment struct {
+	Name string `yaml:"name"`
+	Repo string `yaml:"repo"`
+	Ref  string `yaml:"ref"`
+	// non-exhaustive
+}
+
+type DevnetConfig struct {
+	Deployments []Deployment `yaml:"deployments"`
+	// non-exhaustive
+}
 
 func main() {
 	app := cli.NewApp()
@@ -101,6 +114,15 @@ func StartCmd(ctx *cli.Context) error {
 	}
 	if !fileExists(argsFile) {
 		return cli.Exit("Config file doesn't exist: "+argsFile, 2)
+	}
+	var config DevnetConfig
+	file, err := os.ReadFile(argsFile)
+	if err != nil {
+		return err
+	}
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		return err
 	}
 
 	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
