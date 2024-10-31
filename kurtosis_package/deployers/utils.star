@@ -29,7 +29,7 @@ def deploy_generic_contract(plan, context, deployment):
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
         deployer_img = FOUNDRY_IMAGE
-        input_artifacts["/app/"] = repo
+        input_artifacts.append(("/app/", repo))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
