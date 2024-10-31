@@ -140,6 +140,9 @@ func StartCmd(ctx *cli.Context) error {
 	alreadyUploaded := make(map[string]bool)
 
 	for _, deployment := range config.Deployments {
+		if deployment.Repo == "" {
+			continue
+		}
 		repoUrl, err := url.Parse(deployment.Repo)
 		if err != nil {
 			return cli.Exit(err, 6)
