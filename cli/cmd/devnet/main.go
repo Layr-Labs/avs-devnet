@@ -28,11 +28,20 @@ type DevnetConfig struct {
 	// non-exhaustive
 }
 
+var packageNameFlag = cli.StringFlag{
+	Name:    "package-name",
+	Usage:   "Locator for the Kurtosis package to run",
+	Hidden:  true,
+	EnvVars: []string{"AVS_DEVNET__PACKAGE_NAME"},
+	Value:   "github.com/Layr-Labs/avs-devnet",
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "devnet"
 	app.Usage = "start an AVS devnet"
 	app.Version = version
+	app.Flags = append(app.Flags, &packageNameFlag)
 
 	app.Commands = append(app.Commands, &cli.Command{
 		Name:      "init",
@@ -115,6 +124,7 @@ func InitCmd(ctx *cli.Context) error {
 
 func StartCmd(ctx *cli.Context) error {
 	fmt.Println("Starting devnet...")
+	pkgName := ctx.String(packageNameFlag.Name)
 	argsFile, devnetName, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
@@ -161,7 +171,7 @@ func StartCmd(ctx *cli.Context) error {
 		alreadyUploaded[repoUrl.Path] = true
 	}
 
-	return kurtosisRun("run", "../kurtosis_package/", "--enclave", devnetName, "--args-file", argsFile)
+	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", argsFile)
 }
 
 func StopCmd(ctx *cli.Context) error {
