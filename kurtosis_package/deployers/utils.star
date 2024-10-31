@@ -12,6 +12,7 @@ FOUNDRY_IMAGE = ImageBuildSpec(
 def deploy_generic_contract(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
+    is_remote_repo = repo.startswith("https://") or repo.startswith("http://")
     contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
@@ -24,7 +25,7 @@ def deploy_generic_contract(plan, context, deployment):
 
     input_artifacts = generate_input_artifacts(plan, context, input, root)
 
-    if repo.startswith("https://") or repo.startswith("http://"):
+    if is_remote_repo:
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
         deployer_img = FOUNDRY_IMAGE
@@ -98,9 +99,8 @@ def generate_store_specs(root_dir, output_args):
         if type(output_info) == type(""):
             output_info = struct(path=output_info, rename=None)
         else:
-            output_info = struct(
-                path=output_info["path"], rename=output_info.get("rename", None)
-            )
+            rename = output_info.get("rename", None)
+            output_info = struct(path=output_info["path"], rename=rename)
 
         expanded_path = expand_path(root_dir, output_info.path)
         if output_info.rename != None:
@@ -139,9 +139,10 @@ def generate_deploy_cmd(context, script_path, extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
-    # We use 'set -e' to fail the script if any command fails
-    cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-        http_rpc_url, private_key, verify_args, script_path, extra_args
+    cmd = (
+        "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
+            http_rpc_url, private_key, verify_args, script_path, extra_args
+        )
     )
     return cmd
 
