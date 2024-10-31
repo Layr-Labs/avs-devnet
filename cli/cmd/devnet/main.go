@@ -2,10 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -95,39 +97,44 @@ ethereum_package:
 func InitCmd(ctx *cli.Context) error {
 	argsFile, _, err := parseArgs(ctx)
 	if err != nil {
-		return err
+		return cli.Exit(err, 1)
 	}
 	if fileExists(argsFile) {
 		return cli.Exit("Config file already exists: "+argsFile, 2)
 	}
+
+	fmt.Println("Creating new devnet configuration file in", argsFile)
+
 	file, err := os.Create(argsFile)
 	if err != nil {
-		return err
+		return cli.Exit(err, 3)
 	}
 	file.WriteString(DefaultConfig)
 	return file.Close()
 }
 
 func StartCmd(ctx *cli.Context) error {
+	fmt.Println("Starting devnet...")
 	argsFile, devnetName, err := parseArgs(ctx)
 	if err != nil {
-		return err
+		return cli.Exit(err, 1)
 	}
 	if !fileExists(argsFile) {
 		return cli.Exit("Config file doesn't exist: "+argsFile, 2)
 	}
+
 	var config DevnetConfig
 	file, err := os.ReadFile(argsFile)
 	if err != nil {
-		return err
+		return cli.Exit(err, 3)
 	}
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
-		return err
+		return cli.Exit(err, 4)
 	}
 
 	if err := kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
-		return err
+		return cli.Exit(err, 5)
 	}
 
 	alreadyUploaded := make(map[string]bool)
@@ -135,7 +142,7 @@ func StartCmd(ctx *cli.Context) error {
 	for _, deployment := range config.Deployments {
 		repoUrl, err := url.Parse(deployment.Repo)
 		if err != nil {
-			return err
+			return cli.Exit(err, 6)
 		}
 		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
 			continue
@@ -146,7 +153,7 @@ func StartCmd(ctx *cli.Context) error {
 		path := repoUrl.Path
 		// Upload the file with the path as the name
 		if err := kurtosisRun("files", "add", "--name", path, devnetName, path); err != nil {
-			return err
+			return cli.Exit(err, 7)
 		}
 		alreadyUploaded[repoUrl.Path] = true
 	}
@@ -157,8 +164,9 @@ func StartCmd(ctx *cli.Context) error {
 func StopCmd(ctx *cli.Context) error {
 	_, devnetName, err := parseArgs(ctx)
 	if err != nil {
-		return err
+		return cli.Exit(err, 1)
 	}
+	fmt.Println("Stopping devnet...")
 	return kurtosisRun("enclave", "rm", "-f", devnetName)
 }
 
@@ -173,7 +181,11 @@ func parseArgs(ctx *cli.Context) (string, string, error) {
 		argsFile = "devnet.yaml"
 		devnetName = "devnet"
 	} else {
-		devnetName = nameFromArgsFile(argsFile)
+		name, err := nameFromArgsFile(argsFile)
+		if err != nil {
+			return "", "", err
+		}
+		devnetName = name
 	}
 	return argsFile, devnetName, nil
 }
@@ -183,9 +195,19 @@ func fileExists(filePath string) bool {
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func nameFromArgsFile(argsFile string) string {
-	base := filepath.Base(argsFile)
-	return strings.Split(base, ".")[0]
+func nameFromArgsFile(argsFile string) (string, error) {
+	name := filepath.Base(argsFile)
+	name = strings.Split(name, ".")[0]
+	name = strings.ReplaceAll(name, "_", "-")
+	matches, err := regexp.MatchString("^[-A-Za-z0-9]{1,60}$", name)
+	if err != nil {
+		// Error in regex pattern
+		panic(err)
+	}
+	if !matches {
+		return "", errors.New("Invalid devnet name: " + name)
+	}
+	return name, nil
 }
 
 func kurtosisRun(args ...string) error {
