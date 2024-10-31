@@ -14,13 +14,13 @@ def deploy_generic_contract(plan, context, deployment):
 
     root = "/app/" + contracts_path + "/"
 
-    input_files = generate_input_files(plan, context, input, root)
+    input_artifacts = generate_input_artifacts(plan, context, input, root)
 
     deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
 
     store_specs, output_renames = generate_store_specs(root, output)
 
-    pre_cmd, input_files = rename_input_files(input_files)
+    pre_cmd, input_files = rename_input_files(input_artifacts)
     deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
@@ -58,7 +58,7 @@ def gen_deployer_img(repo, ref, path):
     )
 
 
-def generate_input_files(plan, context, input, root):
+def generate_input_artifacts(plan, context, input, root):
     artifacts, files = parse_input_files(input, root)
     shared_utils.generate_artifacts(plan, context, artifacts)
     return files
