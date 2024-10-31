@@ -1,13 +1,6 @@
 shared_utils = import_module("../shared_utils.star")
 utils = import_module("./utils.star")
 
-# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
-FOUNDRY_IMAGE = ImageBuildSpec(
-    image_name="Layr-Labs/foundry",
-    build_context_dir="../dockerfiles/",
-    build_file="foundry.Dockerfile",
-)
-
 
 def deploy(plan, context, deployment):
     plan.print("Initiating EigenLayer deployment")
@@ -136,7 +129,9 @@ def whitelist_strategies(plan, context, strategies):
         strategy_params=strategy_params,
         flag_params=flag_params,
     )
-    plan.run_sh(image=FOUNDRY_IMAGE, run=cmd, description="Whitelisting strategies")
+    plan.run_sh(
+        image=utils.FOUNDRY_IMAGE, run=cmd, description="Whitelisting strategies"
+    )
 
 
 def register_operators(plan, context, operators):
@@ -194,7 +189,7 @@ def register_operators(plan, context, operators):
             )
 
         plan.run_sh(
-            image=FOUNDRY_IMAGE,
+            image=utils.FOUNDRY_IMAGE,
             run=" ; ".join(cmds),
             description="Registering operator '{}'".format(operator_name),
         )

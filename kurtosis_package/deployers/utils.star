@@ -1,6 +1,14 @@
 shared_utils = import_module("../shared_utils.star")
 
 
+# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
+FOUNDRY_IMAGE = ImageBuildSpec(
+    image_name="Layr-Labs/foundry",
+    build_context_dir="../dockerfiles/",
+    build_file="foundry.Dockerfile",
+)
+
+
 def deploy_generic_contract(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
@@ -16,17 +24,21 @@ def deploy_generic_contract(plan, context, deployment):
 
     input_artifacts = generate_input_artifacts(plan, context, input, root)
 
-    deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
+    if repo.startswith("https://") or repo.startswith("http://"):
+        deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
+    else:
+        deployer_img = FOUNDRY_IMAGE
+        input_artifacts["/app/"] = repo
 
     store_specs, output_renames = generate_store_specs(root, output)
 
     pre_cmd, input_files = rename_input_files(input_artifacts)
+    move_to_dir_cmd = "cd " + root
     deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
-    cmd = generate_cmd([pre_cmd, deploy_cmd, post_cmd])
+    cmd = generate_cmd([pre_cmd, move_to_dir_cmd, deploy_cmd, post_cmd])
 
-    # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
         image=deployer_img,
         run=cmd,
