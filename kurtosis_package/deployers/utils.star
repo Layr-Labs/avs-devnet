@@ -1,9 +1,18 @@
 shared_utils = import_module("../shared_utils.star")
 
 
+# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
+FOUNDRY_IMAGE = ImageBuildSpec(
+    image_name="Layr-Labs/foundry",
+    build_context_dir="../dockerfiles/",
+    build_file="foundry.Dockerfile",
+)
+
+
 def deploy_generic_contract(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
+    is_remote_repo = repo.startswith("https://") or repo.startswith("http://")
     contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
@@ -16,17 +25,21 @@ def deploy_generic_contract(plan, context, deployment):
 
     input_artifacts = generate_input_artifacts(plan, context, input, root)
 
-    deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
+    if is_remote_repo:
+        deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
+    else:
+        deployer_img = FOUNDRY_IMAGE
+        input_artifacts.append(("/app/", repo))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
     pre_cmd, input_files = rename_input_files(input_artifacts)
+    move_to_dir_cmd = "cd " + root
     deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
-    cmd = generate_cmd([pre_cmd, deploy_cmd, post_cmd])
+    cmd = generate_cmd([pre_cmd, move_to_dir_cmd, deploy_cmd, post_cmd])
 
-    # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
         image=deployer_img,
         run=cmd,
@@ -86,9 +99,8 @@ def generate_store_specs(root_dir, output_args):
         if type(output_info) == type(""):
             output_info = struct(path=output_info, rename=None)
         else:
-            output_info = struct(
-                path=output_info["path"], rename=output_info.get("rename", None)
-            )
+            rename = output_info.get("rename", None)
+            output_info = struct(path=output_info["path"], rename=rename)
 
         expanded_path = expand_path(root_dir, output_info.path)
         if output_info.rename != None:
@@ -116,9 +128,7 @@ def rename_input_files(input_files):
         cmd1 = "mkdir -p {}".format(dst_path)
         # Copy the artifact to the directory
         cmd2 = "cp -RT {} {}".format(src_path, dst_path)
-        # Remove the temporary directory
-        cmd3 = "rm -rf {}".format(src_path)
-        cmds.extend([cmd1, cmd2, cmd3])
+        cmds.extend([cmd1, cmd2])
 
     return " && ".join(cmds), renamed_input_files
 
@@ -127,9 +137,10 @@ def generate_deploy_cmd(context, script_path, extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
-    # We use 'set -e' to fail the script if any command fails
-    cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-        http_rpc_url, private_key, verify_args, script_path, extra_args
+    cmd = (
+        "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
+            http_rpc_url, private_key, verify_args, script_path, extra_args
+        )
     )
     return cmd
 
