@@ -35,7 +35,7 @@ def generate_all_keys(plan, context, keys):
 def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     output_dir = "/_output"
 
-    cmd = "set -e ; rm -rf {output} && mkdir -p {output} && \
+    cmd = "set -e ; rm -rf {output} && \
     egnkey generate --key-type {type} --num-keys 1 --output-dir {output} ; \
     cat {output}/password.txt | tr -d '\n'".format(
         output=output_dir, type=key_type
