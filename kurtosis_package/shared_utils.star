@@ -34,7 +34,6 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
             field=json_field, input=input_dir, path=file_path
         ),
         files={input_dir: artifact_name},
-        wait="1s",
     )
     return result.output
 
