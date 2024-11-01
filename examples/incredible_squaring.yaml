@@ -87,8 +87,8 @@ artifacts:
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}
         eth_ws_url: {{.ws_rpc_url}}
-        ecdsa_private_key_store_path: /usr/src/app/config-files/1.ecdsa.key.json
-        bls_private_key_store_path: /usr/src/app/config-files/1.bls.key.json
+        ecdsa_private_key_store_path: /usr/src/app/config-files/keys/1.ecdsa.key.json
+        bls_private_key_store_path: /usr/src/app/config-files/keys/1.bls.key.json
         aggregator_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
         eigen_metrics_ip_port_address: "0.0.0.0:8081"
         enable_metrics: False

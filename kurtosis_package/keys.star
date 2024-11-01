@@ -33,13 +33,12 @@ def generate_all_keys(plan, context, keys):
 
 
 def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
-    tmp_dir = "/_tmp"
     output_dir = "/_output"
 
-    cmd = "rm -rf {tmp} && mkdir -p {output} && egnkey generate --key-type {type} \
-    --num-keys 1 --output-dir {tmp} && mv {tmp}/keys/1.{type}.key.json {output} ; \
-    cat {tmp}/password.txt | tr -d '\n'".format(
-        tmp=tmp_dir, output=output_dir, type=key_type
+    cmd = "rm -rf {output} && mkdir -p {output} && \
+    egnkey generate --key-type {type} --num-keys 1 --output-dir {output} ; \
+    cat {output}/password.txt | tr -d '\n'".format(
+        output=output_dir, type=key_type
     )
 
     result = plan.exec(
@@ -51,12 +50,12 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
 
     _file_artifact = plan.store_service_files(
         service_name=egnkey_service_name,
-        src=output_dir + "/1." + key_type + ".key.json",
+        src=output_dir,
         name=artifact_name,
         description="Storing " + key_type + " key",
     )
 
-    cmd = "cat {tmp}/private_key_hex.txt | tr -d '\n'".format(tmp=tmp_dir)
+    cmd = "cat {output}/private_key_hex.txt | tr -d '\n'".format(tmp=tmp_dir)
 
     result = plan.exec(
         service_name=egnkey_service_name,
