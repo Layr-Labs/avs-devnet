@@ -4,31 +4,27 @@ shared_utils = import_module("../shared_utils.star")
 def deploy_generic_contract(plan, context, deployment):
     deployment_name = deployment["name"]
     repo = deployment["repo"]
-    ref = deployment["ref"]
     contracts_path = deployment.get("contracts_path", ".")
     script_path = deployment["script"]
     extra_args = deployment.get("extra_args", "")
     env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
     verify = deployment.get("verify", False)
+    input = deployment.get("input", {})
+    output = deployment.get("output", {})
 
     root = "/app/" + contracts_path + "/"
 
-    def file_mapper(path):
-        return expand_path(context, root, path)
+    input_artifacts = generate_input_artifacts(plan, context, input, root)
 
-    input_files = shared_utils.generate_input_files(
-        plan,
-        context,
-        deployment.get("input", {}),
-        mapper=file_mapper,
-        allow_dirs=False,
-    )
-    store_specs, renames = generate_store_specs(
-        context, root, deployment.get("output", {})
-    )
-    deployer_img = gen_deployer_img(repo, ref, contracts_path)
+    deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
 
-    cmd = generate_cmd(context, script_path, extra_args, renames, verify)
+    store_specs, output_renames = generate_store_specs(root, output)
+
+    pre_cmd, input_files = rename_input_files(input_artifacts)
+    deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
+    post_cmd = generate_post_cmd(output_renames)
+
+    cmd = generate_cmd([pre_cmd, deploy_cmd, post_cmd])
 
     # Deploy the Incredible Squaring AVS contracts
     result = plan.run_sh(
@@ -62,7 +58,27 @@ def gen_deployer_img(repo, ref, path):
     )
 
 
-def generate_store_specs(context, root_dir, output_args):
+def generate_input_artifacts(plan, context, input, root):
+    artifacts, files = parse_input_files(input, root)
+    shared_utils.generate_artifacts(plan, context, artifacts)
+    return files
+
+
+def parse_input_files(input_args, root_dir):
+    artifacts = []
+    files = []
+    for path, artifact_names in input_args.items():
+        if type(artifact_names) == type(""):
+            artifact_names = [artifact_names]
+
+        expanded_path = expand_path(root_dir, path)
+        artifacts.extend(artifact_names)
+        files.extend([(expanded_path, art) for art in artifact_names])
+
+    return artifacts, files
+
+
+def generate_store_specs(root_dir, output_args):
     output = []
     renames = []
 
@@ -74,7 +90,7 @@ def generate_store_specs(context, root_dir, output_args):
                 path=output_info["path"], rename=output_info.get("rename", None)
             )
 
-        expanded_path = expand_path(context, root_dir, output_info.path)
+        expanded_path = expand_path(root_dir, output_info.path)
         if output_info.rename != None:
             path_stem = expanded_path.rsplit("/", 1)[0]
             renamed_file = path_stem + "/" + output_info.rename
@@ -86,11 +102,28 @@ def generate_store_specs(context, root_dir, output_args):
     return output, renames
 
 
-def expand_path(context, root_dir, path):
+def expand_path(root_dir, path):
     return (root_dir + path).replace("//", "/")
 
 
-def generate_cmd(context, script_path, extra_args, renames, verify):
+def rename_input_files(input_files):
+    renamed_input_files = {}
+    cmds = []
+    for dst_path, artifact_name in input_files:
+        src_path = "/var/__" + artifact_name
+        renamed_input_files[src_path] = artifact_name
+        # Create the directory if it doesn't exist
+        cmd1 = "mkdir -p {}".format(dst_path)
+        # Copy the artifact to the directory
+        cmd2 = "cp -RT {} {}".format(src_path, dst_path)
+        # Remove the temporary directory
+        cmd3 = "rm -rf {}".format(src_path)
+        cmds.extend([cmd1, cmd2, cmd3])
+
+    return " && ".join(cmds), renamed_input_files
+
+
+def generate_deploy_cmd(context, script_path, extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
@@ -98,10 +131,15 @@ def generate_cmd(context, script_path, extra_args, renames, verify):
     cmd = "set -e ; forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
         http_rpc_url, private_key, verify_args, script_path, extra_args
     )
-    rename_cmds = ["mv {} {}".format(src, dst) for src, dst in renames]
-    if len(rename_cmds) == 0:
-        return cmd
-    return cmd + " ; " + " && ".join(rename_cmds)
+    return cmd
+
+
+def generate_post_cmd(renames):
+    return " && ".join(["mv {} {}".format(src, dst) for src, dst in renames])
+
+
+def generate_cmd(cmds):
+    return " ; ".join([c for c in cmds if c != ""])
 
 
 def get_verify_args(context):
