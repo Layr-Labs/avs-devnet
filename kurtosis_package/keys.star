@@ -55,7 +55,7 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
         description="Storing " + key_type + " key",
     )
 
-    cmd = "cat {output}/private_key_hex.txt | tr -d '\n'".format(tmp=tmp_dir)
+    cmd = "cat {}/private_key_hex.txt | tr -d '\n'".format(output_dir)
 
     result = plan.exec(
         service_name=egnkey_service_name,
