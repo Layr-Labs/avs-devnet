@@ -24,7 +24,7 @@ def generate_all_keys(plan, context, keys):
         info = parse_key_info(plan, context, generator, key, i)
         name = info["name"]
 
-        if info["type"] == "ecdsa":
+        if "address" in info:
             shared_utils.send_funds(plan, context, info["address"])
 
         keys_data[name] = info
