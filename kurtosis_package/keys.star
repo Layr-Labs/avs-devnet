@@ -55,7 +55,7 @@ def parse_key_info(plan, context, generator, key, i):
 
     if should_be_generated:
         info.update(generate_keys(plan, generator, key_type, name))
-    
+
     return info
 
 
