@@ -35,7 +35,7 @@ def generate_all_keys(plan, context, keys):
 def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     output_dir = "/_output"
 
-    cmd = "rm -rf {output} && mkdir -p {output} && \
+    cmd = "set -e ; rm -rf {output} && mkdir -p {output} && \
     egnkey generate --key-type {type} --num-keys 1 --output-dir {output} ; \
     cat {output}/password.txt | tr -d '\n'".format(
         output=output_dir, type=key_type
@@ -55,7 +55,7 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
         description="Storing " + key_type + " key",
     )
 
-    cmd = "cat {}/private_key_hex.txt | tr -d '\n'".format(output_dir)
+    cmd = "set -e ; cat {}/private_key_hex.txt | tr -d '\n'".format(output_dir)
 
     result = plan.exec(
         service_name=egnkey_service_name,
