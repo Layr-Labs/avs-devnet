@@ -7,6 +7,8 @@ A wrapper over the [Kurtosis CLI](https://docs.kurtosis.com/cli).
 ```sh
 make deps     # installs dependencies
 make install  # installs the project
+
+source env.sh # set env-vars
 ```
 
 ## Starting the devnet
