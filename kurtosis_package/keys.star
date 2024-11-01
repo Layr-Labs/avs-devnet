@@ -73,7 +73,9 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     }
 
     if key_type == "ecdsa":
-        address = shared_utils.read_json_artifact(plan, artifact_name, ".address")
+        address = shared_utils.read_json_artifact(
+            plan, artifact_name, ".address", file_path="keys/1.ecdsa.key.json"
+        )
         # Prepend the address with "0x" manually
         keys_info["address"] = "0x" + address
 

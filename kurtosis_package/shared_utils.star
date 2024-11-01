@@ -26,11 +26,13 @@ def generate_artifact(plan, context, artifact_name):
     return artifact
 
 
-def read_json_artifact(plan, artifact_name, json_field):
+def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
     input_dir = "/_input"
     result = plan.run_sh(
         image="badouralix/curl-jq",
-        run="jq -j {field} {input}/*.json".format(field=json_field, input=input_dir),
+        run="jq -j {field} {input}/{path}".format(
+            field=json_field, input=input_dir, path=file_path
+        ),
         files={input_dir: artifact_name},
         wait="1s",
     )
