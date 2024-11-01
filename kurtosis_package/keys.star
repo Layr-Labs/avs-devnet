@@ -20,8 +20,9 @@ def generate_all_keys(plan, context, keys):
     )
     generator = generator_service.name
 
-    for key in keys:
-        info = parse_key_info(plan, context, generator, key)
+    for i, key in enumerate(keys):
+        info = parse_key_info(plan, context, generator, key, i)
+        name = info["name"]
 
         if info["type"] == "ecdsa":
             shared_utils.send_funds(plan, context, info["address"])
@@ -31,24 +32,28 @@ def generate_all_keys(plan, context, keys):
     plan.remove_service(generator)
 
 
-def parse_key_info(plan, context, generator, key):
+def parse_key_info(plan, context, generator, key, i):
     info = {}
-    info["type"] = key.get("type", "ecdsa")
+    name = key.get("name", "key{}".format(i))
+    key_type = key.get("type", "ecdsa")
 
-    is_generated = True
-    name = key.get("name")
     address = key.get("address")
+    private_key = key.get("private_key")
 
-    if name:
-        info["name"] = name
+    should_be_generated = not (address or private_key)
+    info["name"] = name
+    info["type"] = key_type
 
     if address:
         if key_type != "ecdsa":
             fail("Only ECDSA keys can have an address")
         info["address"] = address
-        is_generated = False
 
-    if is_generated:
+    if private_key:
+        # TODO: derive address from private key
+        info["private_key"] = private_key
+
+    if should_be_generated:
         info.update(generate_keys(plan, generator, key_type, name))
     
     return info
