@@ -3,7 +3,7 @@ ethereum_package = import_module("github.com/ethpandaops/ethereum-package/main.s
 service_utils = import_module("./service_utils.star")
 shared_utils = import_module("./shared_utils.star")
 contract_deployer = import_module("./contract_deployer.star")
-keystore = import_module("./keystore.star")
+keys = import_module("./keys.star")
 
 
 def run(plan, args={}):
@@ -30,7 +30,7 @@ def run(plan, args={}):
     plan.print("Initial data: " + json.indent(json.encode(data)))
 
     # Append fields that will be populated later
-    data.update({"services": {}, "keystores": {}, "addresses": {}})
+    data.update({"services": {}, "keys": {}, "addresses": {}})
 
     context = struct(
         artifacts=args.artifacts,
@@ -39,7 +39,7 @@ def run(plan, args={}):
         data=data,
     )
 
-    keystore.generate_all_keystores(plan, context, args.keystores)
+    keys.generate_all_keys(plan, context, args.keys)
 
     for deployment in args.deployments:
         contract_deployer.deploy(plan, context, deployment)
@@ -52,13 +52,13 @@ def run(plan, args={}):
 
 def parse_args(plan, args):
     artifacts = args.get("artifacts", {})
-    keystores = args.get("keystores", [])
+    keys = args.get("keys", [])
     deployments = args.get("deployments", [])
     services = args.get("services", [])
 
     return struct(
         artifacts=artifacts,
-        keystores=keystores,
+        keys=keys,
         deployments=deployments,
         services=services,
     )

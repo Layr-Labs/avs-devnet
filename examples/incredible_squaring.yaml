@@ -48,17 +48,17 @@ services:
     input:
       /usr/src/app/config-files/:
         - operator-config
-        - operator1_bls_keystore
-        - operator1_ecdsa_keystore
+        - operator1_bls_keys
+        - operator1_ecdsa_keys
     env:
-      OPERATOR_ECDSA_KEY_PASSWORD: $keystores.operator1_ecdsa_keystore.password
-      OPERATOR_BLS_KEY_PASSWORD: $keystores.operator1_bls_keystore.password
+      OPERATOR_ECDSA_KEY_PASSWORD: $keys.operator1_ecdsa_keys.password
+      OPERATOR_BLS_KEY_PASSWORD: $keys.operator1_bls_keys.password
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
-keystores:
-  - name: "operator1_bls_keystore"
+keys:
+  - name: "operator1_bls_keys"
     type: "bls"
-  - name: "operator1_ecdsa_keystore"
+  - name: "operator1_ecdsa_keys"
     type: "ecdsa"
 
 artifacts:
@@ -82,7 +82,7 @@ artifacts:
     files:
       operator-config.yaml: |
         production: False
-        operator_address: {{.keystores.operator1_ecdsa_keystore.address}}
+        operator_address: {{.keys.operator1_ecdsa_keys.address}}
         avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}

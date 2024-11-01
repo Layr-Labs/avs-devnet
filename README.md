@@ -197,16 +197,16 @@ services:
       # Value: env variable's value
       key: value
       # Values starting with `$` can be used to retrieve context information
-      # This example expands to the `ecdsa_keystore` keystore's password
-      ECDSA_KEY_PASSWORD: $keystores.ecdsa_keystore.password
+      # This example expands to the `ecdsa_keys` keystore's password
+      ECDSA_KEY_PASSWORD: $keys.ecdsa_keys.password
     # Command to use when running the docker image
     cmd: ["some", "option", "here"]
 
-# Lists the keystores to be generated at startup
-keystores:
-    # Name for the keystore
-  - name: "ecdsa_keystore"
-    # Type of keystore: bls, ecdsa
+# Lists the keys to be generated at startup
+keys:
+    # Name for the keys
+  - name: "ecdsa_keys"
+    # Type of keys: bls, ecdsa
     type: "ecdsa"
 
 # Lists artifacts to be generated at startup

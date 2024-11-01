@@ -1,10 +1,10 @@
 shared_utils = import_module("./shared_utils.star")
 
 
-def generate_all_keystores(plan, context, keystores):
-    if len(keystores) == 0:
+def generate_all_keys(plan, context, keys):
+    if len(keys) == 0:
         return
-    keystore_data = context.data.get("keystores", {})
+    keys_data = context.data["keys"]
 
     generator_service = plan.add_service(
         "egnkey-service",
@@ -19,20 +19,20 @@ def generate_all_keystores(plan, context, keystores):
         ),
     )
 
-    for keystore in keystores:
-        name = keystore["name"]
-        key_type = keystore["type"]
-        info = generate_keystore(plan, generator_service.name, key_type, name)
+    for key in keys:
+        name = key["name"]
+        key_type = key["type"]
+        info = generate_keys(plan, generator_service.name, key_type, name)
 
         if key_type == "ecdsa":
             shared_utils.send_funds(plan, context, info["address"])
 
-        keystore_data[name] = info
+        keys_data[name] = info
 
     plan.remove_service(generator_service.name)
 
 
-def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
+def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     tmp_dir = "/_tmp"
     output_dir = "/_output"
 
@@ -66,7 +66,7 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
     # NOTE: this is in hexa for ECDSA and decimal for BLS
     private_key = result["output"]
 
-    keystore_info = {
+    keys_info = {
         "name": artifact_name,
         "type": key_type,
         "password": password,
@@ -76,6 +76,6 @@ def generate_keystore(plan, egnkey_service_name, key_type, artifact_name):
     if key_type == "ecdsa":
         address = shared_utils.read_json_artifact(plan, artifact_name, ".address")
         # Prepend the address with "0x" manually
-        keystore_info["address"] = "0x" + address
+        keys_info["address"] = "0x" + address
 
-    return keystore_info
+    return keys_info
