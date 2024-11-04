@@ -68,7 +68,6 @@ ethereum_package:
     - el_type: erigon
   additional_services:
     - blockscout
-    - dora
   network_params:
     # We use the chain ID hardcoded in the hello-world-avs example
     network_id: "31337"

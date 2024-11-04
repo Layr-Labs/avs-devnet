@@ -244,5 +244,4 @@ ethereum_package:
       cl_type: teku
   additional_services:
     - blockscout
-    - dora
 ```

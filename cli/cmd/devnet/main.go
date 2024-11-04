@@ -117,7 +117,6 @@ ethereum_package:
     - el_type: erigon
   additional_services:
     - blockscout
-    - dora
 `
 
 func InitCmd(ctx *cli.Context) error {
