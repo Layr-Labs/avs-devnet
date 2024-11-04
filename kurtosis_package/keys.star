@@ -18,18 +18,45 @@ def generate_all_keys(plan, context, keys):
             description="Spinning up EigenLayer key generator service",
         ),
     )
+    generator = generator_service.name
 
-    for key in keys:
-        name = key["name"]
-        key_type = key["type"]
-        info = generate_keys(plan, generator_service.name, key_type, name)
+    for i, key in enumerate(keys):
+        info = parse_key_info(plan, context, generator, key, i)
+        name = info["name"]
 
-        if key_type == "ecdsa":
+        if "address" in info:
             shared_utils.send_funds(plan, context, info["address"])
 
         keys_data[name] = info
 
-    plan.remove_service(generator_service.name)
+    plan.remove_service(generator)
+
+
+def parse_key_info(plan, context, generator, key, i):
+    info = {}
+    name = key.get("name", "key{}".format(i))
+    key_type = key.get("type", "ecdsa")
+
+    address = key.get("address")
+    private_key = key.get("private_key")
+
+    should_be_generated = not (address or private_key)
+    info["name"] = name
+    info["type"] = key_type
+
+    if address:
+        if key_type != "ecdsa":
+            fail("Only ECDSA keys can have an address")
+        info["address"] = address
+
+    if private_key:
+        # TODO: derive address from private key
+        info["private_key"] = private_key
+
+    if should_be_generated:
+        info.update(generate_keys(plan, generator, key_type, name))
+
+    return info
 
 
 def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
@@ -48,7 +75,7 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     )
     password = result["output"]
 
-    _file_artifact = plan.store_service_files(
+    artifact_name = plan.store_service_files(
         service_name=egnkey_service_name,
         src=output_dir,
         name=artifact_name,

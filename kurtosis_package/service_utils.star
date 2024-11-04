@@ -4,10 +4,6 @@ shared_utils = import_module("./shared_utils.star")
 def add_service(plan, service_args, context):
     name = service_args["name"]
     files = generate_input_files(plan, context, service_args.get("input", {}))
-    address = service_args.get("address", None)
-
-    if address != None:
-        shared_utils.send_funds(plan, context, address)
 
     ports = generate_port_specs(service_args.get("ports", {}))
     env_vars = shared_utils.generate_env_vars(context, service_args.get("env", {}))
