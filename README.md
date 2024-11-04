@@ -1,12 +1,12 @@
 # EigenLayer AVS Devnet
 
 *AvsDevnet* is a library and CLI tool to start local devnets with specific operator states.
-We expect the library to be commonly used in place of mocks for automated testing of specific situations.
-The CLI tool, on the other hand, we expect to be used in place of bash scripts for end-to-end testing and local development.
+The library is commonly used in place of mocks for automated testing of specific situations.
+The CLI tool, on the other hand, is used in place of bash scripts for end-to-end testing and local development.
 
 > [!WARNING]  
-> Currently, only the Kurtosis package is available.
-> Future versions may include the testing library and a CLI.
+> Currently, only the [Kurtosis package](./kurtosis_package/) and [CLI](./cli/) are available.
+> Future versions may include the testing library.
 
 ## Dependencies
 
