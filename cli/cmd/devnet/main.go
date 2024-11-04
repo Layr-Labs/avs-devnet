@@ -216,7 +216,8 @@ func GetAddressCmd(ctx *cli.Context) error {
 	for _, arg := range args.Slice() {
 		// contract name is like "artifact-name:contract-name"
 		path := strings.Split(arg, ":")
-		if len(path) > 2 {
+		// TODO: assume a length of 1 means it's just the contract name
+		if len(path) > 2 || len(path) == 1 {
 			fmt.Println("Invalid contract name: " + arg)
 			failed = true
 			continue
@@ -234,7 +235,7 @@ func GetAddressCmd(ctx *cli.Context) error {
 			cached[artifactName] = file
 		}
 		jsonPath := "addresses"
-		if len(path) == 2 {
+		if len(path) == 2 && path[1] != "" {
 			// This searches for `path[1]` inside the json
 			// Since there are multiple results, `|0` is used to get the first one
 			jsonPath = jsonPath + "|@dig:" + path[1] + "|0"
