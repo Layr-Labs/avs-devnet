@@ -269,9 +269,13 @@ ethereum_package:
 
 ## Kurtosis package
 
+> [!WARNING]
+> Some features won't be available when starting the devnet via Kurtosis CLI.
+> This is due to the pre-processing of the args-file in our CLI.
+
 ### How to run
 
-> [!WARNING]  
+> [!WARNING]
 > Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
 
 [After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [blockscout](https://github.com/blockscout/blockscout) explorer.
