@@ -123,8 +123,6 @@ GLOBAL OPTIONS:
 
 ## Configuration
 
-<!-- TODO: update -->
-
 An example (non-functional) configuration is:
 
 ```yaml
@@ -142,6 +140,13 @@ deployments:
     script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
     # Extra args passed on to `forge script`
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    # Environment variables to set for deployment
+    env:
+      # Key: env variable name
+      # Value: env variable's value
+      key: value
+      # Variables starting with `$` are magic variables and change to the real value at runtime
+      PRIVATE_KEY: "$deployer_private_key"
     # Input files to embed into the repo
     input:
       # Key: destination to insert the files in
@@ -164,6 +169,27 @@ deployments:
         # The new name to give to the file
         rename: "eigenlayer_deployment_output.json"
 
+    # Available types: eigenlayer
+    # This autofills some of the other options, and allows access
+    # to additional arguments
+  - type: eigenlayer
+    # Same as before
+    ref: v0.4.2-mainnet-pepe
+    # The strategies to deploy, all of them backed by the same mocked token
+    strategies:
+      # The strategy name
+      - MockETH
+    # The operators to register in EigenLayer
+    operators:
+        # The name of the operator
+      - name: operator1
+        # The keys
+        keys: ecdsa_keys
+        # The strategies to deposit shares in
+        strategies:
+          # strategy_name: number_of_tokens
+          MockETH: 100000000000000000
+
 # Lists the services to start after the contracts are deployed
 services:
     # Name for the service
@@ -183,9 +209,6 @@ services:
         # Timeout before failing deployment. `null` can be used to disable this.
         # Default: 15s
         wait: "10s"
-    # [Optional] Ethereum address the service will use. Funds will be deposited to it at startup.
-    # NOTE: this option will be removed in the future
-    address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
     # Input files to embed into the repo
     # Same as in `deployments`
     input:
@@ -239,8 +262,7 @@ artifacts:
 # See https://github.com/ethpandaops/ethereum-package for more information
 ethereum_package:
   participants:
-    - el_type: reth
-      cl_type: teku
+    - el_type: erigon
   additional_services:
     - blockscout
 ```
@@ -252,7 +274,7 @@ ethereum_package:
 > [!WARNING]  
 > Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
 
-[After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [dora](https://github.com/ethpandaops/dora) and [blockscout](https://github.com/blockscout/blockscout) explorers.
+[After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [blockscout](https://github.com/blockscout/blockscout) explorer.
 
 ```sh
 kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file github.com/kurtosis_package/devnet_params.yaml
