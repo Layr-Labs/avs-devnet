@@ -92,3 +92,30 @@ $ devnet get-address eigenlayer_addresses:MockETH
 $ devnet get-address eigenlayer_addresses:.MockETH  # this fails
 Contract not found: eigenlayer_addresses:.MockETH
 ```
+
+### More Help
+
+You can find the options for each command by appending `--help`:
+
+```sh
+$ devnet --help
+NAME:
+   devnet - start an AVS devnet
+
+USAGE:
+   devnet [global options] command [command options]
+
+VERSION:
+   development
+
+COMMANDS:
+   init         Initialize a devnet configuration file
+   start        Start devnet from configuration file
+   stop         Stop devnet from configuration file
+   get-address  Get a devnet contract or EOA address
+   help, h      Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h     show help
+   --version, -v  print the version
+```
