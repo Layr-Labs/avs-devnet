@@ -82,16 +82,16 @@ var DefaultConfig = `deployments:
     operators:
       # Register a single operator with EigenLayer
       - name: operator1
-        keystore: operator1_ecdsa_keystore
+        key: operator1_ecdsa_keys
         # Deposit 1e17 tokens into the MockETH strategy
         strategies:
           MockETH: 100000000000000000
 
 # Specify keys to generate
-keystores:
-  - name: operator1_ecdsa_keystore
+keys:
+  - name: operator1_ecdsa_keys
     type: ecdsa
-  - name: operator1_bls_keystore
+  - name: operator1_bls_keys
     type: bls
 
 # ethereum-package configuration

@@ -17,6 +17,9 @@ def add_service(plan, service_args, context):
         files=files,
         env_vars=env_vars,
         cmd=service_args.get("cmd", []),
+        # TODO: use default user
+        # We need to do this due to artifacts being owned by root
+        user=User(uid=0, gid=0),
     )
     plan.print(config)
     service = plan.add_service(

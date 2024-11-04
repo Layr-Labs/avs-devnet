@@ -138,14 +138,14 @@ def register_operators(plan, context, operators):
     data = context.data
     for operator in operators:
         operator_name = operator["name"]
-        keystore_name = operator["keystore"]
+        keys_name = operator["keys"]
         strategies = operator.get("strategies", [])
 
-        operator_keystore = data["keystores"][keystore_name]
+        operator_keys = data["keys"][keys_name]
         addresses = data["addresses"]
 
         send_cmd = "cast send --rpc-url {rpc} --private-key {pk}".format(
-            rpc=data["http_rpc_url"], pk=operator_keystore["private_key"]
+            rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
         )
         cmds = ["set -e"]
         cmds.append(
@@ -167,7 +167,7 @@ def register_operators(plan, context, operators):
                 "{} {token} 'mint(address,uint256)' {addr} {amount}".format(
                     send_cmd,
                     token=token,
-                    addr=operator_keystore["address"],
+                    addr=operator_keys["address"],
                     amount=amount,
                 )
             )

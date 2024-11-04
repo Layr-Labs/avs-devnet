@@ -42,7 +42,7 @@ services:
     env:
       # This expands to the RPC node's URL
       RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "$keystores.operator_ecdsa_keystore.private_key"
+      PRIVATE_KEY: "$keys.operator_ecdsa_keys.private_key"
     cmd: ["npm", "run", "start:operator"]
 
   - name: "traffic-generator"
@@ -54,13 +54,13 @@ services:
     env:
       # This expands to the RPC node's URL
       RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "$keystores.traffic_generator_ecdsa_keystore.private_key"
+      PRIVATE_KEY: "$keys.traffic_generator_ecdsa_keys.private_key"
     cmd: ["sh", "-c", "sleep 30 ; npm run start:traffic"]
 
-keystores:
-  - name: operator_ecdsa_keystore
+keys:
+  - name: operator_ecdsa_keys
     type: ecdsa
-  - name: traffic_generator_ecdsa_keystore
+  - name: traffic_generator_ecdsa_keys
     type: ecdsa
 
 ethereum_package:
