@@ -223,6 +223,7 @@ func GetAddressCmd(ctx *cli.Context) error {
 			continue
 		}
 		artifactName := path[0]
+		contractName := path[1]
 		file, ok := cached[artifactName]
 		if !ok {
 			readFile, err := readJsonArtifact(cacheDir, devnetName, artifactName)
@@ -234,13 +235,18 @@ func GetAddressCmd(ctx *cli.Context) error {
 			file = string(readFile)
 			cached[artifactName] = file
 		}
-		jsonPath := "addresses"
-		if len(path) == 2 && path[1] != "" {
-			// This searches for `path[1]` inside the json
+		var jsonPath string
+		if strings.HasPrefix(contractName, ".") {
+			// This uses the absolute path
+			jsonPath = "addresses" + contractName + "|@pretty"
+		} else if contractName != "" {
+			// This searches for `contractName` inside the json
 			// Since there are multiple results, `|0` is used to get the first one
-			jsonPath = jsonPath + "|@dig:" + path[1] + "|0"
+			jsonPath = "@dig:" + contractName + "|0|@pretty"
+		} else {
+			// This just prints the whole json
+			jsonPath = "@pretty"
 		}
-		jsonPath = jsonPath + "|@pretty"
 		res := gjson.Get(string(file), jsonPath)
 		if res.Exists() {
 			fmt.Print(res.String())
