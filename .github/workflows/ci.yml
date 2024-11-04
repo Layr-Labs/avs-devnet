@@ -1,4 +1,4 @@
-name: CI
+name: CI-Kurtosis
 
 on:
   push:
@@ -11,11 +11,13 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  KURTOSIS_VERSION: '1.3.1'
+  KURTOSIS_VERSION: '1.4.1'
+  GO_VERSION: '1.22.4'
 
 
 jobs:
-  run:
+  # Kurtosis package CI
+  kurtosis_run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,7 +36,7 @@ jobs:
         run: |
           kurtosis run ./kurtosis_package
 
-  run_examples:
+  kurtosis_run_examples:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -59,7 +61,7 @@ jobs:
       - name: Run example '${{ matrix.example }}'
         run: make start_${{ matrix.example }}
 
-  lint:
+  kurtosis_lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -75,3 +77,40 @@ jobs:
 
       - name: Kurtosis Lint
         run: kurtosis lint ./kurtosis_package
+
+  # Golang CI
+  go_fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Check go files formatting
+        working-directory: ./cli
+        # Fails if there are any unformatted files
+        run: test -z $(gofmt -l .)
+
+  go_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ./cli
+          version: latest
+
+  go_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run go test
+        working-directory: ./cli
+        run: go test -v ./...
