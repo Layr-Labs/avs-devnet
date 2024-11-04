@@ -12,6 +12,8 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
+
+	"github.com/tidwall/gjson"
 )
 
 var version = "development"
@@ -34,6 +36,12 @@ var packageNameFlag = cli.StringFlag{
 	Hidden:  true,
 	EnvVars: []string{"AVS_DEVNET__PACKAGE_NAME"},
 	Value:   "github.com/Layr-Labs/avs-devnet",
+}
+
+var configFileNameFlag = cli.StringFlag{
+	Name:  "config-file",
+	Usage: "Path to the devnet configuration file",
+	Value: "devnet.yaml",
 }
 
 func main() {
@@ -70,6 +78,15 @@ func main() {
 		Action:    StopCmd,
 	})
 
+	app.Commands = append(app.Commands, &cli.Command{
+		Name:      "get-address",
+		Usage:     "Get a devnet contract or EOA address",
+		Args:      true,
+		ArgsUsage: "<contract-name>...",
+		Flags:     []cli.Flag{&configFileNameFlag},
+		Action:    GetAddressCmd,
+	})
+
 	app.Run(os.Args)
 }
 
@@ -82,16 +99,16 @@ var DefaultConfig = `deployments:
     operators:
       # Register a single operator with EigenLayer
       - name: operator1
-        key: operator1_ecdsa_keys
+        keys: operator1_ecdsa
         # Deposit 1e17 tokens into the MockETH strategy
         strategies:
           MockETH: 100000000000000000
 
 # Specify keys to generate
 keys:
-  - name: operator1_ecdsa_keys
+  - name: operator1_ecdsa
     type: ecdsa
-  - name: operator1_bls_keys
+  - name: operator1_bls
     type: bls
 
 # ethereum-package configuration
@@ -133,14 +150,9 @@ func StartCmd(ctx *cli.Context) error {
 		return cli.Exit("Config file doesn't exist: "+argsFile, 2)
 	}
 
-	var config DevnetConfig
-	file, err := os.ReadFile(argsFile)
+	config, err := loadArgsFile(argsFile)
 	if err != nil {
-		return cli.Exit(err, 3)
-	}
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
-		return cli.Exit(err, 4)
+		return cli.Exit(err, 2)
 	}
 
 	if err := kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
@@ -183,6 +195,100 @@ func StopCmd(ctx *cli.Context) error {
 	return kurtosisRun("enclave", "rm", "-f", devnetName)
 }
 
+func GetAddressCmd(ctx *cli.Context) error {
+	args := ctx.Args()
+	argsFile := ctx.String(configFileNameFlag.Name)
+	devnetName, err := nameFromArgsFile(argsFile)
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	failed := false
+
+	cacheDir, err := os.MkdirTemp(os.TempDir(), ".devnet_cache")
+	if err != nil {
+		return cli.Exit(err, 2)
+	}
+	defer func() { _ = os.RemoveAll(cacheDir) }()
+
+	cached := make(map[string]string)
+
+	for _, arg := range args.Slice() {
+		// contract name is like "artifact-name:contract-name"
+		path := strings.Split(arg, ":")
+		// TODO: assume a length of 1 means it's just the contract name
+		if len(path) > 2 || len(path) == 1 {
+			fmt.Println("Invalid contract name: " + arg)
+			failed = true
+			continue
+		}
+		artifactName := path[0]
+		contractName := path[1]
+		file, ok := cached[artifactName]
+		if !ok {
+			readFile, err := readJsonArtifact(cacheDir, devnetName, artifactName)
+			if err != nil {
+				fmt.Println("Error reading artifact", artifactName+":", err)
+				failed = true
+				readFile = ""
+			}
+			file = string(readFile)
+			cached[artifactName] = file
+		}
+		var jsonPath string
+		if strings.HasPrefix(contractName, ".") {
+			// This uses the absolute path
+			jsonPath = "addresses" + contractName + "|@pretty"
+		} else if contractName != "" {
+			// This searches for `contractName` inside the json
+			// Since there are multiple results, `|0` is used to get the first one
+			jsonPath = "@dig:" + contractName + "|0|@pretty"
+		} else {
+			// This just prints the whole json
+			jsonPath = "@pretty"
+		}
+		res := gjson.Get(string(file), jsonPath)
+		if res.Exists() {
+			fmt.Print(res.String())
+		} else {
+			fmt.Println("Contract not found: " + arg)
+			failed = true
+		}
+	}
+	if failed {
+		return cli.Exit("", 7)
+	}
+	return nil
+}
+
+func readJsonArtifact(cacheDir string, devnetName string, artifactName string) (string, error) {
+	err := exec.Command("sh", "-c", "cd "+cacheDir+" && kurtosis files download "+devnetName+" "+artifactName).Run()
+	if err != nil {
+		return "", err
+	}
+	artifactPath := filepath.Join(cacheDir, artifactName)
+	dirEntry, err := os.ReadDir(artifactPath)
+	if err != nil {
+		return "", err
+	}
+	var readFile []byte
+	for _, entry := range dirEntry {
+		if entry.IsDir() {
+			continue
+		}
+		fileName := entry.Name()
+		if filepath.Ext(fileName) != ".json" {
+			continue
+		}
+		readFile, err = os.ReadFile(filepath.Join(artifactPath, fileName))
+		if err != nil {
+			return "", err
+		}
+		break
+	}
+	return string(readFile), nil
+}
+
 func parseArgs(ctx *cli.Context) (string, string, error) {
 	args := ctx.Args()
 	if args.Len() > 1 {
@@ -221,6 +327,19 @@ func nameFromArgsFile(argsFile string) (string, error) {
 		return "", errors.New("Invalid devnet name: " + name)
 	}
 	return name, nil
+}
+
+func loadArgsFile(argsFile string) (DevnetConfig, error) {
+	var config DevnetConfig
+	file, err := os.ReadFile(argsFile)
+	if err != nil {
+		return config, err
+	}
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		return config, err
+	}
+	return config, nil
 }
 
 func kurtosisRun(args ...string) error {
