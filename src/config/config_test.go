@@ -14,7 +14,8 @@ func TestLoadDefaultConfig(t *testing.T) {
 }
 
 func TestLoadingExampleConfigs(t *testing.T) {
-	dir, err := os.ReadDir("../../../examples")
+	examplesDir := "../../examples"
+	dir, err := os.ReadDir(examplesDir)
 	assert.NoError(t, err, "Couldn't read examples directory")
 
 	for _, file := range dir {
@@ -27,7 +28,7 @@ func TestLoadingExampleConfigs(t *testing.T) {
 			continue
 		}
 		t.Run(fileName, func(t *testing.T) {
-			_, err := LoadFromPath("../../../examples/" + fileName)
+			_, err := LoadFromPath(filepath.Join(examplesDir, fileName))
 			assert.NoError(t, err, "Couldn't load config from path")
 		})
 	}
