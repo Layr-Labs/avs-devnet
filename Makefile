@@ -5,7 +5,6 @@
 
 ##### Variables #####
 
-CLI_DIR:=cli/
 KURTOSIS_DIR:=kurtosis_package/
 KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
 
@@ -19,7 +18,7 @@ deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 
 install: generate_envscript ## 📦 Install the CLI
 	@echo "Installing package..."
-	cd $(CLI_DIR) && go install ./...
+	go install ./...
 	@-asdf reshim 2> /dev/null
 	@echo "Package installed successfully!"
 	@echo
@@ -30,33 +29,33 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
 test: ## 🧪 Run tests
-	cd $(CLI_DIR) && go test -v ./...
+	go test -v ./...
 
 
 ##### CLI #####
 
 cli_deps:
 	@echo "Installing Go dependencies..."
-	cd $(CLI_DIR) && go mod tidy
+	go mod tidy
 
 generate_envscript:
 	echo "export AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)" > env.sh
 	chmod u+x env.sh
 
 devnet.yaml:
-	cd $(CLI_DIR) && go run cmd/devnet/main.go init
+	go run cmd/devnet/main.go init
 
 cli_start_devnet: devnet.yaml ## 🚀 Start the devnet (CLI)
-	cd $(CLI_DIR) && go run cmd/devnet/main.go start
+	go run cmd/devnet/main.go start
 
 cli_stop_devnet: devnet.yaml ## 🛑 Stop the devnet (CLI)
-	cd $(CLI_DIR) && go run cmd/devnet/main.go stop
+	go run cmd/devnet/main.go stop
 
 cli_fmt:
-	cd $(CLI_DIR) && go fmt ./...
+	go fmt ./...
 
 cli_lint:
-	cd $(CLI_DIR) && golangci-lint run
+	golangci-lint run
 
 
 ##### Kurtosis Package #####
