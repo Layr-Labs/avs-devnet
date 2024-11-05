@@ -27,10 +27,10 @@ type Deployment struct {
 }
 
 type Service struct {
-	Name         string `yaml:"name"`
-	Image        string `yaml:"image"`
-	BuildContext string `yaml:"build_context"`
-	BuildFile    string `yaml:"build_file"`
+	Name         string  `yaml:"name"`
+	Image        string  `yaml:"image"`
+	BuildContext *string `yaml:"build_context"`
+	BuildFile    *string `yaml:"build_file"`
 }
 
 type DevnetConfig struct {
@@ -131,17 +131,17 @@ ethereum_package:
 `
 
 func InitCmd(ctx *cli.Context) error {
-	argsFile, _, err := parseArgs(ctx)
+	configFileName, _, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
-	if fileExists(argsFile) {
-		return cli.Exit("Config file already exists: "+argsFile, 2)
+	if fileExists(configFileName) {
+		return cli.Exit("Config file already exists: "+configFileName, 2)
 	}
 
-	fmt.Println("Creating new devnet configuration file in", argsFile)
+	fmt.Println("Creating new devnet configuration file in", configFileName)
 
-	file, err := os.Create(argsFile)
+	file, err := os.Create(configFileName)
 	if err != nil {
 		return cli.Exit(err, 3)
 	}
@@ -155,34 +155,34 @@ func InitCmd(ctx *cli.Context) error {
 func StartCmd(ctx *cli.Context) error {
 	fmt.Println("Starting devnet...")
 	pkgName := ctx.String(packageNameFlag.Name)
-	argsFile, devnetName, err := parseArgs(ctx)
+	configPath, devnetName, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
-	if !fileExists(argsFile) {
-		return cli.Exit("Config file doesn't exist: "+argsFile, 2)
+	if !fileExists(configPath) {
+		return cli.Exit("Config file doesn't exist: "+configPath, 2)
 	}
 
-	config, err := loadArgsFile(argsFile)
+	config, err := loadConfigFile(configPath)
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
 
-	if err := kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
-		return cli.Exit(err, 5)
+	err = buildDockerImages(config)
+	if err != nil {
+		return cli.Exit(err, 3)
+	}
+
+	if err = kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
+		return cli.Exit(err, 4)
 	}
 
 	err = uploadLocalRepos(config, devnetName)
 	if err != nil {
-		return cli.Exit(err, 6)
+		return cli.Exit(err, 5)
 	}
 
-	err = buildDockerImages(config, devnetName)
-	if err != nil {
-		return cli.Exit(err, 7)
-	}
-
-	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", argsFile)
+	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", configPath)
 }
 
 func StopCmd(ctx *cli.Context) error {
@@ -196,8 +196,8 @@ func StopCmd(ctx *cli.Context) error {
 
 func GetAddressCmd(ctx *cli.Context) error {
 	args := ctx.Args()
-	argsFile := ctx.String(configFileNameFlag.Name)
-	devnetName, err := nameFromArgsFile(argsFile)
+	configFileName := ctx.String(configFileNameFlag.Name)
+	devnetName, err := nameFromConfigFile(configFileName)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
@@ -302,16 +302,34 @@ func uploadLocalRepos(config DevnetConfig, devnetName string) error {
 	return nil
 }
 
-func buildDockerImages(config DevnetConfig, devnetName string) error {
+func buildDockerImages(config DevnetConfig) error {
+	errChan := make(chan error)
+	numBuilds := 0
 	for _, service := range config.Services {
-		if service.BuildContext == "" {
+		if service.BuildContext == nil {
 			continue
 		}
-		if err := kurtosisRun("services", "build", "--name", service.Name, "--context", service.BuildContext, "--file", service.BuildFile); err != nil {
-			return err
+		image := service.Image
+		cmdArgs := []string{"docker", "build", *service.BuildContext, "-t", image}
+		if service.BuildFile != nil {
+			cmdArgs = append(cmdArgs, "-f", *service.BuildFile)
 		}
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		fmt.Println("Building image", image)
+		go func() {
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				err = fmt.Errorf("building image '%s' failed: %w\n%s", image, err, output)
+			}
+			errChan <- err
+		}()
+		numBuilds += 1
 	}
-	return nil
+	errs := make([]error, numBuilds)
+	for range numBuilds {
+		errs = append(errs, <-errChan)
+	}
+	return errors.Join(errs...)
 }
 
 func readJsonArtifact(cacheDir string, devnetName string, artifactName string) (string, error) {
@@ -347,19 +365,19 @@ func parseArgs(ctx *cli.Context) (string, string, error) {
 	if args.Len() > 1 {
 		return "", "", errors.New("expected exactly 1 argument: <config-file>")
 	}
-	argsFile := args.First()
+	configFileName := args.First()
 	var devnetName string
-	if argsFile == "" {
-		argsFile = "devnet.yaml"
+	if configFileName == "" {
+		configFileName = "devnet.yaml"
 		devnetName = "devnet"
 	} else {
-		name, err := nameFromArgsFile(argsFile)
+		name, err := nameFromConfigFile(configFileName)
 		if err != nil {
 			return "", "", err
 		}
 		devnetName = name
 	}
-	return argsFile, devnetName, nil
+	return configFileName, devnetName, nil
 }
 
 func fileExists(filePath string) bool {
@@ -367,8 +385,8 @@ func fileExists(filePath string) bool {
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func nameFromArgsFile(argsFile string) (string, error) {
-	name := filepath.Base(argsFile)
+func nameFromConfigFile(fileName string) (string, error) {
+	name := filepath.Base(fileName)
 	name = strings.Split(name, ".")[0]
 	name = strings.ReplaceAll(name, "_", "-")
 	matches, err := regexp.MatchString("^[-A-Za-z0-9]{1,60}$", name)
@@ -382,9 +400,9 @@ func nameFromArgsFile(argsFile string) (string, error) {
 	return name, nil
 }
 
-func loadArgsFile(argsFile string) (DevnetConfig, error) {
+func loadConfigFile(fileName string) (DevnetConfig, error) {
 	var config DevnetConfig
-	file, err := os.ReadFile(argsFile)
+	file, err := os.ReadFile(fileName)
 	if err != nil {
 		return config, err
 	}
