@@ -33,10 +33,6 @@ examples/hello-world-avs:
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
 
-build_hello_world_image: examples/hello-world-avs
-	@echo "Building hello_world docker image..."
-	docker build -t hello_world -f examples/hello-world-avs/Dockerfile examples/hello-world-avs
-
-start_hello_world: build_hello_world_image
+start_hello_world: examples/hello-world-avs
 	@echo "Starting devnet with hello_world example..."
 	kurtosis run kurtosis_package/ --enclave=devnet --args-file=examples/hello_world.yaml
