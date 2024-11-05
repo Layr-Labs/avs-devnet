@@ -26,8 +26,16 @@ type Deployment struct {
 	// non-exhaustive
 }
 
+type Service struct {
+	Name         string `yaml:"name"`
+	Image        string `yaml:"image"`
+	BuildContext string `yaml:"build_context"`
+	BuildFile    string `yaml:"build_file"`
+}
+
 type DevnetConfig struct {
 	Deployments []Deployment `yaml:"deployments"`
+	Services    []Service    `yaml:"services"`
 	// non-exhaustive
 }
 
@@ -164,28 +172,14 @@ func StartCmd(ctx *cli.Context) error {
 		return cli.Exit(err, 5)
 	}
 
-	alreadyUploaded := make(map[string]bool)
+	err = uploadLocalRepos(config, devnetName)
+	if err != nil {
+		return cli.Exit(err, 6)
+	}
 
-	for _, deployment := range config.Deployments {
-		if deployment.Repo == "" {
-			continue
-		}
-		repoUrl, err := url.Parse(deployment.Repo)
-		if err != nil {
-			return cli.Exit(err, 6)
-		}
-		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
-			continue
-		}
-		if alreadyUploaded[repoUrl.Path] {
-			continue
-		}
-		path := repoUrl.Path
-		// Upload the file with the path as the name
-		if err := kurtosisRun("files", "upload", "--name", path, devnetName, path); err != nil {
-			return cli.Exit(err, 7)
-		}
-		alreadyUploaded[repoUrl.Path] = true
+	err = buildDockerImages(config, devnetName)
+	if err != nil {
+		return cli.Exit(err, 7)
 	}
 
 	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", argsFile)
@@ -208,17 +202,24 @@ func GetAddressCmd(ctx *cli.Context) error {
 		return cli.Exit(err, 1)
 	}
 
-	failed := false
+	err = printAddresses(args.Slice(), devnetName)
 
-	cacheDir, err := os.MkdirTemp(os.TempDir(), ".devnet_cache")
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
-	defer func() { _ = os.RemoveAll(cacheDir) }()
+	return nil
+}
 
+func printAddresses(args []string, devnetName string) error {
+	failed := false
+	cacheDir, err := os.MkdirTemp(os.TempDir(), ".devnet_cache")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.RemoveAll(cacheDir) }()
 	cached := make(map[string]string)
 
-	for _, arg := range args.Slice() {
+	for _, arg := range args {
 		// contract name is like "artifact-name:contract-name"
 		path := strings.Split(arg, ":")
 		// TODO: assume a length of 1 means it's just the contract name
@@ -240,28 +241,75 @@ func GetAddressCmd(ctx *cli.Context) error {
 			file = string(readFile)
 			cached[artifactName] = file
 		}
-		var jsonPath string
-		if strings.HasPrefix(contractName, ".") {
-			// This uses the absolute path
-			jsonPath = "addresses" + contractName + "|@pretty"
-		} else if contractName != "" {
-			// This searches for `contractName` inside the json
-			// Since there are multiple results, `|0` is used to get the first one
-			jsonPath = "@dig:" + contractName + "|0|@pretty"
-		} else {
-			// This just prints the whole json
-			jsonPath = "@pretty"
-		}
-		res := gjson.Get(string(file), jsonPath)
-		if res.Exists() {
-			fmt.Print(res.String())
-		} else {
-			fmt.Println("Contract not found: " + arg)
+		output, ok := readArtifact(file, contractName)
+		if !ok {
+			fmt.Println("Error getting", arg)
 			failed = true
+			continue
 		}
+		fmt.Println(strings.TrimSpace(output))
 	}
 	if failed {
-		return cli.Exit("", 7)
+		return errors.New("failed to get some addresses")
+	}
+	return nil
+}
+
+func readArtifact(file string, contractName string) (string, bool) {
+	var jsonPath string
+	if strings.HasPrefix(contractName, ".") {
+		// This uses the absolute path
+		jsonPath = "addresses" + contractName + "|@pretty"
+	} else if contractName != "" {
+		// This searches for `contractName` inside the json
+		// Since there are multiple results, `|0` is used to get the first one
+		jsonPath = "@dig:" + contractName + "|0|@pretty"
+	} else {
+		// This just prints the whole json
+		jsonPath = "@pretty"
+	}
+	res := gjson.Get(string(file), jsonPath)
+	if !res.Exists() {
+		return "", false
+	}
+	return res.String(), true
+}
+
+func uploadLocalRepos(config DevnetConfig, devnetName string) error {
+	alreadyUploaded := make(map[string]bool)
+
+	for _, deployment := range config.Deployments {
+		if deployment.Repo == "" {
+			continue
+		}
+		repoUrl, err := url.Parse(deployment.Repo)
+		if err != nil {
+			return err
+		}
+		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
+			continue
+		}
+		if alreadyUploaded[repoUrl.Path] {
+			continue
+		}
+		path := repoUrl.Path
+		// Upload the file with the path as the name
+		if err := kurtosisRun("files", "upload", "--name", path, devnetName, path); err != nil {
+			return err
+		}
+		alreadyUploaded[repoUrl.Path] = true
+	}
+	return nil
+}
+
+func buildDockerImages(config DevnetConfig, devnetName string) error {
+	for _, service := range config.Services {
+		if service.BuildContext == "" {
+			continue
+		}
+		if err := kurtosisRun("services", "build", "--name", service.Name, "--context", service.BuildContext, "--file", service.BuildFile); err != nil {
+			return err
+		}
 	}
 	return nil
 }
