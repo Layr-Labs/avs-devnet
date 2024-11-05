@@ -7,6 +7,7 @@
 
 CLI_DIR:=cli/
 KURTOSIS_DIR:=kurtosis_package/
+KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
 
 
 ##### General #####
@@ -14,7 +15,7 @@ KURTOSIS_DIR:=kurtosis_package/
 help: ## 📚 Show help for each of the Makefile recipes
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-deps: cli_deps ## 📥 Install dependencies
+deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 
 install: generate_envscript ## 📦 Install the CLI
 	@echo "Installing package..."
@@ -32,7 +33,7 @@ lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 ##### CLI #####
 
 cli_deps:
-	@echo "Installing dependencies..."
+	@echo "Installing Go dependencies..."
 	cd $(CLI_DIR) && go mod tidy
 
 generate_envscript:
@@ -56,6 +57,11 @@ cli_lint:
 
 
 ##### Kurtosis Package #####
+
+kurtosis_deps:
+	@echo "Checking Kurtosis is installed..."
+	@command -v kurtosis 2>&1 > /dev/null || (echo "Kurtosis CLI not found. Please install it from https://docs.kurtosis.com/install/" && exit 1)
+	@command -v docker 2>&1 > /dev/null || (echo "Docker not found" && exit 1)
 
 kurtosis_start_devnet: ## 🚀 Start the devnet (Kurtosis)
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=$(KURTOSIS_DIR)/devnet_params.yaml
