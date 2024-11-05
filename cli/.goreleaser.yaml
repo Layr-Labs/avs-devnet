@@ -1,0 +1,32 @@
+# Taken from https://github.com/Layr-Labs/eigenlayer-cli/blob/4ab21e57e58a7bd4008465818ed43910a2507b8b/.goreleaser.yml
+
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+builds:
+  - id: devnet
+    main: ./cmd/devnet/main.go
+    binary: devnet
+    flags:
+      - -v
+    ldflags:
+      - -X 'main.version={{.Version}}'
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+release:
+  # Repo in which the release will be created.
+  # Default is extracted from the origin remote URL or empty if its private hosted.
+  github:
+    owner: Layr-Labs
+    name: avs-devnet
+
+  draft: true
