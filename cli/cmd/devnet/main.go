@@ -81,35 +81,6 @@ func main() {
 	}
 }
 
-var DefaultConfig = `deployments:
-  # Deploy EigenLayer
-  - type: EigenLayer
-    ref: v0.4.2-mainnet-pepe
-    # Whitelist a single strategy named MockETH, backed by a mock-token
-    strategies: [MockETH]
-    operators:
-      # Register a single operator with EigenLayer
-      - name: operator1
-        keys: operator1_ecdsa
-        # Deposit 1e17 tokens into the MockETH strategy
-        strategies:
-          MockETH: 100000000000000000
-
-# Specify keys to generate
-keys:
-  - name: operator1_ecdsa
-    type: ecdsa
-  - name: operator1_bls
-    type: bls
-
-# ethereum-package configuration
-ethereum_package:
-  participants:
-    - el_type: erigon
-  additional_services:
-    - blockscout
-`
-
 func InitCmd(ctx *cli.Context) error {
 	configFileName, _, err := parseArgs(ctx)
 	if err != nil {
@@ -125,7 +96,7 @@ func InitCmd(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 3)
 	}
-	_, err = file.WriteString(DefaultConfig)
+	_, err = file.WriteString(config.DefaultConfig)
 	if err != nil {
 		return cli.Exit(err, 4)
 	}
