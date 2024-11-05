@@ -1,4 +1,4 @@
-name: CI-Kurtosis
+name: CI
 
 on:
   push:
