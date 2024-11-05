@@ -112,5 +112,4 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Run go test
-        working-directory: ./cli
         run: make test
