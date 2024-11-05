@@ -59,7 +59,7 @@ jobs:
         shell: bash
 
       - name: Run example '${{ matrix.example }}'
-        run: make start_${{ matrix.example }}
+        run: make kurtosis_${{ matrix.example }}
 
   kurtosis_lint:
     runs-on: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
         shell: bash
 
       - name: Kurtosis Lint
-        run: kurtosis lint ./kurtosis_package
+        run: make kurtosis_lint
 
   # Golang CI
   go_fmt:
