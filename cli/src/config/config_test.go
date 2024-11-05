@@ -1,13 +1,17 @@
 package config
 
 import (
-	_ "embed"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLoadDefaultConfig(t *testing.T) {
+	_, err := Unmarshal([]byte(DefaultConfig))
+	assert.NoError(t, err, "Couldn't parse default config")
+}
 
 func TestLoadingExampleConfigs(t *testing.T) {
 	dir, err := os.ReadDir("../../../examples")

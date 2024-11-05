@@ -19,13 +19,21 @@ func Init(ctx *cli.Context) error {
 
 	fmt.Println("Creating new devnet configuration file in", configFileName)
 
-	file, err := os.Create(configFileName)
+	err = initializeConfigFile(configFileName)
 	if err != nil {
 		return cli.Exit(err, 3)
 	}
+	return nil
+}
+
+func initializeConfigFile(configFileName string) error {
+	file, err := os.Create(configFileName)
+	if err != nil {
+		return err
+	}
 	_, err = file.WriteString(config.DefaultConfig)
 	if err != nil {
-		return cli.Exit(err, 4)
+		return err
 	}
 	return file.Close()
 }
