@@ -42,9 +42,9 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - devnet
-          - incredible_squaring
-          - hello_world
+          - kurtosis_start_devnet
+          - kurtosis_incredible_squaring
+          - kurtosis_hello_world
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -59,7 +59,7 @@ jobs:
         shell: bash
 
       - name: Run example '${{ matrix.example }}'
-        run: make kurtosis_${{ matrix.example }}
+        run: make ${{ matrix.example }}
 
   kurtosis_lint:
     runs-on: ubuntu-latest
