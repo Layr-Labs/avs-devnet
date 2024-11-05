@@ -1,4 +1,4 @@
-.PHONY: help deps install fmt lint \
+.PHONY: help deps install fmt lint test \
 	cli_deps generate_envscript cli_start cli_stop cli_fmt cli_lint \
 	kurtosis_start kurtosis_stop kurtosis_fmt \
 	kurtosis_incredible_squaring kurtosis_hello_world build_hello_world_image
@@ -29,6 +29,9 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
+test: ## 🧪 Run tests
+	cd $(CLI_DIR) && go test -v ./...
+
 
 ##### CLI #####
 
@@ -55,8 +58,6 @@ cli_fmt:
 cli_lint:
 	cd $(CLI_DIR) && golangci-lint run
 
-test: ## 🧪 Run tests
-	cd $(CLI_DIR) && go test -v ./...
 
 ##### Kurtosis Package #####
 
