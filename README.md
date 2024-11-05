@@ -18,7 +18,15 @@ For local development, we require the `go` toolchain to be installed.
 
 ## Installation
 
-TODO: add instructions on how to install
+To build and install the CLI locally, run:
+
+```sh
+make deps      # installs dependencies
+make install   # installs the project
+
+# this command should be run once per shell
+source env.sh  # set env-vars
+```
 
 ## How to Use
 
