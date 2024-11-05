@@ -94,6 +94,31 @@ $ devnet get-address eigenlayer_addresses:.MockETH  # this fails
 Contract not found: eigenlayer_addresses:.MockETH
 ```
 
+### Local development
+
+Some fields in the config can be used to ease deployment of local projects.
+
+The `repo` field in `deployments` accepts local paths.
+This can be used when deployments should be done from locally available versions.
+
+```yaml
+deployments:
+  - name: some-deployment
+    repo: "foo/bar/baz"
+```
+
+The `build_context` field in `services`, if specified, allows the Devnet to automatically build docker images via `docker build`.
+Images are built in the specified context, and tagged with the name specified in the `image` field.
+If the build file is named something other than `Dockerfile`, or isn't located in the context, you can use `build_file` to specify the path.
+
+```yaml
+services:
+  - name: my-service
+    image: some-local-image-name
+    build_context: path/to/context
+    build_file: path/to/context/Dockerfile
+```
+
 ### More Help
 
 You can find the options for each command by appending `--help`:
