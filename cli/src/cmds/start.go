@@ -1,7 +1,10 @@
 package cmds
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"os/exec"
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/config"
@@ -39,4 +42,61 @@ func Start(ctx *cli.Context) error {
 	}
 
 	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", configPath)
+}
+
+func uploadLocalRepos(config config.DevnetConfig, devnetName string) error {
+	alreadyUploaded := make(map[string]bool)
+
+	for _, deployment := range config.Deployments {
+		if deployment.Repo == "" {
+			continue
+		}
+		repoUrl, err := url.Parse(deployment.Repo)
+		if err != nil {
+			return err
+		}
+		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
+			continue
+		}
+		if alreadyUploaded[repoUrl.Path] {
+			continue
+		}
+		path := repoUrl.Path
+		// Upload the file with the path as the name
+		if err := kurtosisRun("files", "upload", "--name", path, devnetName, path); err != nil {
+			return err
+		}
+		alreadyUploaded[repoUrl.Path] = true
+	}
+	return nil
+}
+
+func buildDockerImages(config config.DevnetConfig) error {
+	errChan := make(chan error)
+	numBuilds := 0
+	for _, service := range config.Services {
+		if service.BuildContext == nil {
+			continue
+		}
+		image := service.Image
+		cmdArgs := []string{"docker", "build", *service.BuildContext, "-t", image}
+		if service.BuildFile != nil {
+			cmdArgs = append(cmdArgs, "-f", *service.BuildFile)
+		}
+		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		fmt.Println("Building image", image)
+		go func() {
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				err = fmt.Errorf("building image '%s' failed: %w\n%s", image, err, output)
+			}
+			errChan <- err
+		}()
+		numBuilds += 1
+	}
+	errs := make([]error, numBuilds)
+	for range numBuilds {
+		errs = append(errs, <-errChan)
+	}
+	return errors.Join(errs...)
 }
