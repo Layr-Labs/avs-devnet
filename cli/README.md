@@ -5,7 +5,7 @@ Provides an easier way to interact with the devnet package.
 
 ## Local development
 
-Clone the repo, and inside this directory, run:
+While in the root, run:
 
 ```sh
 make deps     # installs dependencies
