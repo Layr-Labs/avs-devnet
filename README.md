@@ -132,6 +132,8 @@ deployments:
   - name: deployment-name
     # The repo to fetch the contracts from
     repo: "https://github.com/some-org/some-repo.git"
+    # This can also be a local path (absolute or relative)
+    # repo: ./foo/bar
     # The commit/branch/tag to use
     ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
     # The path to the foundry project inside the repo
@@ -196,6 +198,11 @@ services:
   - name: "aggregator"
     # The docker image to use
     image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    # Local images are built automatically when specifying `build_context`
+    # Specifies the context for the image's dockerfile
+    build_context: path/to/context
+    # Optional. Used to override the default of "build_context/Dockerfile".
+    build_file: path/to/context/Dockerfile
     # The ports to expose on the container
     ports:
       # The key is a name for the port
@@ -230,6 +237,11 @@ keys:
   - name: "ecdsa_keys"
     # Type of keys: bls, ecdsa
     type: "ecdsa"
+    # Key details will be dynamically generated unless specified
+    # Address of the precomputed key
+    address: "0xdeadbeef"
+    # Private key of the precomputed key
+    private_key: "0xdeadbeef"
 
 # Lists artifacts to be generated at startup
 artifacts:
