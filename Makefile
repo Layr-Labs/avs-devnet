@@ -55,6 +55,8 @@ cli_fmt:
 cli_lint:
 	cd $(CLI_DIR) && golangci-lint run
 
+test: ## 🧪 Run tests
+	cd $(CLI_DIR) && go test -v ./...
 
 ##### Kurtosis Package #####
 
