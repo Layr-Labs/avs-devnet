@@ -2,9 +2,8 @@ package kurtosis
 
 import (
 	"context"
+	"os/exec"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
 	"github.com/kurtosis-tech/kurtosis/api/golang/engine/lib/kurtosis_context"
 )
@@ -21,14 +20,12 @@ func InitKurtosisContext() (KurtosisCtx, error) {
 	ctx, err := kurtosis_context.NewKurtosisContextFromLocalEngine()
 	if err != nil {
 		// Kurtosis engine is probably not running. Try to start it.
-		cli, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
+		// TODO: avoid using the CLI for this
+		if exec.Command("kurtosis", "engine", "start").Run() != nil {
+
 			return KurtosisCtx{}, err
 		}
-		config := container.Config{
-			Image: "kurtosistech/engine:latest",
-		}
-		cli.ContainerCreate(context.Background(), &config, nil, nil, nil, "")
+		ctx, err = kurtosis_context.NewKurtosisContextFromLocalEngine()
 	}
 
 	return KurtosisCtx{ctx}, err
