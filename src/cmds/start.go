@@ -51,6 +51,9 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	if err != nil {
 		return err
 	}
+	if kurtosisCtx.EnclaveExists(ctx.Context, devnetName) {
+		return errors.New("devnet already running")
+	}
 	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx.Context, devnetName)
 	if err != nil {
 		return err

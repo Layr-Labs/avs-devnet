@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
+	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v2"
 )
@@ -21,10 +22,16 @@ func GetAddress(ctx *cli.Context) error {
 		return cli.Exit(err, 1)
 	}
 
+	kurtosisCtx, err := kurtosis.InitKurtosisContext()
+	if err != nil {
+		return cli.Exit(err, 2)
+	}
+	kurtosisCtx.EnclaveExists(ctx.Context, devnetName)
+
 	err = printAddresses(args.Slice(), devnetName)
 
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, 3)
 	}
 	return nil
 }
