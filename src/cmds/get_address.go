@@ -3,13 +3,11 @@ package cmds
 import (
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
+	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/services"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v2"
 )
@@ -26,9 +24,12 @@ func GetAddress(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
-	kurtosisCtx.EnclaveExists(ctx.Context, devnetName)
+	enclaveCtx, err := kurtosisCtx.GetEnclaveCtx(ctx.Context, devnetName)
+	if err != nil {
+		return cli.Exit("Failed to find '"+devnetName+"'. Maybe it's not running?", 3)
+	}
 
-	err = printAddresses(args.Slice(), devnetName)
+	err = printAddresses(ctx, args.Slice(), enclaveCtx)
 
 	if err != nil {
 		return cli.Exit(err, 3)
@@ -36,13 +37,8 @@ func GetAddress(ctx *cli.Context) error {
 	return nil
 }
 
-func printAddresses(args []string, devnetName string) error {
+func printAddresses(ctx *cli.Context, args []string, enclaveCtx kurtosis.EnclaveCtx) error {
 	failed := false
-	cacheDir, err := os.MkdirTemp(os.TempDir(), ".devnet_cache")
-	if err != nil {
-		return err
-	}
-	defer func() { _ = os.RemoveAll(cacheDir) }()
 	cached := make(map[string]string)
 
 	for _, arg := range args {
@@ -58,7 +54,7 @@ func printAddresses(args []string, devnetName string) error {
 		contractName := path[1]
 		file, ok := cached[artifactName]
 		if !ok {
-			readFile, err := readJsonArtifact(cacheDir, devnetName, artifactName)
+			readFile, err := readJsonArtifact(ctx, enclaveCtx, artifactName)
 			if err != nil {
 				fmt.Println("Error reading artifact", artifactName+":", err)
 				failed = true
@@ -101,30 +97,15 @@ func readArtifact(file string, contractName string) (string, bool) {
 	return res.String(), true
 }
 
-func readJsonArtifact(cacheDir string, devnetName string, artifactName string) (string, error) {
-	err := exec.Command("sh", "-c", "cd "+cacheDir+" && kurtosis files download "+devnetName+" "+artifactName).Run()
+func readJsonArtifact(ctx *cli.Context, enclaveCtx kurtosis.EnclaveCtx, artifactName string) (string, error) {
+	artifactInfo, err := enclaveCtx.InspectFilesArtifact(ctx.Context, services.FileArtifactName(artifactName))
 	if err != nil {
 		return "", err
 	}
-	artifactPath := filepath.Join(cacheDir, artifactName)
-	dirEntry, err := os.ReadDir(artifactPath)
-	if err != nil {
-		return "", err
+	for _, file := range artifactInfo.GetFileDescriptions() {
+		if strings.HasSuffix(file.GetPath(), ".json") {
+			return file.GetTextPreview(), nil
+		}
 	}
-	var readFile []byte
-	for _, entry := range dirEntry {
-		if entry.IsDir() {
-			continue
-		}
-		fileName := entry.Name()
-		if filepath.Ext(fileName) != ".json" {
-			continue
-		}
-		readFile, err = os.ReadFile(filepath.Join(artifactPath, fileName))
-		if err != nil {
-			return "", err
-		}
-		break
-	}
-	return string(readFile), nil
+	return "", errors.New("No json file found in artifact " + artifactName)
 }
