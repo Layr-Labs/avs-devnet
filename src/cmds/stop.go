@@ -20,5 +20,6 @@ func Stop(ctx *cli.Context) error {
 	if err = kurtosisCtx.DestroyEnclave(ctx.Context, devnetName); err != nil {
 		return cli.Exit(err, 3)
 	}
+	fmt.Println("Devnet stopped!")
 	return err
 }

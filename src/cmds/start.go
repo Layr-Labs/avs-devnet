@@ -10,9 +10,9 @@ import (
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/config"
+	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/starlark_run_config"
-	"github.com/kurtosis-tech/kurtosis/api/golang/engine/lib/kurtosis_context"
 	"github.com/urfave/cli/v2"
 )
 
@@ -47,7 +47,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return err
 	}
 
-	kurtosisCtx, err := kurtosis_context.NewKurtosisContextFromLocalEngine()
+	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
 		return err
 	}
