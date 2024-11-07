@@ -31,6 +31,7 @@ type Service struct {
 	Image        string  `yaml:"image"`
 	BuildContext *string `yaml:"build_context"`
 	BuildFile    *string `yaml:"build_file"`
+	// non-exhaustive
 }
 
 type DevnetConfig struct {
@@ -310,11 +311,11 @@ func buildDockerImages(config DevnetConfig) error {
 			continue
 		}
 		image := service.Image
-		cmdArgs := []string{"docker", "build", *service.BuildContext, "-t", image}
+		cmdArgs := []string{"build", *service.BuildContext, "-t", image}
 		if service.BuildFile != nil {
 			cmdArgs = append(cmdArgs, "-f", *service.BuildFile)
 		}
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+		cmd := exec.Command("docker", cmdArgs...)
 		fmt.Println("Building image", image)
 		go func() {
 			output, err := cmd.CombinedOutput()
