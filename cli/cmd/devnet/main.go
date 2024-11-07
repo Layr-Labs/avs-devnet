@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -87,7 +88,9 @@ func main() {
 		Action:    GetAddressCmd,
 	})
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
 
 var DefaultConfig = `deployments:
@@ -134,7 +137,10 @@ func InitCmd(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 3)
 	}
-	file.WriteString(DefaultConfig)
+	_, err = file.WriteString(DefaultConfig)
+	if err != nil {
+		return cli.Exit(err, 4)
+	}
 	return file.Close()
 }
 
