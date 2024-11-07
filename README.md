@@ -14,9 +14,19 @@ Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 As part of that, you'll also need to install Docker.
 
+For local development, we require the `go` toolchain to be installed.
+
 ## Installation
 
-TODO: add instructions on how to install
+To build and install the CLI locally, run:
+
+```sh
+make deps      # installs dependencies
+make install   # installs the project
+
+# this command should be run once per shell
+source env.sh  # set env-vars
+```
 
 ## How to Use
 
@@ -308,7 +318,7 @@ ethereum_package:
 
 > [!WARNING]
 > Some features won't be available when starting the devnet via Kurtosis CLI.
-> This is due to the pre-processing of the args-file in our CLI.
+> This is because the CLI pre-processes some parts of the args-file before invoking Kurtosis.
 
 ### How to run
 
@@ -373,50 +383,7 @@ kurtosis files download my_devnet <artifact name>
 
 This produces a folder named like the artifact containing its files.
 
-## Local development
+## Contributing
 
 We have a Makefile for some of the usual tasks.
-
-### Start the devnet
-
-This registers the devnet with Kurtosis, and runs it.
-The command can be run multiple times, each one updating the devnet configuration.
-
-```sh
-make start_devnet
-```
-
-### Stop the devnet
-
-This stops the devnet without removing containers and file artifacts.
-
-```sh
-make stop_devnet
-```
-
-### Remove the devnet
-
-This stops the devnet, removing containers and file artifacts.
-
-```sh
-make clean_devnet
-```
-
-### Formatting files
-
-To format the Starlark scripts, run:
-
-```sh
-make format
-```
-
-### Starting an example
-
-Some of the targets run with the configurations under [examples](./examples/).
-
-```sh
-# https://github.com/Layr-Labs/incredible-squaring-avs
-make start_incredible_squaring
-# https://github.com/Layr-Labs/hello-world-avs
-make start_hello_world
-```
+Run `make help` for more info.
