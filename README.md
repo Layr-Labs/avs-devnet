@@ -94,6 +94,31 @@ $ devnet get-address eigenlayer_addresses:.MockETH  # this fails
 Contract not found: eigenlayer_addresses:.MockETH
 ```
 
+### Local development
+
+Some fields in the config can be used to ease deployment of local projects.
+
+The `repo` field in `deployments` accepts local paths.
+This can be used when deployments should be done from locally available versions.
+
+```yaml
+deployments:
+  - name: some-deployment
+    repo: "foo/bar/baz"
+```
+
+The `build_context` field in `services`, if specified, allows the Devnet to automatically build docker images via `docker build`.
+Images are built in the specified context, and tagged with the name specified in the `image` field.
+If the build file is named something other than `Dockerfile`, or isn't located in the context, you can use `build_file` to specify the path.
+
+```yaml
+services:
+  - name: my-service
+    image: some-local-image-name
+    build_context: path/to/context
+    build_file: path/to/context/Dockerfile
+```
+
 ### More Help
 
 You can find the options for each command by appending `--help`:
@@ -132,6 +157,8 @@ deployments:
   - name: deployment-name
     # The repo to fetch the contracts from
     repo: "https://github.com/some-org/some-repo.git"
+    # This can also be a local path (absolute or relative)
+    # repo: ./foo/bar
     # The commit/branch/tag to use
     ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
     # The path to the foundry project inside the repo
@@ -196,6 +223,11 @@ services:
   - name: "aggregator"
     # The docker image to use
     image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    # Local images are built automatically when specifying `build_context`
+    # Specifies the context for the image's dockerfile
+    build_context: path/to/context
+    # Optional. Used to override the default of "build_context/Dockerfile".
+    build_file: path/to/context/Dockerfile
     # The ports to expose on the container
     ports:
       # The key is a name for the port
@@ -230,6 +262,11 @@ keys:
   - name: "ecdsa_keys"
     # Type of keys: bls, ecdsa
     type: "ecdsa"
+    # Key details will be dynamically generated unless specified
+    # Address of the precomputed key
+    address: "0xdeadbeef"
+    # Private key of the precomputed key
+    private_key: "0xdeadbeef"
 
 # Lists artifacts to be generated at startup
 artifacts:
