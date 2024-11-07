@@ -7,6 +7,7 @@
 
 KURTOSIS_DIR:=kurtosis_package/
 KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
+PACKAGE_ENV_VAR:=AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)
 
 
 ##### General #####
@@ -39,17 +40,17 @@ cli_deps:
 	go mod tidy
 
 generate_envscript:
-	echo "export AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)" > env.sh
+	echo "export $(PACKAGE_ENV_VAR)" > env.sh
 	chmod u+x env.sh
 
 devnet.yaml:
-	go run cmd/devnet/main.go init
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go init
 
 cli_start: devnet.yaml ## 🚀 Start the devnet (CLI)
-	go run cmd/devnet/main.go start
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go start
 
 cli_stop: devnet.yaml ## 🛑 Stop the devnet (CLI)
-	go run cmd/devnet/main.go stop
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go stop
 
 cli_fmt:
 	go fmt ./...
