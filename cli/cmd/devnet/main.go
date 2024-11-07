@@ -11,34 +11,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Layr-Labs/avs-devnet/src/config"
 	"github.com/urfave/cli/v2"
-	"gopkg.in/yaml.v3"
 
 	"github.com/tidwall/gjson"
 )
 
 var version = "development"
-
-type Deployment struct {
-	Name string `yaml:"name"`
-	Repo string `yaml:"repo"`
-	Ref  string `yaml:"ref"`
-	// non-exhaustive
-}
-
-type Service struct {
-	Name         string  `yaml:"name"`
-	Image        string  `yaml:"image"`
-	BuildContext *string `yaml:"build_context"`
-	BuildFile    *string `yaml:"build_file"`
-	// non-exhaustive
-}
-
-type DevnetConfig struct {
-	Deployments []Deployment `yaml:"deployments"`
-	Services    []Service    `yaml:"services"`
-	// non-exhaustive
-}
 
 var packageNameFlag = cli.StringFlag{
 	Name:    "package-name",
@@ -164,7 +143,7 @@ func StartCmd(ctx *cli.Context) error {
 		return cli.Exit("Config file doesn't exist: "+configPath, 2)
 	}
 
-	config, err := loadConfigFile(configPath)
+	config, err := config.LoadFromPath(configPath)
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
@@ -276,7 +255,7 @@ func readArtifact(file string, contractName string) (string, bool) {
 	return res.String(), true
 }
 
-func uploadLocalRepos(config DevnetConfig, devnetName string) error {
+func uploadLocalRepos(config config.DevnetConfig, devnetName string) error {
 	alreadyUploaded := make(map[string]bool)
 
 	for _, deployment := range config.Deployments {
@@ -303,7 +282,7 @@ func uploadLocalRepos(config DevnetConfig, devnetName string) error {
 	return nil
 }
 
-func buildDockerImages(config DevnetConfig) error {
+func buildDockerImages(config config.DevnetConfig) error {
 	errChan := make(chan error)
 	numBuilds := 0
 	for _, service := range config.Services {
@@ -399,19 +378,6 @@ func nameFromConfigFile(fileName string) (string, error) {
 		return "", errors.New("Invalid devnet name: " + name)
 	}
 	return name, nil
-}
-
-func loadConfigFile(fileName string) (DevnetConfig, error) {
-	var config DevnetConfig
-	file, err := os.ReadFile(fileName)
-	if err != nil {
-		return config, err
-	}
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
-		return config, err
-	}
-	return config, nil
 }
 
 func kurtosisRun(args ...string) error {
