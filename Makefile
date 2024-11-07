@@ -1,6 +1,6 @@
 .PHONY: help deps install fmt lint \
-	cli_deps generate_envscript cli_start_devnet cli_stop_devnet cli_fmt cli_lint \
-	kurtosis_start_devnet kurtosis_stop_devnet kurtosis_fmt \
+	cli_deps generate_envscript cli_start cli_stop cli_fmt cli_lint \
+	kurtosis_start kurtosis_stop kurtosis_fmt \
 	kurtosis_incredible_squaring kurtosis_hello_world build_hello_world_image
 
 ##### Variables #####
@@ -43,10 +43,10 @@ generate_envscript:
 devnet.yaml:
 	cd $(CLI_DIR) && go run cmd/devnet/main.go init
 
-cli_start_devnet: devnet.yaml ## 🚀 Start the devnet (CLI)
+cli_start: devnet.yaml ## 🚀 Start the devnet (CLI)
 	cd $(CLI_DIR) && go run cmd/devnet/main.go start
 
-cli_stop_devnet: devnet.yaml ## 🛑 Stop the devnet (CLI)
+cli_stop: devnet.yaml ## 🛑 Stop the devnet (CLI)
 	cd $(CLI_DIR) && go run cmd/devnet/main.go stop
 
 cli_fmt:
@@ -63,10 +63,10 @@ kurtosis_deps:
 	@command -v kurtosis 2>&1 > /dev/null || (echo "Kurtosis CLI not found. Please install it from https://docs.kurtosis.com/install/" && exit 1)
 	@command -v docker 2>&1 > /dev/null || (echo "Docker not found" && exit 1)
 
-kurtosis_start_devnet: ## 🚀 Start the devnet (Kurtosis)
+kurtosis_start: ## 🚀 Start the devnet (Kurtosis)
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=$(KURTOSIS_DIR)/devnet_params.yaml
 
-kurtosis_stop_devnet: ## 🛑 Stop the devnet (Kurtosis)
+kurtosis_stop: ## 🛑 Stop the devnet (Kurtosis)
 	-kurtosis enclave rm -f devnet
 
 kurtosis_fmt:

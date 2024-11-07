@@ -42,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - kurtosis_start_devnet
+          - kurtosis_start
           - kurtosis_incredible_squaring
           - kurtosis_hello_world
     steps:
