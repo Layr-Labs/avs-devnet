@@ -138,7 +138,7 @@ func newValidationProgressBar(max int) *progressbar.ProgressBar {
 		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionShowCount(),
 		progressbar.OptionSpinnerType(14),
-		progressbar.OptionSetWidth(20),
+		progressbar.OptionFullWidth(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",
