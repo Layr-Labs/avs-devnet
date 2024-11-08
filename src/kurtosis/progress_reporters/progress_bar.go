@@ -1,6 +1,7 @@
 package progress_reporters
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -73,6 +74,12 @@ func ReportProgress(reporter KurtosisReporter) error {
 			} else {
 				cp.Details = []string{}
 			}
+			pb.Describe(cp.Description)
+			for _, detail := range cp.Details {
+				if err := pb.AddDetail(detail); err != nil {
+					return err
+				}
+			}
 			if progressInfo.TotalSteps != 0 {
 				cp.TotalSteps = progressInfo.TotalSteps
 				cp.CurrentStep = progressInfo.CurrentStepNumber
@@ -90,18 +97,20 @@ func ReportProgress(reporter KurtosisReporter) error {
 				detail = detail[:57] + "..."
 			}
 			cp.Details = append(cp.Details, detail)
+			pb.Describe(cp.Description)
+			for _, detail := range cp.Details {
+				pb.AddDetail(detail)
+			}
 		}
 		if line.GetInfo() != nil {
 			pb.Clear()
 			// It's an info
 			fmt.Println("INFO:", line.GetInfo().InfoMessage)
-			continue
 		}
 		if line.GetWarning() != nil {
 			pb.Clear()
 			// It's a warning
 			fmt.Println(line.GetWarning().WarningMessage)
-			continue
 		}
 		if line.GetInstructionResult() != nil {
 			// It's an instruction result
@@ -112,12 +121,21 @@ func ReportProgress(reporter KurtosisReporter) error {
 			// 	detail = detail[:37] + "..."
 			// }
 			// cp.Details = append(cp.Details, detail)
-			continue
 		}
 		if line.GetError() != nil {
 			// It's an error
 			pb.Exit()
-			fmt.Println(line.GetError().Error)
+			var msg string
+			if err := line.GetError().GetValidationError(); err != nil {
+				msg = err.ErrorMessage
+			}
+			if err := line.GetError().GetInterpretationError(); err != nil {
+				msg = err.ErrorMessage
+			}
+			if err := line.GetError().GetExecutionError(); err != nil {
+				msg = err.ErrorMessage
+			}
+			return errors.New("error occurred during execution: " + msg)
 		}
 		if line.GetRunFinishedEvent() != nil {
 			// It's a run finished event
@@ -130,13 +148,6 @@ func ReportProgress(reporter KurtosisReporter) error {
 			}
 			fmt.Println(event.SerializedOutput)
 			break
-		}
-
-		pb.Describe(cp.Description)
-		for _, detail := range cp.Details {
-			if err := pb.AddDetail(detail); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
