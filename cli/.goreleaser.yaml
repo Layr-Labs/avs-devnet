@@ -13,6 +13,7 @@ builds:
       - -v
     ldflags:
       - -X 'main.version={{.Version}}'
+      - -X 'flags.defaultKurtosisPackage=github.com/Layr-Labs/avs-devnet@v{{.Version}}'
     env:
       - CGO_ENABLED=0
     goos:

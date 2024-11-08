@@ -37,7 +37,7 @@ cli_deps:
 	cd $(CLI_DIR) && go mod tidy
 
 generate_envscript:
-	echo "export AVS_DEVNET__PACKAGE_NAME=$(shell cd $(KURTOSIS_DIR) && pwd -P)" > env.sh
+	echo "export AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)" > env.sh
 	chmod u+x env.sh
 
 devnet.yaml:
