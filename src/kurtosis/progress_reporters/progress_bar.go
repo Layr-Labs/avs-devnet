@@ -25,7 +25,6 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		if line.GetProgressInfo() != nil {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
-			fmt.Fprintln(os.Stderr, "progress: ", progressInfo)
 			if len(progressInfo.CurrentStepInfo) == 0 {
 				continue
 			}
@@ -70,7 +69,6 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		if line.GetInstruction() != nil {
 			// It's an instruction
 			instruction := line.GetInstruction()
-			fmt.Fprintln(os.Stderr, instruction.Description)
 			detail := instruction.Description
 			if len(instruction.Description) > 60 {
 				detail = detail[:57] + "..."
@@ -100,7 +98,6 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		if line.GetInstructionResult() != nil {
 			// It's an instruction result
 			result := line.GetInstructionResult()
-			fmt.Fprintln(os.Stderr, result)
 			detail := result.SerializedInstructionResult
 			if len(result.SerializedInstructionResult) > 40 {
 				detail = detail[:37] + "..."
