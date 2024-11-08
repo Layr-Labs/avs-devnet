@@ -1,0 +1,54 @@
+# Taken from https://github.com/Layr-Labs/eigenlayer-cli/blob/79add3518f856c71faa3b95b383e35df370bcc52/.github/workflows/release.yml
+name: Release (with lint and test)
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  GO_VERSION: '1.22.4'
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ./cli
+          version: latest
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run go test
+        working-directory: ./cli
+        run: go test -v ./...
+
+  release:
+    needs: [lint, test]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # History is needed when generating the changelog
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: release --clean
+        env:
+          # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -28,3 +28,4 @@ examples/hello-world-avs
 
 devnet.yaml
 env.sh
+dist/

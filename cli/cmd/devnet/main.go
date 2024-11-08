@@ -45,7 +45,7 @@ var packageNameFlag = cli.StringFlag{
 	Usage:   "Locator for the Kurtosis package to run",
 	Hidden:  true,
 	EnvVars: []string{"AVS_DEVNET__PACKAGE_NAME"},
-	Value:   "github.com/Layr-Labs/avs-devnet",
+	Value:   "github.com/Layr-Labs/avs-devnet@v" + version,
 }
 
 var configFileNameFlag = cli.StringFlag{
