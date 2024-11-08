@@ -10,17 +10,8 @@ import (
 )
 
 type KurtosisResponse = *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
-type KurtosisReporter = chan KurtosisResponse
 
-// type ProgressBarReporter struct {
-// 	progressBar  *progressbar.ProgressBar
-// 	info         []string
-// 	currentStage int
-// 	currentStep  int
-// 	totalSteps   int
-// }
-
-func ReportProgress(reporter KurtosisReporter) error {
+func ReportProgress(reporter chan KurtosisResponse) error {
 	pb := newValidationProgressBar(-1)
 	if err := pb.RenderBlank(); err != nil {
 		return err
@@ -99,11 +90,11 @@ func ReportProgress(reporter KurtosisReporter) error {
 			// It's an instruction result
 			result := line.GetInstructionResult()
 			fmt.Fprintln(os.Stderr, result)
-			// detail := result.SerializedInstructionResult
-			// if len(result.SerializedInstructionResult) > 40 {
-			// 	detail = detail[:37] + "..."
-			// }
-			// details = append(details, detail)
+			detail := result.SerializedInstructionResult
+			if len(result.SerializedInstructionResult) > 40 {
+				detail = detail[:37] + "..."
+			}
+			details = append(details, detail)
 		}
 		if line.GetError() != nil {
 			// It's an error
@@ -144,13 +135,8 @@ func newValidationProgressBar(max int) *progressbar.ProgressBar {
 		progressbar.OptionClearOnFinish(),
 		progressbar.OptionSetElapsedTime(true),
 		progressbar.OptionSetPredictTime(false),
-		// TODO: use Stderr for progress bar
-		// progressbar.OptionSetWriter(os.Stderr),
 		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionShowCount(),
-		// progressbar.OptionOnCompletion(func() {
-		// 	fmt.Fprint(os.Stderr, "\n")
-		// }),
 		progressbar.OptionSpinnerType(14),
 		progressbar.OptionSetWidth(20),
 		progressbar.OptionSetTheme(progressbar.Theme{
@@ -173,15 +159,10 @@ func newExecutionProgressBar(steps int) *progressbar.ProgressBar {
 		progressbar.OptionClearOnFinish(),
 		progressbar.OptionSetElapsedTime(true),
 		progressbar.OptionSetPredictTime(false),
-		// TODO: use Stderr for progress bar
-		// progressbar.OptionSetWriter(os.Stderr),
 		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionShowCount(),
-		// progressbar.OptionOnCompletion(func() {
-		// 	fmt.Fprint(os.Stderr, "\n")
-		// }),
 		progressbar.OptionSpinnerType(14),
-		progressbar.OptionSetWidth(50),
+		progressbar.OptionFullWidth(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",

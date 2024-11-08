@@ -68,7 +68,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
 	starlarkConfig.SerializedParams = string(configBytes)
 
-	var responseChan progress_reporters.KurtosisReporter
+	var responseChan chan progress_reporters.KurtosisResponse
 	// TODO: use cancel func if needed
 	// var cancel context.CancelFunc
 	// TODO: stream result lines and give user progress updates
