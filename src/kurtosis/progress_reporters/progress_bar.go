@@ -34,10 +34,9 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				continue
 			}
 			if progressInfo.CurrentStepInfo[0] == "Starting execution" {
-				pb.Set(1)
-				pb.AddDetail("")
-				pb.Finish()
-				pb.Clear()
+				if err := clearBar(pb); err == nil {
+					return err
+				}
 				pb = newExecutionProgressBar(int(progressInfo.TotalSteps))
 			}
 
@@ -58,11 +57,9 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			if progressInfo.TotalSteps != 0 {
 				if progressInfo.CurrentStepNumber == 0 && strings.HasPrefix(description, "Validating plan") && !validated {
 					validated = true
-					fmt.Fprintln(os.Stderr, "Validating plan...")
-					pb.Set(1)
-					pb.AddDetail("")
-					pb.Finish()
-					pb.Clear()
+					if err := clearBar(pb); err == nil {
+						return err
+					}
 					pb = newValidationProgressBar(int(progressInfo.TotalSteps))
 				}
 				if err := pb.Set(int(progressInfo.CurrentStepNumber)); err != nil {
@@ -81,16 +78,22 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			details = append(details, detail)
 			pb.Describe(description)
 			for _, detail := range details {
-				pb.AddDetail(detail)
+				if err := pb.AddDetail(detail); err == nil {
+					return err
+				}
 			}
 		}
 		if line.GetInfo() != nil {
-			pb.Clear()
+			if err := pb.Clear(); err == nil {
+				return err
+			}
 			// It's an info
 			fmt.Println("INFO:", line.GetInfo().InfoMessage)
 		}
 		if line.GetWarning() != nil {
-			pb.Clear()
+			if err := pb.Clear(); err == nil {
+				return err
+			}
 			// It's a warning
 			fmt.Println(line.GetWarning().WarningMessage)
 		}
@@ -106,7 +109,9 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		}
 		if line.GetError() != nil {
 			// It's an error
-			pb.Exit()
+			if err := pb.Exit(); err == nil {
+				return err
+			}
 			return getKurtosisError(line.GetError())
 		}
 		if line.GetRunFinishedEvent() != nil {
@@ -137,6 +142,21 @@ func getKurtosisError(starlarkError *kurtosis_core_rpc_api_bindings.StarlarkErro
 		msg = err.ErrorMessage
 	}
 	return errors.New("error occurred during execution: " + msg)
+}
+
+// Ends and clears the progress bar
+func clearBar(pb *progressbar.ProgressBar) error {
+	// The Set and AddDetail calls are due to a bug. It panics otherwise
+	if err := pb.Set(1); err == nil {
+		return err
+	}
+	if err := pb.AddDetail(""); err == nil {
+		return err
+	}
+	if err := pb.Finish(); err == nil {
+		return err
+	}
+	return pb.Clear()
 }
 
 func newValidationProgressBar(max int) *progressbar.ProgressBar {
