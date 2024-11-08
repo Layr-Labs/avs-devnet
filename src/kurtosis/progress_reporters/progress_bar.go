@@ -20,28 +20,13 @@ type KurtosisReporter = chan KurtosisResponse
 // 	totalSteps   int
 // }
 
-type CurrentProgress struct {
-	Description string
-	Details     []string
-	CurrentStep uint32
-	TotalSteps  uint32
-}
-
-func newProgress() CurrentProgress {
-	return CurrentProgress{
-		Description: "",
-		Details:     []string{},
-		CurrentStep: 0,
-		TotalSteps:  0,
-	}
-}
-
 func ReportProgress(reporter KurtosisReporter) error {
 	pb := newValidationProgressBar(-1)
 	if err := pb.RenderBlank(); err != nil {
 		return err
 	}
-	cp := newProgress()
+	var description string
+	var details []string
 	// TODO: clean up this mess
 	for line := range reporter {
 		if line.GetProgressInfo() != nil {
@@ -67,23 +52,21 @@ func ReportProgress(reporter KurtosisReporter) error {
 			}
 
 			if len(progressInfo.CurrentStepInfo) > 0 {
-				cp.Description = progressInfo.CurrentStepInfo[0]
+				description = progressInfo.CurrentStepInfo[0]
 			}
 			if len(progressInfo.CurrentStepInfo) > 1 {
-				cp.Details = progressInfo.CurrentStepInfo[1:]
+				details = progressInfo.CurrentStepInfo[1:]
 			} else {
-				cp.Details = []string{}
+				details = []string{}
 			}
-			pb.Describe(cp.Description)
-			for _, detail := range cp.Details {
+			pb.Describe(description)
+			for _, detail := range details {
 				if err := pb.AddDetail(detail); err != nil {
 					return err
 				}
 			}
 			if progressInfo.TotalSteps != 0 {
-				cp.TotalSteps = progressInfo.TotalSteps
-				cp.CurrentStep = progressInfo.CurrentStepNumber
-				if err := pb.Set(int(cp.CurrentStep)); err != nil {
+				if err := pb.Set(int(progressInfo.CurrentStepNumber)); err != nil {
 					return err
 				}
 			}
@@ -96,9 +79,9 @@ func ReportProgress(reporter KurtosisReporter) error {
 			if len(instruction.Description) > 60 {
 				detail = detail[:57] + "..."
 			}
-			cp.Details = append(cp.Details, detail)
-			pb.Describe(cp.Description)
-			for _, detail := range cp.Details {
+			details = append(details, detail)
+			pb.Describe(description)
+			for _, detail := range details {
 				pb.AddDetail(detail)
 			}
 		}
@@ -120,7 +103,7 @@ func ReportProgress(reporter KurtosisReporter) error {
 			// if len(result.SerializedInstructionResult) > 40 {
 			// 	detail = detail[:37] + "..."
 			// }
-			// cp.Details = append(cp.Details, detail)
+			// details = append(details, detail)
 		}
 		if line.GetError() != nil {
 			// It's an error
