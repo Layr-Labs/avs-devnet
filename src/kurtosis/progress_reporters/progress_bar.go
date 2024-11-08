@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
 	"github.com/schollz/progressbar/v3"
@@ -18,6 +19,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 	}
 	var description string
 	var details []string
+	validated := false
 	// TODO: clean up this mess
 	for line := range reporter {
 		if line.GetProgressInfo() != nil {
@@ -28,11 +30,8 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				continue
 			}
 			if progressInfo.CurrentStepInfo[0] == "Starting validation" {
-				pb.Set(1)
-				pb.AddDetail("")
-				pb.Finish()
-				pb.Clear()
-				pb = newValidationProgressBar(int(progressInfo.TotalSteps))
+				// NOTE: the total step number here is bugged, and shows the amount of execution steps instead
+				continue
 			}
 			if progressInfo.CurrentStepInfo[0] == "Starting execution" {
 				pb.Set(1)
@@ -57,6 +56,15 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				}
 			}
 			if progressInfo.TotalSteps != 0 {
+				if progressInfo.CurrentStepNumber == 0 && strings.HasPrefix(description, "Validating plan") && !validated {
+					validated = true
+					fmt.Fprintln(os.Stderr, "Validating plan...")
+					pb.Set(1)
+					pb.AddDetail("")
+					pb.Finish()
+					pb.Clear()
+					pb = newValidationProgressBar(int(progressInfo.TotalSteps))
+				}
 				if err := pb.Set(int(progressInfo.CurrentStepNumber)); err != nil {
 					return err
 				}
@@ -99,17 +107,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		if line.GetError() != nil {
 			// It's an error
 			pb.Exit()
-			var msg string
-			if err := line.GetError().GetValidationError(); err != nil {
-				msg = err.ErrorMessage
-			}
-			if err := line.GetError().GetInterpretationError(); err != nil {
-				msg = err.ErrorMessage
-			}
-			if err := line.GetError().GetExecutionError(); err != nil {
-				msg = err.ErrorMessage
-			}
-			return errors.New("error occurred during execution: " + msg)
+			return getKurtosisError(line.GetError())
 		}
 		if line.GetRunFinishedEvent() != nil {
 			// It's a run finished event
@@ -125,6 +123,20 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 		}
 	}
 	return nil
+}
+
+func getKurtosisError(starlarkError *kurtosis_core_rpc_api_bindings.StarlarkError) error {
+	var msg string
+	if err := starlarkError.GetValidationError(); err != nil {
+		msg = err.ErrorMessage
+	}
+	if err := starlarkError.GetInterpretationError(); err != nil {
+		msg = err.ErrorMessage
+	}
+	if err := starlarkError.GetExecutionError(); err != nil {
+		msg = err.ErrorMessage
+	}
+	return errors.New("error occurred during execution: " + msg)
 }
 
 func newValidationProgressBar(max int) *progressbar.ProgressBar {
