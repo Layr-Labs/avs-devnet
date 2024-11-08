@@ -76,6 +76,11 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			details = append(details, detail)
 			pb.Describe(description)
 			for _, detail := range details {
+				// Avoid adding details if the progress bar is finished
+				// TODO: solve this more cleanly
+				if pb.IsFinished() {
+					break
+				}
 				if err := pb.AddDetail(detail); err != nil {
 					return err
 				}
