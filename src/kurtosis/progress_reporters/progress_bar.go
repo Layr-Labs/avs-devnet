@@ -8,81 +8,143 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-type KurtosisReporter = chan *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
+type KurtosisResponse = *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
+type KurtosisReporter = chan KurtosisResponse
+
+// type ProgressBarReporter struct {
+// 	progressBar  *progressbar.ProgressBar
+// 	info         []string
+// 	currentStage int
+// 	currentStep  int
+// 	totalSteps   int
+// }
+
+type CurrentProgress struct {
+	Description string
+	Details     []string
+	CurrentStep uint32
+	TotalSteps  uint32
+}
+
+func newProgress() CurrentProgress {
+	return CurrentProgress{
+		Description: "",
+		Details:     []string{},
+		CurrentStep: 0,
+		TotalSteps:  0,
+	}
+}
 
 func ReportProgress(reporter KurtosisReporter) error {
-	pb := newValidationProgressBar()
+	pb := newValidationProgressBar(-1)
 	if err := pb.RenderBlank(); err != nil {
 		return err
 	}
+	cp := newProgress()
+	// TODO: clean up this mess
 	for line := range reporter {
 		if line.GetProgressInfo() != nil {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
+			fmt.Fprintln(os.Stderr, "progress: ", progressInfo)
 			if len(progressInfo.CurrentStepInfo) == 0 {
 				continue
 			}
 			if progressInfo.CurrentStepInfo[0] == "Starting validation" {
-				continue
+				pb.Set(1)
+				pb.AddDetail("")
+				pb.Finish()
+				pb.Clear()
+				pb = newValidationProgressBar(int(progressInfo.TotalSteps))
 			}
-			fmt.Fprintln(os.Stderr, "progress: ", progressInfo)
+			if progressInfo.CurrentStepInfo[0] == "Starting execution" {
+				pb.Set(1)
+				pb.AddDetail("")
+				pb.Finish()
+				pb.Clear()
+				pb = newExecutionProgressBar(int(progressInfo.TotalSteps))
+			}
 
-			pb.Describe(progressInfo.CurrentStepInfo[0])
-			detail := ""
-			if len(progressInfo.CurrentStepInfo) > 1 {
-				detail = progressInfo.CurrentStepInfo[1]
+			if len(progressInfo.CurrentStepInfo) > 0 {
+				cp.Description = progressInfo.CurrentStepInfo[0]
 			}
-			if err := pb.AddDetail(detail); err != nil {
-				return err
+			if len(progressInfo.CurrentStepInfo) > 1 {
+				cp.Details = progressInfo.CurrentStepInfo[1:]
+			} else {
+				cp.Details = []string{}
 			}
 			if progressInfo.TotalSteps != 0 {
-				if progressInfo.CurrentStepNumber >= progressInfo.TotalSteps {
-					pb.Close()
-					pb = newExecutionProgressBar(-1)
-					if err := pb.RenderBlank(); err != nil {
-						return err
-					}
-				} else {
-					pb.ChangeMax(int(progressInfo.TotalSteps))
-					if err := pb.Set(int(progressInfo.CurrentStepNumber)); err != nil {
-						return err
-					}
+				cp.TotalSteps = progressInfo.TotalSteps
+				cp.CurrentStep = progressInfo.CurrentStepNumber
+				if err := pb.Set(int(cp.CurrentStep)); err != nil {
+					return err
 				}
 			}
 		}
 		if line.GetInstruction() != nil {
 			// It's an instruction
-			fmt.Fprintln(os.Stderr, line.GetInstruction().Description)
+			instruction := line.GetInstruction()
+			fmt.Fprintln(os.Stderr, instruction.Description)
+			detail := instruction.Description
+			if len(instruction.Description) > 60 {
+				detail = detail[:57] + "..."
+			}
+			cp.Details = append(cp.Details, detail)
 		}
 		if line.GetInfo() != nil {
+			pb.Clear()
 			// It's an info
-			fmt.Fprintln(os.Stderr, "INFO:", line.GetInfo().InfoMessage)
+			fmt.Println("INFO:", line.GetInfo().InfoMessage)
+			continue
 		}
 		if line.GetWarning() != nil {
+			pb.Clear()
 			// It's a warning
-			fmt.Fprintln(os.Stderr, line.GetWarning().WarningMessage)
+			fmt.Println(line.GetWarning().WarningMessage)
+			continue
 		}
 		if line.GetInstructionResult() != nil {
 			// It's an instruction result
-			fmt.Fprintln(os.Stderr, line.GetInstructionResult())
+			result := line.GetInstructionResult()
+			fmt.Fprintln(os.Stderr, result)
+			// detail := result.SerializedInstructionResult
+			// if len(result.SerializedInstructionResult) > 40 {
+			// 	detail = detail[:37] + "..."
+			// }
+			// cp.Details = append(cp.Details, detail)
+			continue
 		}
 		if line.GetError() != nil {
 			// It's an error
-			// pb.Exit()
-			fmt.Fprintln(os.Stderr, line.GetError())
+			pb.Exit()
+			fmt.Println(line.GetError().Error)
 		}
 		if line.GetRunFinishedEvent() != nil {
 			// It's a run finished event
-			// pb.Close()
-			fmt.Fprintln(os.Stderr, line.GetRunFinishedEvent())
+			pb.Close()
+			event := line.GetRunFinishedEvent()
+			if event.IsRunSuccessful {
+				fmt.Println("Run finished successfully with output:")
+			} else {
+				fmt.Println("Run failed with output:")
+			}
+			fmt.Println(event.SerializedOutput)
+			break
+		}
+
+		pb.Describe(cp.Description)
+		for _, detail := range cp.Details {
+			if err := pb.AddDetail(detail); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func newValidationProgressBar() *progressbar.ProgressBar {
+func newValidationProgressBar(max int) *progressbar.ProgressBar {
 	pb := progressbar.NewOptions(
-		-1,
+		max,
 		progressbar.OptionSetMaxDetailRow(1),
 		progressbar.OptionShowDescriptionAtLineEnd(),
 		progressbar.OptionClearOnFinish(),
@@ -112,7 +174,7 @@ func newValidationProgressBar() *progressbar.ProgressBar {
 func newExecutionProgressBar(steps int) *progressbar.ProgressBar {
 	pb := progressbar.NewOptions(
 		steps,
-		progressbar.OptionSetMaxDetailRow(2),
+		progressbar.OptionSetMaxDetailRow(1),
 		progressbar.OptionShowDescriptionAtLineEnd(),
 		progressbar.OptionClearOnFinish(),
 		progressbar.OptionSetElapsedTime(true),
