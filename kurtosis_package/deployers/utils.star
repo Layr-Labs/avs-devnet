@@ -5,7 +5,8 @@ shared_utils = import_module("../shared_utils.star")
 FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry",
     build_context_dir="../dockerfiles/",
-    build_file="foundry.Dockerfile",
+    build_file="contract_deployer.Dockerfile",
+    target_stage="foundry",
 )
 
 
