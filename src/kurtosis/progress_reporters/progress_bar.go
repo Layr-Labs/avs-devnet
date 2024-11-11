@@ -23,7 +23,7 @@ const (
 )
 
 func ReportProgress(reporter chan KurtosisResponse) error {
-	maxWidth := 80
+	var maxWidth int
 
 	pb := newProgressBar(-1)
 	state := Interpretation
@@ -72,13 +72,13 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				if len(details) > maxWidth {
 					details = details[:maxWidth-3] + "..."
 				}
-				pb.AddDetail(details)
+				_ = pb.AddDetail(details)
 			}
 			if state == Execution {
 				// On execution, current step starts at 1, and current == total doesn't mean we're done
 				currentStep -= 1
 			}
-			pb.Set(int(currentStep))
+			_ = pb.Set(int(currentStep))
 		}
 		if line.GetInstruction() != nil {
 			// It's an instruction
@@ -91,7 +91,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			if len(instruction.Description) > maxWidth {
 				detail = detail[:maxWidth-3] + "..."
 			}
-			pb.AddDetail(detail)
+			_ = pb.AddDetail(detail)
 		}
 		if line.GetInfo() != nil {
 			_ = pb.Clear()
@@ -108,7 +108,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			// _ = pb.Clear()
 			// fmt.Println(result.SerializedInstructionResult)
 			currentStep += 1
-			pb.Set(int(currentStep))
+			_ = pb.Set(int(currentStep))
 			continue
 		}
 		if line.GetError() != nil {
