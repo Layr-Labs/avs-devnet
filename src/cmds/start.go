@@ -82,7 +82,9 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return err
 	}
 
-	if err = progress_reporters.ReportProgress(responseChan); err != nil {
+	reporter := progress_reporters.NewProgressBarReporter()
+
+	if err = progress_reporters.ReportProgress(reporter, responseChan); err != nil {
 		return err
 	}
 

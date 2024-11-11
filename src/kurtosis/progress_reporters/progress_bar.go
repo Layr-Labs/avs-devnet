@@ -1,148 +1,94 @@
 package progress_reporters
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
 	"github.com/schollz/progressbar/v3"
 	"golang.org/x/term"
 )
 
-type KurtosisResponse = *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
+var _ Reporter = (*ProgressBarReporter)(nil)
 
-type State int
+type ProgressBarReporter struct {
+	pb *progressbar.ProgressBar
+}
 
-const (
-	Interpretation State = 0
-	Validation     State = iota
-	Execution      State = iota
-)
+func NewProgressBarReporter() *ProgressBarReporter {
+	return &ProgressBarReporter{}
+}
 
-func ReportProgress(reporter chan KurtosisResponse) error {
-	var maxWidth int
-
-	pb := newProgressBar(-1)
-	state := Interpretation
-	var totalSteps uint32
-	var currentStep uint32
-	for line := range reporter {
-		if line.GetProgressInfo() != nil {
-			// It's a progress info
-			progressInfo := line.GetProgressInfo()
-			description := progressInfo.CurrentStepInfo[0]
-			if description == "Interpreting plan - execution will begin shortly" {
-				state = Interpretation
-				clearBar(pb)
-				pb = newProgressBar(-1)
-				_ = pb.RenderBlank()
-				pb.Describe("Interpreting plan...")
-				continue
-			} else if description == "Starting validation" {
-				// NOTE: the total step number here is bugged, and shows the amount of execution steps instead
-				clearBar(pb)
-				pb = newProgressBar(-1)
-				_ = pb.RenderBlank()
-				pb.Describe("Starting validation...")
-				state = Validation
-				continue
-			} else if description == "Starting execution" {
-				state = Execution
-				totalSteps = progressInfo.TotalSteps
-				clearBar(pb)
-				pb = newProgressBar(int(totalSteps))
-				_ = pb.RenderBlank()
-				pb.Describe("Starting validation...")
-				continue
-			} else if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
-				state = Validation
-				totalSteps = progressInfo.TotalSteps
-				clearBar(pb)
-				pb = newProgressBar(int(totalSteps))
-				_ = pb.RenderBlank()
-				pb.Describe(description)
-			}
-			currentStep = progressInfo.CurrentStepNumber
-			if len(progressInfo.CurrentStepInfo) > 1 {
-				details := strings.Join(progressInfo.CurrentStepInfo[1:], ", ")
-				maxWidth = termWidth()
-				if len(details) > maxWidth {
-					details = details[:maxWidth-3] + "..."
-				}
-				_ = pb.AddDetail(details)
-			}
-			if state == Execution {
-				// On execution, current step starts at 1, and current == total doesn't mean we're done
-				currentStep -= 1
-			}
-			_ = pb.Set(int(currentStep))
-		}
-		if line.GetInstruction() != nil {
-			// It's an instruction
-			instruction := line.GetInstruction()
-			if state != Execution { // This should never happen
-				panic("Received instruction outside of execution state")
-			}
-			detail := instruction.Description
-			maxWidth = termWidth()
-			if len(instruction.Description) > maxWidth {
-				detail = detail[:maxWidth-3] + "..."
-			}
-			_ = pb.AddDetail(detail)
-		}
-		if line.GetInfo() != nil {
-			_ = pb.Clear()
-			fmt.Println(line.GetInfo().InfoMessage)
-		}
-		if line.GetWarning() != nil {
-			_ = pb.Clear()
-			fmt.Println(line.GetWarning().WarningMessage)
-		}
-		if line.GetInstructionResult() != nil {
-			// It's an instruction result
-			// TODO: implement verbosity levels and print this only on verbose
-			// result := line.GetInstructionResult()
-			// _ = pb.Clear()
-			// fmt.Println(result.SerializedInstructionResult)
-			currentStep += 1
-			_ = pb.Set(int(currentStep))
-			continue
-		}
-		if line.GetError() != nil {
-			// It's an error
-			return getKurtosisError(line.GetError())
-		}
-		if line.GetRunFinishedEvent() != nil {
-			// It's a run finished event
-			pb.Close()
-			event := line.GetRunFinishedEvent()
-			if event.IsRunSuccessful {
-				fmt.Println("Run finished successfully with output:")
-			} else {
-				fmt.Println("Run failed with output:")
-			}
-			fmt.Println(event.SerializedOutput)
-			break
-		}
-	}
+func (r *ProgressBarReporter) ReportInterpretationStart() error {
+	changeProgressBar(r.pb, -1, "Interpreting plan...")
 	return nil
 }
 
-func getKurtosisError(starlarkError *kurtosis_core_rpc_api_bindings.StarlarkError) error {
-	var msg string
-	if err := starlarkError.GetValidationError(); err != nil {
-		msg = err.ErrorMessage
+func (r *ProgressBarReporter) ReportValidationStart(totalSteps int) error {
+	changeProgressBar(r.pb, totalSteps, "Starting validation...")
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportValidationStep(stepInfo ValidationStep) error {
+	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	r.pb.Describe(stepInfo.Description)
+	details := strings.Join(stepInfo.Details, ", ")
+	maxWidth := termWidth()
+	if len(details) > maxWidth {
+		details = details[:maxWidth-3] + "..."
 	}
-	if err := starlarkError.GetInterpretationError(); err != nil {
-		msg = err.ErrorMessage
+	_ = r.pb.AddDetail(details)
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportExecutionStart(totalSteps int) error {
+	changeProgressBar(r.pb, totalSteps, "Starting execution...")
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportExecutionStep(stepInfo ExecutionStep) error {
+	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	r.pb.Describe(stepInfo.Description)
+	if stepInfo.InstructionDescription != nil {
+		_ = r.pb.AddDetail(*stepInfo.InstructionDescription)
 	}
-	if err := starlarkError.GetExecutionError(); err != nil {
-		msg = err.ErrorMessage
+	// TODO: implement verbosity levels and print this only on verbose
+	// if stepInfo.InstructionResult != nil {
+	// 	fmt.Println(*stepInfo.InstructionResult)
+	// }
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportInfo(message string) error {
+	_ = r.pb.Clear()
+	fmt.Println(message)
+	_ = r.pb.RenderBlank()
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportWarning(message string) error {
+	_ = r.pb.Clear()
+	fmt.Println(message)
+	_ = r.pb.RenderBlank()
+	return nil
+}
+
+func (r *ProgressBarReporter) ReportRunFinished(success bool, output string) error {
+	if success {
+		fmt.Println("Run finished successfully with output:")
+	} else {
+		fmt.Println("Run failed with output:")
 	}
-	return errors.New("error occurred during execution: " + msg)
+	fmt.Println(output)
+	return nil
+}
+
+func changeProgressBar(pb *progressbar.ProgressBar, max int, message string) {
+	clearBar(pb)
+	pb = newProgressBar(max)
+	_ = pb.RenderBlank()
+	pb.Describe(message)
 }
 
 func termWidth() int {
@@ -151,15 +97,6 @@ func termWidth() int {
 		return 80
 	}
 	return width
-}
-
-// Ends and clears the progress bar
-func clearBar(pb *progressbar.ProgressBar) {
-	// Ignore any errors
-	_ = pb.Set(1)
-	_ = pb.AddDetail("")
-	_ = pb.Finish()
-	_ = pb.Clear()
 }
 
 func newProgressBar(steps int) *progressbar.ProgressBar {
@@ -196,4 +133,13 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 		}()
 	}
 	return pb
+}
+
+// Ends and clears the progress bar
+func clearBar(pb *progressbar.ProgressBar) {
+	// Ignore any errors
+	_ = pb.Set(1)
+	_ = pb.AddDetail("")
+	_ = pb.Finish()
+	_ = pb.Clear()
 }
