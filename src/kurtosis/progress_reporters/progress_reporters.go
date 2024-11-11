@@ -94,7 +94,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 			}
 
 			// We set the total steps here because the "Starting validation" message has the wrong step count.
-			if strings.HasPrefix(description, "Validating plan") && progressInfo.TotalSteps == 0 && progressInfo.TotalSteps != 0 {
+			if strings.HasPrefix(description, "Validating plan") && state == Interpretation && progressInfo.TotalSteps != 0 {
 				state = Validation
 				totalSteps = progressInfo.TotalSteps
 				err := reporter.ReportValidationStart(int(totalSteps))
