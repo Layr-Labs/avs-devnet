@@ -10,8 +10,7 @@ RUN apt update -y && \
 RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="/root/.foundry/bin:${PATH}"
 
-# 2024/11/10 - nightly
-RUN foundryup --commit e028b92698eae7e5019025e1784e7c06c3cae534
+RUN foundryup
 
 WORKDIR /app/
 
