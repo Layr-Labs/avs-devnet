@@ -78,7 +78,9 @@ func (r *ProgressBarReporter) ReportWarning(message string) error {
 func (r *ProgressBarReporter) ReportRunFinished(success bool, output string) error {
 	r.pb.Finish()
 	r.pb.Clear()
-	if !success {
+	if success {
+		fmt.Printf("Devnet started in %.1fs\n", r.pb.State().SecondsSince)
+	} else {
 		fmt.Println("Run failed with output:", output)
 	}
 	return nil

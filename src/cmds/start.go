@@ -81,14 +81,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	}
 
 	reporter := progress_reporters.NewProgressBarReporter()
-	err = progress_reporters.ReportProgress(reporter, responseChan)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Devnet started!")
-	return err
+	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 
 func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
