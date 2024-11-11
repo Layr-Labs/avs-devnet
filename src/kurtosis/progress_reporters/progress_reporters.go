@@ -33,19 +33,34 @@ type ExecutionStep struct {
 }
 
 type Reporter interface {
+	// Signals the start of the interpretation phase
 	ReportInterpretationStart() error
 
+	// Signals the start of the validation phase
 	ReportValidationStart(totalSteps int) error
+
+	// Signals a single step of the validation phase
 	ReportValidationStep(stepInfo ValidationStep) error
 
+	// Signals the start of the execution phase
 	ReportExecutionStart(totalSteps int) error
+
+	// Signals a single step of the execution phase
+	// Can be called multiple times for the same step,
+	// each time with more information (Description -> InstructionDescription -> InstructionResult)
 	ReportExecutionStep(stepInfo ExecutionStep) error
 
+	// Signals an informational message
 	ReportInfo(message string) error
+
+	// Signals a warning message
 	ReportWarning(message string) error
+
+	// Signals the end of the run
 	ReportRunFinished(success bool, output string) error
 }
 
+// This function reads the Kurtosis response channel and reports the progress to the reporter
 func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error {
 	state := Interpretation
 	var totalSteps uint32
