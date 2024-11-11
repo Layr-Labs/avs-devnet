@@ -83,13 +83,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	}
 
 	reporter := progress_reporters.NewProgressBarReporter()
-
-	if err = progress_reporters.ReportProgress(reporter, responseChan); err != nil {
-		return err
-	}
-
-	fmt.Println("Devnet started!")
-	return err
+	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 
 // Uploads the local repositories to the enclave
