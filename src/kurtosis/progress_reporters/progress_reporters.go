@@ -86,7 +86,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 					return err
 				}
 				continue
-			} else if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
+			} else if strings.HasPrefix(description, "Validating plan") && progressInfo.TotalSteps == 0 && progressInfo.TotalSteps != 0 {
 				state = Validation
 				totalSteps = progressInfo.TotalSteps
 				if err := reporter.ReportValidationStart(int(totalSteps)); err != nil {
@@ -116,8 +116,6 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 				if err := reporter.ReportExecutionStep(currentExecutionStep); err != nil {
 					return err
 				}
-			} else {
-				panic("Unknown state")
 			}
 		}
 		if line.GetInstruction() != nil {
