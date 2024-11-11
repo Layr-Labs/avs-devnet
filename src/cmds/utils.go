@@ -3,7 +3,6 @@ package cmds
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -49,11 +48,4 @@ func nameFromConfigFile(fileName string) (string, error) {
 		return "", errors.New("Invalid devnet name: " + name)
 	}
 	return name, nil
-}
-
-func kurtosisRun(args ...string) error {
-	cmd := exec.Command("kurtosis", args...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
 }

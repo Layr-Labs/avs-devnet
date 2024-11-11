@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/config"
+	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
+	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
+	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/starlark_run_config"
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,29 +27,60 @@ func Start(ctx *cli.Context) error {
 		return cli.Exit("Config file doesn't exist: "+configPath, 2)
 	}
 
-	config, err := config.LoadFromPath(configPath)
-	if err != nil {
-		return cli.Exit(err, 2)
-	}
-
-	err = buildDockerImages(config)
-	if err != nil {
+	if err := startDevnet(ctx, pkgName, devnetName, configPath); err != nil {
 		return cli.Exit(err, 3)
 	}
-
-	if err = kurtosisRun("enclave", "add", "--name", devnetName); err != nil {
-		return cli.Exit(err, 4)
-	}
-
-	err = uploadLocalRepos(config, devnetName)
-	if err != nil {
-		return cli.Exit(err, 5)
-	}
-
-	return kurtosisRun("run", pkgName, "--enclave", devnetName, "--args-file", configPath)
+	return nil
 }
 
-func uploadLocalRepos(config config.DevnetConfig, devnetName string) error {
+func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string) error {
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return err
+	}
+	config, err := config.Unmarshal(configBytes)
+	if err != nil {
+		return err
+	}
+
+	if err := buildDockerImages(config); err != nil {
+		return err
+	}
+
+	kurtosisCtx, err := kurtosis.InitKurtosisContext()
+	if err != nil {
+		return err
+	}
+	if kurtosisCtx.EnclaveExists(ctx.Context, devnetName) {
+		return errors.New("devnet already running")
+	}
+	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx.Context, devnetName)
+	if err != nil {
+		return err
+	}
+
+	err = uploadLocalRepos(config, enclaveCtx)
+	if err != nil {
+		return err
+	}
+
+	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
+	starlarkConfig.SerializedParams = string(configBytes)
+
+	var result *enclaves.StarlarkRunResult
+	// TODO: stream result lines and give user progress updates
+	if strings.HasPrefix(pkgName, "github.com/") {
+		result, err = enclaveCtx.RunStarlarkRemotePackageBlocking(ctx.Context, pkgName, starlarkConfig)
+	} else {
+		result, err = enclaveCtx.RunStarlarkPackageBlocking(ctx.Context, pkgName, starlarkConfig)
+	}
+	_ = result
+
+	fmt.Println("Devnet started!")
+	return err
+}
+
+func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
 	alreadyUploaded := make(map[string]bool)
 
 	for _, deployment := range config.Deployments {
@@ -63,7 +99,7 @@ func uploadLocalRepos(config config.DevnetConfig, devnetName string) error {
 		}
 		path := repoUrl.Path
 		// Upload the file with the path as the name
-		if err := kurtosisRun("files", "upload", "--name", path, devnetName, path); err != nil {
+		if _, _, err := enclaveCtx.UploadFiles(path, path); err != nil {
 			return err
 		}
 		alreadyUploaded[repoUrl.Path] = true
