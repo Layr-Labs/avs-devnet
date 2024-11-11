@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Stops the devnet with the given context
 func Stop(ctx *cli.Context) error {
 	_, devnetName, err := parseArgs(ctx)
 	if err != nil {
@@ -18,7 +19,7 @@ func Stop(ctx *cli.Context) error {
 		return cli.Exit(err, 2)
 	}
 	if !kurtosisCtx.EnclaveExists(ctx.Context, devnetName) {
-		return cli.Exit("Failed to find '"+devnetName+"'. Maybe it's not running?", 3)
+		return cli.Exit(err.Error()+"\n\nFailed to find '"+devnetName+"'. Maybe it's not running?", 3)
 	}
 	if err = kurtosisCtx.DestroyEnclave(ctx.Context, devnetName); err != nil {
 		return cli.Exit(err, 4)

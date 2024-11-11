@@ -17,6 +17,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Starts the devnet with the given context
 func Start(ctx *cli.Context) error {
 	fmt.Println("Starting devnet...")
 	pkgName := ctx.String(flags.KurtosisPackageFlag.Name)
@@ -34,6 +35,7 @@ func Start(ctx *cli.Context) error {
 	return nil
 }
 
+// Starts the devnet with the given configuration
 func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string) error {
 	configBytes, err := os.ReadFile(configPath)
 	if err != nil {
@@ -88,6 +90,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	return err
 }
 
+// Uploads the local repositories to the enclave
 func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
 	alreadyUploaded := make(map[string]bool)
 
@@ -115,6 +118,7 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 	return nil
 }
 
+// Builds the local docker images for the services in the configuration
 func buildDockerImages(config config.DevnetConfig) error {
 	errChan := make(chan error)
 	numBuilds := 0
