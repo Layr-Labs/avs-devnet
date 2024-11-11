@@ -17,7 +17,7 @@ func NewCliApp() *cli.App {
 		Usage:     "Initialize a devnet configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     []cli.Flag{&flags.KurtosisPackageFlag},
 		Action:    Init,
 	})
 
@@ -26,7 +26,7 @@ func NewCliApp() *cli.App {
 		Usage:     "Start devnet from configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     []cli.Flag{&flags.KurtosisPackageFlag},
 		Action:    Start,
 	})
 
@@ -35,7 +35,7 @@ func NewCliApp() *cli.App {
 		Usage:     "Stop devnet from configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     []cli.Flag{&flags.KurtosisPackageFlag},
 		Action:    Stop,
 	})
 
@@ -44,7 +44,7 @@ func NewCliApp() *cli.App {
 		Usage:     "Get a devnet contract or EOA address",
 		Args:      true,
 		ArgsUsage: "<contract-name>...",
-		Flags:     []cli.Flag{&flags.ConfigFilePathFlag},
+		Flags:     []cli.Flag{&flags.ConfigFilePathFlag, &flags.KurtosisPackageFlag},
 		Action:    GetAddress,
 	})
 	return app

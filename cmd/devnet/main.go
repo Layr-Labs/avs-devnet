@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -9,6 +10,8 @@ import (
 
 func main() {
 	app := cmds.NewCliApp()
+
+	fmt.Println(os.Args)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)

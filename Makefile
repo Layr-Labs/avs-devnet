@@ -34,9 +34,11 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
-test: ## 🧪 Run tests
-	go test -v ./...
+test: ## 🧪 Run tests (except long-running ones)
+	go test -v ./... -short
 
+test_all: ## 🧪 Run all tests
+	go test -v ./...
 
 ##### CLI #####
 
