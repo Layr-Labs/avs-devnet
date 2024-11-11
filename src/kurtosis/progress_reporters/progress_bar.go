@@ -12,6 +12,7 @@ import (
 
 var _ Reporter = (*ProgressBarReporter)(nil)
 
+// A reporter that reports progress via a progress bar
 type ProgressBarReporter struct {
 	pb *progressbar.ProgressBar
 }
