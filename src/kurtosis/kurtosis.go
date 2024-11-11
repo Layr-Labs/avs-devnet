@@ -22,12 +22,10 @@ func InitKurtosisContext() (KurtosisCtx, error) {
 		// Kurtosis engine is probably not running. Try to start it.
 		// TODO: avoid using the CLI for this
 		if exec.Command("kurtosis", "engine", "start").Run() != nil {
-
 			return KurtosisCtx{}, err
 		}
 		ctx, err = kurtosis_context.NewKurtosisContextFromLocalEngine()
 	}
-
 	return KurtosisCtx{ctx}, err
 }
 
