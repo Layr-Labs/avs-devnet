@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
 	"github.com/schollz/progressbar/v3"
@@ -182,5 +183,17 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 		}),
 		progressbar.OptionEnableColorCodes(true),
 	)
+	if steps != -1 {
+		go func() {
+			ticker := time.NewTicker(1 * time.Second)
+			defer ticker.Stop()
+			for range ticker.C {
+				if pb.IsFinished() {
+					return
+				}
+				_ = pb.RenderBlank()
+			}
+		}()
+	}
 	return pb
 }
