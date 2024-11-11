@@ -55,7 +55,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				clearBar(pb)
 				pb = newProgressBar(int(totalSteps))
 				_ = pb.RenderBlank()
-				pb.Describe("Starting validation...")
+				pb.Describe("Starting execution...")
 				continue
 			} else if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
 				state = Validation
