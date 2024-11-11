@@ -22,12 +22,12 @@ func NewProgressBarReporter() *ProgressBarReporter {
 }
 
 func (r *ProgressBarReporter) ReportInterpretationStart() error {
-	changeProgressBar(r.pb, -1, "Interpreting plan...")
+	r.changeProgressBar(-1, "Interpreting plan...")
 	return nil
 }
 
 func (r *ProgressBarReporter) ReportValidationStart(totalSteps int) error {
-	changeProgressBar(r.pb, totalSteps, "Starting validation...")
+	r.changeProgressBar(totalSteps, "Starting validation...")
 	return nil
 }
 
@@ -44,7 +44,7 @@ func (r *ProgressBarReporter) ReportValidationStep(stepInfo ValidationStep) erro
 }
 
 func (r *ProgressBarReporter) ReportExecutionStart(totalSteps int) error {
-	changeProgressBar(r.pb, totalSteps, "Starting execution...")
+	r.changeProgressBar(totalSteps, "Starting execution...")
 	return nil
 }
 
@@ -76,20 +76,21 @@ func (r *ProgressBarReporter) ReportWarning(message string) error {
 }
 
 func (r *ProgressBarReporter) ReportRunFinished(success bool, output string) error {
-	if success {
-		fmt.Println("Run finished successfully with output:")
-	} else {
-		fmt.Println("Run failed with output:")
+	r.pb.Finish()
+	r.pb.Clear()
+	if !success {
+		fmt.Println("Run failed with output:", output)
 	}
-	fmt.Println(output)
 	return nil
 }
 
-func changeProgressBar(pb *progressbar.ProgressBar, max int, message string) {
-	clearBar(pb)
-	pb = newProgressBar(max)
-	_ = pb.RenderBlank()
-	pb.Describe(message)
+func (r *ProgressBarReporter) changeProgressBar(max int, message string) {
+	if r.pb != nil {
+		clearBar(r.pb)
+	}
+	r.pb = newProgressBar(max)
+	_ = r.pb.RenderBlank()
+	r.pb.Describe(message)
 }
 
 func termWidth() int {
