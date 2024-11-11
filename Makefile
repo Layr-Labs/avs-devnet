@@ -9,6 +9,8 @@ KURTOSIS_DIR:=kurtosis_package/
 KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
 PACKAGE_ENV_VAR:=AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)
 
+INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
+
 
 ##### General #####
 
@@ -20,8 +22,11 @@ deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 install: generate_envscript ## 📦 Install the CLI
 	@echo "Installing package..."
 	go install ./...
-	@-asdf reshim 2> /dev/null
-	@echo "Package installed successfully!"
+	@asdf reshim 2> /dev/null || true
+	@echo
+	@echo "Installation successfull!"
+	@echo "Package was installed in $(INSTALLATION_DIR)"
+	@echo $(PATH) | grep -q $(INSTALLATION_DIR) || echo "\nWARNING: $(INSTALLATION_DIR) doesn't seem to be in your PATH. To add it, run:\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\""
 	@echo
 	@echo "Remember to run 'source env.sh' to set the environment variables"
 
