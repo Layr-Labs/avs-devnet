@@ -28,6 +28,10 @@ make install   # installs the project
 source env.sh  # set env-vars
 ```
 
+> [!IMPORTANT]  
+> If this is your first time installing go binary packages on your computer, you might need to add the binary location in your `PATH`.
+> The command output contains more information.
+
 ## How to Use
 
 ### Creating a devnet config
