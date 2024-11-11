@@ -71,7 +71,6 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	var responseChan chan progress_reporters.KurtosisResponse
 	// TODO: use cancel func if needed
 	// var cancel context.CancelFunc
-	// TODO: stream result lines and give user progress updates
 	if strings.HasPrefix(pkgName, "github.com/") {
 		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx.Context, pkgName, starlarkConfig)
 	} else {

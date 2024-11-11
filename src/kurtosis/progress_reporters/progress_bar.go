@@ -8,108 +8,110 @@ import (
 
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
 	"github.com/schollz/progressbar/v3"
+	"golang.org/x/term"
 )
 
 type KurtosisResponse = *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
 
+type State int
+
+const (
+	Interpretation State = 0
+	Validation     State = iota
+	Execution      State = iota
+)
+
 func ReportProgress(reporter chan KurtosisResponse) error {
-	pb := newValidationProgressBar(-1)
-	if err := pb.RenderBlank(); err != nil {
-		return err
-	}
-	var description string
-	var details []string
-	validated := false
-	// TODO: clean up this mess
+	maxWidth := 80
+
+	pb := newProgressBar(-1)
+	state := Interpretation
+	var totalSteps uint32
+	var currentStep uint32
 	for line := range reporter {
 		if line.GetProgressInfo() != nil {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
-			if len(progressInfo.CurrentStepInfo) == 0 {
-				continue
-			}
-			if progressInfo.CurrentStepInfo[0] == "Starting validation" {
-				// NOTE: the total step number here is bugged, and shows the amount of execution steps instead
-				continue
-			}
-			if progressInfo.CurrentStepInfo[0] == "Starting execution" {
+			description := progressInfo.CurrentStepInfo[0]
+			if description == "Interpreting plan - execution will begin shortly" {
+				state = Interpretation
 				clearBar(pb)
-				pb = newExecutionProgressBar(int(progressInfo.TotalSteps))
+				pb = newProgressBar(-1)
+				_ = pb.RenderBlank()
+				pb.Describe("Interpreting plan...")
+				continue
+			} else if description == "Starting validation" {
+				// NOTE: the total step number here is bugged, and shows the amount of execution steps instead
+				clearBar(pb)
+				pb = newProgressBar(-1)
+				_ = pb.RenderBlank()
+				pb.Describe("Starting validation...")
+				state = Validation
+				continue
+			} else if description == "Starting execution" {
+				state = Execution
+				totalSteps = progressInfo.TotalSteps
+				clearBar(pb)
+				pb = newProgressBar(int(totalSteps))
+				_ = pb.RenderBlank()
+				pb.Describe("Starting validation...")
+				continue
+			} else if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
+				state = Validation
+				totalSteps = progressInfo.TotalSteps
+				clearBar(pb)
+				pb = newProgressBar(int(totalSteps))
+				_ = pb.RenderBlank()
+				pb.Describe(description)
 			}
-
-			if len(progressInfo.CurrentStepInfo) > 0 {
-				description = progressInfo.CurrentStepInfo[0]
-			}
+			currentStep = progressInfo.CurrentStepNumber
 			if len(progressInfo.CurrentStepInfo) > 1 {
-				details = progressInfo.CurrentStepInfo[1:]
-			} else {
-				details = []string{}
-			}
-			pb.Describe(description)
-			for _, detail := range details {
-				if err := pb.AddDetail(detail); err != nil {
-					return err
+				details := strings.Join(progressInfo.CurrentStepInfo[1:], ", ")
+				maxWidth = termWidth()
+				if len(details) > maxWidth {
+					details = details[:maxWidth-3] + "..."
 				}
+				pb.AddDetail(details)
 			}
-			if progressInfo.TotalSteps != 0 {
-				if progressInfo.CurrentStepNumber == 0 && strings.HasPrefix(description, "Validating plan") && !validated {
-					validated = true
-					clearBar(pb)
-					pb = newValidationProgressBar(int(progressInfo.TotalSteps))
-				}
-				if err := pb.Set(int(progressInfo.CurrentStepNumber)); err != nil {
-					return err
-				}
+			if state == Execution {
+				// On execution, current step starts at 1, and current == total doesn't mean we're done
+				currentStep -= 1
 			}
+			pb.Set(int(currentStep))
 		}
 		if line.GetInstruction() != nil {
 			// It's an instruction
 			instruction := line.GetInstruction()
+			if state != Execution { // This should never happen
+				panic("Received instruction outside of execution state")
+			}
 			detail := instruction.Description
-			if len(instruction.Description) > 60 {
-				detail = detail[:57] + "..."
+			maxWidth = termWidth()
+			if len(instruction.Description) > maxWidth {
+				detail = detail[:maxWidth-3] + "..."
 			}
-			details = append(details, detail)
-			pb.Describe(description)
-			for _, detail := range details {
-				// Avoid adding details if the progress bar is finished
-				// TODO: solve this more cleanly
-				if pb.IsFinished() {
-					break
-				}
-				if err := pb.AddDetail(detail); err != nil {
-					return err
-				}
-			}
+			pb.AddDetail(detail)
 		}
 		if line.GetInfo() != nil {
-			if err := pb.Clear(); err != nil {
-				return err
-			}
-			// It's an info
-			fmt.Println("INFO:", line.GetInfo().InfoMessage)
+			_ = pb.Clear()
+			fmt.Println(line.GetInfo().InfoMessage)
 		}
 		if line.GetWarning() != nil {
-			if err := pb.Clear(); err != nil {
-				return err
-			}
-			// It's a warning
+			_ = pb.Clear()
 			fmt.Println(line.GetWarning().WarningMessage)
 		}
 		if line.GetInstructionResult() != nil {
 			// It's an instruction result
-			result := line.GetInstructionResult()
-			detail := result.SerializedInstructionResult
-			if len(result.SerializedInstructionResult) > 40 {
-				detail = detail[:37] + "..."
-			}
-			details = append(details, detail)
+			// TODO: implement verbosity levels and print this only on verbose
+			// result := line.GetInstructionResult()
+			// _ = pb.Clear()
+			// fmt.Println(result.SerializedInstructionResult)
+			currentStep += 1
+			pb.Set(int(currentStep))
+			continue
 		}
 		if line.GetError() != nil {
 			// It's an error
-			if err := pb.Exit(); err != nil {
-				return err
-			}
 			return getKurtosisError(line.GetError())
 		}
 		if line.GetRunFinishedEvent() != nil {
@@ -142,6 +144,14 @@ func getKurtosisError(starlarkError *kurtosis_core_rpc_api_bindings.StarlarkErro
 	return errors.New("error occurred during execution: " + msg)
 }
 
+func termWidth() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 80
+	}
+	return width
+}
+
 // Ends and clears the progress bar
 func clearBar(pb *progressbar.ProgressBar) {
 	// Ignore any errors
@@ -151,31 +161,7 @@ func clearBar(pb *progressbar.ProgressBar) {
 	_ = pb.Clear()
 }
 
-func newValidationProgressBar(max int) *progressbar.ProgressBar {
-	pb := progressbar.NewOptions(
-		max,
-		progressbar.OptionSetMaxDetailRow(1),
-		progressbar.OptionShowDescriptionAtLineEnd(),
-		progressbar.OptionClearOnFinish(),
-		progressbar.OptionSetElapsedTime(true),
-		progressbar.OptionSetPredictTime(false),
-		progressbar.OptionSetWriter(os.Stdout),
-		progressbar.OptionShowCount(),
-		progressbar.OptionSpinnerType(14),
-		progressbar.OptionFullWidth(),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-		progressbar.OptionEnableColorCodes(true),
-	)
-	return pb
-}
-
-func newExecutionProgressBar(steps int) *progressbar.ProgressBar {
+func newProgressBar(steps int) *progressbar.ProgressBar {
 	pb := progressbar.NewOptions(
 		steps,
 		progressbar.OptionSetMaxDetailRow(1),
