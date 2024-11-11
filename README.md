@@ -29,8 +29,7 @@ source env.sh  # set env-vars
 ```
 
 > [!IMPORTANT]  
-> If this is your first time installing go binary packages on your computer, you might need to add the binary location in your `PATH`.
-> The command output contains more information.
+> If this is your first time installing go binary packages on your computer, [you might need to add the binary location in your `PATH`](https://stackoverflow.com/a/70833125).
 
 ## How to Use
 
