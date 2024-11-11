@@ -1,3 +1,19 @@
+FROM debian:bookworm-slim AS foundry
+
+# Install curl & git
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y curl git && \
+    apt clean
+
+# Install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+ENV PATH="/root/.foundry/bin:${PATH}"
+RUN foundryup
+
+WORKDIR /app/
+
+
 # The repository's URL.
 ARG CONTRACTS_REPO
 # The commit hash, tag, or branch to checkout from the repo.
@@ -6,9 +22,7 @@ ARG CONTRACTS_REF
 # It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
 
-# Nightly (2024-10-03)
-# Foundry doesn't support non-arm64 images, so we need to specify the platform
-FROM --platform=amd64 ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0
+FROM foundry AS contract_deployer
 
 WORKDIR /
 
