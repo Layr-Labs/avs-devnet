@@ -34,6 +34,8 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
 			description := progressInfo.CurrentStepInfo[0]
+
+			// We first match against the message for state transitions
 			if description == "Interpreting plan - execution will begin shortly" {
 				state = Interpretation
 				clearBar(pb)
@@ -42,7 +44,8 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				pb.Describe("Interpreting plan...")
 				continue
 			} else if description == "Starting validation" {
-				// NOTE: the total step number here is bugged, and shows the amount of execution steps instead
+				// The total step number here is bugged, and shows the amount of execution steps instead.
+				// That's why we set the total steps to -1 to show an infinite spinner.
 				clearBar(pb)
 				pb = newProgressBar(-1)
 				_ = pb.RenderBlank()
@@ -57,7 +60,10 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				_ = pb.RenderBlank()
 				pb.Describe("Starting execution...")
 				continue
-			} else if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
+			}
+
+			// We set the total steps here because of the "Starting validation" message having the wrong step count
+			if strings.HasPrefix(description, "Validating plan") && totalSteps == 0 && progressInfo.TotalSteps != 0 {
 				state = Validation
 				totalSteps = progressInfo.TotalSteps
 				clearBar(pb)
@@ -65,6 +71,8 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				_ = pb.RenderBlank()
 				pb.Describe(description)
 			}
+
+			// Update the progress bar description, details, and current step
 			currentStep = progressInfo.CurrentStepNumber
 			if len(progressInfo.CurrentStepInfo) > 1 {
 				details := strings.Join(progressInfo.CurrentStepInfo[1:], ", ")
@@ -80,8 +88,7 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				currentStep -= 1
 			}
 			_ = pb.Set(int(currentStep))
-		}
-		if line.GetInstruction() != nil {
+		} else if line.GetInstruction() != nil {
 			// It's an instruction
 			instruction := line.GetInstruction()
 			if state != Execution { // This should never happen
@@ -93,16 +100,13 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				detail = detail[:maxWidth-3] + "..."
 			}
 			_ = pb.AddDetail(detail)
-		}
-		if line.GetInfo() != nil {
+		} else if line.GetInfo() != nil {
 			_ = pb.Clear()
 			fmt.Println(line.GetInfo().InfoMessage)
-		}
-		if line.GetWarning() != nil {
+		} else if line.GetWarning() != nil {
 			_ = pb.Clear()
 			fmt.Println(line.GetWarning().WarningMessage)
-		}
-		if line.GetInstructionResult() != nil {
+		} else if line.GetInstructionResult() != nil {
 			// It's an instruction result
 			// TODO: implement verbosity levels and print this only on verbose
 			// result := line.GetInstructionResult()
@@ -110,13 +114,10 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 			// fmt.Println(result.SerializedInstructionResult)
 			currentStep += 1
 			_ = pb.Set(int(currentStep))
-			continue
-		}
-		if line.GetError() != nil {
+		} else if line.GetError() != nil {
 			// It's an error
 			return getKurtosisError(line.GetError())
-		}
-		if line.GetRunFinishedEvent() != nil {
+		} else if line.GetRunFinishedEvent() != nil {
 			// It's a run finished event
 			pb.Close()
 			event := line.GetRunFinishedEvent()
