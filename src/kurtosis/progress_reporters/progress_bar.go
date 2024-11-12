@@ -75,7 +75,8 @@ func ReportProgress(reporter chan KurtosisResponse) error {
 				_ = pb.AddDetail(details)
 			}
 			if state == Execution {
-				// On execution, current step starts at 1, and current == total doesn't mean we're done
+				// The current step returned on execution is the step that we're running.
+				// We subtract one to make it the number of steps that we've already run instead.
 				currentStep -= 1
 			}
 			_ = pb.Set(int(currentStep))
