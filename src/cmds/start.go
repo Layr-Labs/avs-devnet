@@ -11,6 +11,7 @@ import (
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/config"
 	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
+	"github.com/Layr-Labs/avs-devnet/src/kurtosis/progress_reporters"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/starlark_run_config"
 	"github.com/urfave/cli/v2"
@@ -67,14 +68,22 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
 	starlarkConfig.SerializedParams = string(configBytes)
 
-	var result *enclaves.StarlarkRunResult
-	// TODO: stream result lines and give user progress updates
+	var responseChan chan progress_reporters.KurtosisResponse
+	// TODO: use cancel func if needed
+	// var cancel context.CancelFunc
 	if strings.HasPrefix(pkgName, "github.com/") {
-		result, err = enclaveCtx.RunStarlarkRemotePackageBlocking(ctx.Context, pkgName, starlarkConfig)
+		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx.Context, pkgName, starlarkConfig)
 	} else {
-		result, err = enclaveCtx.RunStarlarkPackageBlocking(ctx.Context, pkgName, starlarkConfig)
+		responseChan, _, err = enclaveCtx.RunStarlarkPackage(ctx.Context, pkgName, starlarkConfig)
 	}
-	_ = result
+	if err != nil {
+		return err
+	}
+
+	err = progress_reporters.ReportProgress(responseChan)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Devnet started!")
 	return err
