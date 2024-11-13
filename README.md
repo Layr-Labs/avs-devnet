@@ -14,7 +14,15 @@ Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 As part of that, you'll also need to install Docker.
 
-For local development, we require the `go` toolchain to be installed.
+For local development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
+
+> [!IMPORTANT]  
+> To be able to [install the CLI via `go`](#installation), you'll need to add `$HOME/go/bin` to your `PATH`.
+> You can do so by adding to your `~/.bashrc` (or the equivalent for your shell) the following line:
+>
+> ```bash
+> export PATH="$PATH:$HOME/go/bin"
+> ```
 
 ## Installation
 
