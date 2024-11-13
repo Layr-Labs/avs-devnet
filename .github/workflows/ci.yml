@@ -61,6 +61,10 @@ jobs:
       - name: Run example '${{ matrix.example }}'
         run: make ${{ matrix.example }}
 
+      - name: Check example is still running
+        if: ${{matrix.example != 'kurtosis_start' }}
+        run: make check_${{ matrix.example }}
+
   kurtosis_lint:
     runs-on: ubuntu-latest
     steps:
