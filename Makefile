@@ -86,14 +86,13 @@ kurtosis_lint:
 kurtosis_incredible_squaring: ## 🚀 Start the devnet with the Incredible Squaring AVS example (Kurtosis)
 	@echo "Starting devnet with incredible_squaring example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/incredible_squaring.yaml
-	
+
 # TODO: remove this once we have better testing
-check_kurtosis_incredible_squaring:
-	@sleep 60
-	@kurtosis service inspect devnet operator | grep -q "Status: RUNNING" \
-		|| (echo "Operator didn't start correctly" && exit 1)
-	@kurtosis service inspect devnet aggregator | grep -q "Status: RUNNING" \
-		|| (echo "Aggregator didn't start correctly" && exit 1)
+check_devnet:
+	sleep 60
+	# Check that all services are marked as "RUNNING", otherwise fail and print the status
+	kurtosis enclave inspect devnet | tee output.txt
+	grep -q "STOPPED" output.txt && exit 1 || true
 
 # hello-world-avs example
 
@@ -116,11 +115,3 @@ build_hello_world_image: examples/hello-world-avs
 kurtosis_hello_world: build_hello_world_image ## 🚀 Start the devnet with the Hello World AVS example (Kurtosis)
 	@echo "Starting devnet with hello_world example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/hello_world.yaml
-
-# TODO: remove this once we have better testing
-check_kurtosis_hello_world:
-	@sleep 60
-	@kurtosis service inspect devnet operator | grep -q "Status: RUNNING" \
-		|| (echo "Operator didn't start correctly" && exit 1)
-	@kurtosis service inspect devnet traffic-generator | grep -q "Status: RUNNING" \
-		|| (echo "Traffic generator didn't start correctly" && exit 1)
