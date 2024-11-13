@@ -5,8 +5,7 @@ import (
 
 	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
+	"gopkg.in/yaml.v3"
 )
 
 func GetPorts(ctx *cli.Context) error {
@@ -27,7 +26,10 @@ func GetPorts(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 4)
 	}
-	printPorts(ports)
+	err = printPorts(ports)
+	if err != nil {
+		return cli.Exit(err, 5)
+	}
 	return nil
 }
 
@@ -60,21 +62,11 @@ func getServicePorts(enclaveCtx kurtosis.EnclaveCtx) (map[string]ServicePorts, e
 	return servicePorts, err
 }
 
-func printPorts(services map[string]ServicePorts) {
-	keys := maps.Keys(services)
-	slices.Sort(keys)
-
-	for _, name := range keys {
-		fmt.Println(name)
-		servicePorts := services[name]
-		if len(servicePorts) == 0 {
-			fmt.Println("  <none>")
-		}
-		sortedPortNames := maps.Keys(servicePorts)
-		slices.Sort(sortedPortNames)
-		for _, protocol := range sortedPortNames {
-			fmt.Printf("  %s: %s\n", protocol, servicePorts[protocol])
-		}
-		fmt.Println()
+func printPorts(services map[string]ServicePorts) error {
+	out, err := yaml.Marshal(services)
+	if err != nil {
+		return err
 	}
+	fmt.Print(string(out))
+	return nil
 }
