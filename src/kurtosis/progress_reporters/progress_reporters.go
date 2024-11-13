@@ -81,7 +81,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 				continue
 			} else if description == "Starting validation" {
 				// The total step number here is bugged, and shows the amount of execution steps instead.
-				// That's why ignore it and call `ReportValidationStart` later.
+				// That's why we ignore it and call `ReportValidationStart` later.
 				continue
 			} else if description == "Starting execution" {
 				state = Execution
