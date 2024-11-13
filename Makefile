@@ -26,7 +26,10 @@ install: generate_envscript ## 📦 Install the CLI
 	@echo
 	@echo "Installation successfull!"
 	@echo "Package was installed in $(INSTALLATION_DIR)"
-	@echo $(PATH) | grep -q $(INSTALLATION_DIR) || echo "\nWARNING: $(INSTALLATION_DIR) doesn't seem to be in your PATH. To add it, run:\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\""
+	@echo $(PATH) | grep -q $(INSTALLATION_DIR) || echo "\nWARNING: $(INSTALLATION_DIR) doesn't seem to be in your PATH.\
+		\nIf the command can't be found, try adding to your ~/.bashrc the following line and restarting your shell:\
+		\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\"\
+		\n"
 	@echo
 	@echo "Remember to run 'source env.sh' to set the environment variables"
 
