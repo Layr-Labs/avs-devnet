@@ -104,6 +104,6 @@ artifacts:
 
 ethereum_package:
   participants:
-    - el_type: erigon
+    - el_type: nethermind
   additional_services:
     - blockscout
