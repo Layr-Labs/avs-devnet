@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Creates a new devnet configuration with the given context
 func Init(ctx *cli.Context) error {
 	configFileName, _, err := parseArgs(ctx)
 	if err != nil {
@@ -26,6 +27,7 @@ func Init(ctx *cli.Context) error {
 	return nil
 }
 
+// Creates a default devnet configuration in the given file path
 func initializeConfigFile(configFileName string) error {
 	file, err := os.Create(configFileName)
 	if err != nil {

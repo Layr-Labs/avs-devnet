@@ -47,6 +47,8 @@ cli_deps:
 	@echo "Installing Go dependencies..."
 	go mod tidy
 
+# This generates the env.sh script that sets envvars for local development
+# of the CLI + Kurtosis-package combo
 generate_envscript:
 	echo "export $(PACKAGE_ENV_VAR)" > env.sh
 	chmod u+x env.sh
