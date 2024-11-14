@@ -168,7 +168,10 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	if err != nil {
 		return err
 	}
-	file.Write(foundryConfig)
+	_, err = file.Write(foundryConfig)
+	if err != nil {
+		return err
+	}
 	file.Close()
 
 	err = os.Chdir(cwd)
