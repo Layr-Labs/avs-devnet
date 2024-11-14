@@ -2,17 +2,31 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Deployment struct {
-	Name          string `yaml:"name"`
-	Repo          string `yaml:"repo"`
-	Ref           string `yaml:"ref"`
+	// Name for the deployment
+	Name string `yaml:"name"`
+	// URL to the git repo containing the contracts (can be local)
+	Repo string `yaml:"repo"`
+	// The git ref to checkout
+	Ref string `yaml:"ref"`
+	// Path to the contracts dir
 	ContractsPath string `yaml:"contracts_path"`
-	Script        string `yaml:"script"`
+	// Path to the deployment script, relative to the contracts directory
+	Script string `yaml:"script"`
+
 	// non-exhaustive
+}
+
+// Returns the path to the deployment script (i.e. `Script`) but without the trailing contract name
+// Example: "contracts/contracts.sol:Contract" -> "contracts/contracts.sol"
+func (d Deployment) GetScriptPath() string {
+	scriptPath := strings.SplitAfterN(d.Script, ".sol:", 1)[0]
+	return strings.TrimSuffix(scriptPath, ":")
 }
 
 type Service struct {

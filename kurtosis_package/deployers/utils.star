@@ -14,12 +14,14 @@ def deploy_generic_contract(plan, context, deployment):
     repo = deployment["repo"]
     is_remote_repo = repo.startswith("https://") or repo.startswith("http://")
     contracts_path = deployment.get("contracts_path", ".")
-    script_path = deployment["script"]
+    script = deployment["script"]
     extra_args = deployment.get("extra_args", "")
     env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
     output = deployment.get("output", {})
+
+    contract_name = None
 
     root = "/app/" + contracts_path + "/"
 
@@ -29,13 +31,23 @@ def deploy_generic_contract(plan, context, deployment):
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
         deployer_img = FOUNDRY_IMAGE
-        input_artifacts.append(("/app/", repo))
+        split_path = script.split(".sol:")
+        script_path = script
+        # In case the contract name is not provided, we assume the contract name is in the script name
+        # Examples: "MyContract.sol" -> "MyContract", "MyContract.sol:MyContract2" -> "MyContract2"
+        if len(split_path) == 1:
+            contract_name = script.split("/")[-1].rstrip(".sol").rstrip(".s")
+        else:
+            contract_name = split_path[1]
+            script_path = split_path[0] + ".sol"
+
+        input_artifacts.append(("/app/", repo + contracts_path + script_path))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
     pre_cmd, input_files = rename_input_files(input_artifacts)
     move_to_dir_cmd = "cd " + root
-    deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
+    deploy_cmd = generate_deploy_cmd(context, script, contract_name, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
     cmd = generate_cmd([pre_cmd, move_to_dir_cmd, deploy_cmd, post_cmd])
@@ -133,13 +145,16 @@ def rename_input_files(input_files):
     return " && ".join(cmds), renamed_input_files
 
 
-def generate_deploy_cmd(context, script_path, extra_args, verify):
+def generate_deploy_cmd(context, script, contract_name, user_extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
+    target_contract_arg = ("--tc " + contract_name) if contract_name != None else ""
+    extra_args = " ".join([verify_args, target_contract_arg])
+
     cmd = (
         "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-            http_rpc_url, private_key, verify_args, script_path, extra_args
+            http_rpc_url, private_key, extra_args, script, user_extra_args
         )
     )
     return cmd

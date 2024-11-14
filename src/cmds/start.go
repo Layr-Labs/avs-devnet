@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
@@ -96,30 +97,91 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 		}
 		repoUrl, err := url.Parse(deployment.Repo)
 		if err != nil {
-			return err
+			return fmt.Errorf("repo '%s' is invalid: %w", deployment.Repo, err)
 		}
 		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
 			continue
 		}
-		if alreadyUploaded[repoUrl.Path] {
-			continue
-		}
-		path := repoUrl.Path
-		err = uploadLocalRepo(deployment, path, enclaveCtx)
+		err = uploadLocalRepo(deployment, repoUrl.Path, enclaveCtx, alreadyUploaded)
 		if err != nil {
-			return err
+			return fmt.Errorf("local repo '%s' uploading failed: %w", repoUrl.Path, err)
 		}
-		alreadyUploaded[repoUrl.Path] = true
 	}
 	return nil
 }
 
-func uploadLocalRepo(deployment config.Deployment, path string, enclaveCtx *enclaves.EnclaveContext) error {
-	// Upload the file with the path as the name
-	_, _, err := enclaveCtx.UploadFiles(path, path)
+func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext, alreadyUploaded map[string]bool) error {
+	scriptPath := deployment.GetScriptPath()
+	absRepoPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return err
 	}
+	scriptOrigin := filepath.Join(absRepoPath, deployment.ContractsPath, scriptPath)
+
+	// Skip if already uploaded
+	if alreadyUploaded[scriptOrigin] {
+		return nil
+	}
+
+	outputDir, err := os.MkdirTemp(os.TempDir(), "avs-devnet-")
+	if err != nil {
+		return fmt.Errorf("tempdir creation failed: %w", err)
+	}
+	defer os.RemoveAll(outputDir)
+
+	scriptDestination := filepath.Join(outputDir, deployment.ContractsPath, scriptPath)
+
+	err = os.MkdirAll(filepath.Dir(scriptDestination), 0700)
+	if err != nil {
+		return fmt.Errorf("output dir creation failed: %w", err)
+	}
+
+	if !fileExists(scriptOrigin) {
+		return fmt.Errorf("file '%s' doesn't exist", scriptOrigin)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	err = os.Chdir(filepath.Join(absRepoPath, deployment.ContractsPath))
+	if err != nil {
+		return fmt.Errorf("chdir to contracts dir failed: %w", err)
+	}
+	// Install deps
+	output, err := exec.Command("forge", "install").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("forge install failed: %w, with output: %s", err, string(output))
+	}
+	// Flatten the script into a single file
+	output, err = exec.Command("forge", "flatten", "-o", scriptDestination, scriptOrigin).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("script flattening failed: %w, with output: %s", err, string(output))
+	}
+
+	foundryConfigRelPath := filepath.Join(deployment.ContractsPath, "foundry.toml")
+	foundryConfig, err := os.ReadFile(filepath.Join(absRepoPath, foundryConfigRelPath))
+	if err != nil {
+		return fmt.Errorf("failed to read foundry.toml: %w", err)
+	}
+	file, err := os.Create(filepath.Join(outputDir, foundryConfigRelPath))
+	if err != nil {
+		return err
+	}
+	file.Write(foundryConfig)
+	file.Close()
+
+	err = os.Chdir(cwd)
+	if err != nil {
+		return err
+	}
+	// Upload the file with the script path as the name
+	artifactName := repoPath + deployment.ContractsPath + scriptPath
+	_, _, err = enclaveCtx.UploadFiles(outputDir, artifactName)
+	if err != nil {
+		return fmt.Errorf("file uploading failed: %w", err)
+	}
+	alreadyUploaded[scriptOrigin] = true
 	return nil
 }
 
