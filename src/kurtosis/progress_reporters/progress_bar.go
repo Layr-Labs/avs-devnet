@@ -35,11 +35,7 @@ func (r *ProgressBarReporter) ReportValidationStep(stepInfo ValidationStep) erro
 	_ = r.pb.Set(int(stepInfo.CurrentStep))
 	r.pb.Describe(stepInfo.Description)
 	details := strings.Join(stepInfo.Details, ", ")
-	maxWidth := termWidth()
-	if len(details) > maxWidth {
-		details = details[:maxWidth-3] + "..."
-	}
-	_ = r.pb.AddDetail(details)
+	addDetail(r.pb, details)
 	return nil
 }
 
@@ -52,7 +48,7 @@ func (r *ProgressBarReporter) ReportExecutionStep(stepInfo ExecutionStep) error 
 	_ = r.pb.Set(int(stepInfo.CurrentStep))
 	r.pb.Describe(stepInfo.Description)
 	if stepInfo.InstructionDescription != nil {
-		_ = r.pb.AddDetail(*stepInfo.InstructionDescription)
+		addDetail(r.pb, *stepInfo.InstructionDescription)
 	}
 	// TODO: implement verbosity levels and print this only on verbose
 	// if stepInfo.InstructionResult != nil {
@@ -137,6 +133,14 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 		}()
 	}
 	return pb
+}
+
+func addDetail(pb *progressbar.ProgressBar, detail string) {
+	maxWidth := termWidth()
+	if len(detail) > maxWidth {
+		detail = detail[:maxWidth-3] + "..."
+	}
+	_ = pb.AddDetail(detail)
 }
 
 // Ends and clears the progress bar
