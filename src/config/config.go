@@ -69,7 +69,7 @@ keys:
 # ethereum-package configuration
 ethereum_package:
   participants:
-    - el_type: nethermind
+    - el_type: besu
   additional_services:
     - blockscout
 `
