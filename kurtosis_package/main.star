@@ -63,12 +63,15 @@ def parse_args(plan, args):
         services=services,
     )
 
+
 def parse_ethereum_package_args(plan, args):
     ethereum_args = dict(args.get("ethereum_package", {}))
     participants = ethereum_args.get("participants", [{"el_type": "nethermind"}])
 
     if len(participants) == 0 or participants[0].get("el_type") != "nethermind":
-        plan.print("WARNING: no 'nethermind' client as first participant. Adding one...")
+        plan.print(
+            "WARNING: no 'nethermind' client as first participant. Adding one..."
+        )
         participants = [{"el_type": "nethermind"}] + participants
 
     ethereum_args["participants"] = participants
