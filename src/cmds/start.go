@@ -105,11 +105,20 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 			continue
 		}
 		path := repoUrl.Path
-		// Upload the file with the path as the name
-		if _, _, err := enclaveCtx.UploadFiles(path, path); err != nil {
+		err = uploadLocalRepo(deployment, path, enclaveCtx)
+		if err != nil {
 			return err
 		}
 		alreadyUploaded[repoUrl.Path] = true
+	}
+	return nil
+}
+
+func uploadLocalRepo(deployment config.Deployment, path string, enclaveCtx *enclaves.EnclaveContext) error {
+	// Upload the file with the path as the name
+	_, _, err := enclaveCtx.UploadFiles(path, path)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -7,9 +7,11 @@ import (
 )
 
 type Deployment struct {
-	Name string `yaml:"name"`
-	Repo string `yaml:"repo"`
-	Ref  string `yaml:"ref"`
+	Name          string `yaml:"name"`
+	Repo          string `yaml:"repo"`
+	Ref           string `yaml:"ref"`
+	ContractsPath string `yaml:"contracts_path"`
+	Script        string `yaml:"script"`
 	// non-exhaustive
 }
 
