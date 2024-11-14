@@ -3,5 +3,5 @@ description: |
   Runs an Ethereum devnet with EigenLayer and AVS contracts plus off-chain services
 replace:
   # Fix to a specific version of kurtosis ethereum package to avoid breaking changes
-  # Version is from 2024-11-01
-  github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@861cf2ec532efe6cc2496f53af192826607e7524
+  # Version is from 2024-10-29
+  github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@807f6aa8a992d1868d2d0aed7f5857df3c5857e5
