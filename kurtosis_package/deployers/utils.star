@@ -138,10 +138,8 @@ def generate_deploy_cmd(context, script_path, extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
-    cmd = (
-        "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-            http_rpc_url, private_key, verify_args, script_path, extra_args
-        )
+    cmd = "forge install && forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
+        http_rpc_url, private_key, verify_args, script_path, extra_args
     )
     return cmd
 
