@@ -69,7 +69,7 @@ keys:
 # ethereum-package configuration
 ethereum_package:
   participants:
-    - el_type: erigon
+    - el_type: besu
   additional_services:
     - blockscout
 `
