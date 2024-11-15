@@ -14,10 +14,18 @@ type Deployment struct {
 }
 
 type Service struct {
-	Name         string  `yaml:"name"`
-	Image        string  `yaml:"image"`
+	// The service name
+	Name string `yaml:"name"`
+	// The docker image's name
+	Image string `yaml:"image"`
+	// Optional. A custom build command to run to build the docker image.
+	// Ignored if BuildContext is set.
+	BuildCmd *string `yaml:"build_cmd"`
+	// Optional. The build context to use to build the docker image.
 	BuildContext *string `yaml:"build_context"`
-	BuildFile    *string `yaml:"build_file"`
+	// Optional. The build file to specify when building the docker image.
+	// Ignored unless BuildContext is set.
+	BuildFile *string `yaml:"build_file"`
 	// non-exhaustive
 }
 
