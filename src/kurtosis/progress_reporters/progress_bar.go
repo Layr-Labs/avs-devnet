@@ -135,6 +135,8 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 	return pb
 }
 
+// Adds a detail to the progress bar, truncating it if necessary.
+// Details are additional lines that are shown below the progress bar.
 func addDetail(pb *progressbar.ProgressBar, detail string) {
 	maxWidth := termWidth()
 	if len(detail) > maxWidth {
