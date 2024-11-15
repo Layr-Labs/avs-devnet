@@ -68,6 +68,7 @@ def parse_ethereum_package_args(plan, args):
     ethereum_args = dict(args.get("ethereum_package", {}))
     participants = ethereum_args.get("participants", [{"el_type": "besu"}])
 
+    # If there are no supported clients in first participant, add one
     if len(participants) == 0 or participants[0].get("el_type") != "besu":
         plan.print("WARNING: no 'besu' client as first participant. Adding one...")
         participants = [{"el_type": "besu"}] + participants
