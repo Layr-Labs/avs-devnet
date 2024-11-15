@@ -25,7 +25,7 @@ type Deployment struct {
 // Returns the path to the deployment script (i.e. `Script`) but without the trailing contract name
 // Example: "contracts/contracts.sol:Contract" -> "contracts/contracts.sol"
 func (d Deployment) GetScriptPath() string {
-	scriptPath := strings.SplitAfterN(d.Script, ".sol:", 1)[0]
+	scriptPath := strings.SplitAfterN(d.Script, ".sol:", 2)[0]
 	return strings.TrimSuffix(scriptPath, ":")
 }
 
