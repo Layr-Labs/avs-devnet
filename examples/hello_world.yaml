@@ -64,8 +64,6 @@ keys:
     type: ecdsa
 
 ethereum_package:
-  participants:
-    - el_type: erigon
   additional_services:
     - blockscout
   network_params:
