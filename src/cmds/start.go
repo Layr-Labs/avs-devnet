@@ -46,10 +46,6 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return err
 	}
 
-	if err := buildDockerImages(config); err != nil {
-		return err
-	}
-
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
 		return err
@@ -58,6 +54,11 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return errors.New("devnet already running")
 	}
 	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx.Context, devnetName)
+	if err != nil {
+		return err
+	}
+
+	err = buildDockerImages(config)
 	if err != nil {
 		return err
 	}
