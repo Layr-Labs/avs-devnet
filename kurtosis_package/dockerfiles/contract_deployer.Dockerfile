@@ -38,7 +38,7 @@ WORKDIR /app
 RUN git remote add origin ${CONTRACTS_REPO} && \
     git fetch --depth 1 origin ${CONTRACTS_REF} && \
     git checkout FETCH_HEAD && \
-    git submodule update --init --recursive --depth 1 --single-branch --recursive
+    git submodule update --init --recursive --depth 1 --single-branch
 
 WORKDIR /app/${CONTRACTS_PATH}
 
