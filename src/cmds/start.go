@@ -139,11 +139,11 @@ func buildDockerImages(config config.DevnetConfig) error {
 }
 
 func buildWithDocker(imageName string, buildContext string, buildFile *string) error {
-	cmdArgs := []string{"docker", "build", buildContext, "-t", imageName}
+	cmdArgs := []string{"build", buildContext, "-t", imageName}
 	if buildFile != nil {
 		cmdArgs = append(cmdArgs, "-f", *buildFile)
 	}
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd := exec.Command("docker", cmdArgs...)
 	fmt.Println("Building image", imageName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
