@@ -46,10 +46,6 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return err
 	}
 
-	if err := buildDockerImages(config); err != nil {
-		return err
-	}
-
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
 		return err
@@ -58,6 +54,11 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 		return errors.New("devnet already running")
 	}
 	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx.Context, devnetName)
+	if err != nil {
+		return err
+	}
+
+	err = buildDockerImages(config)
 	if err != nil {
 		return err
 	}
@@ -119,23 +120,15 @@ func buildDockerImages(config config.DevnetConfig) error {
 	errChan := make(chan error)
 	numBuilds := 0
 	for _, service := range config.Services {
-		if service.BuildContext == nil {
-			continue
+		if service.BuildContext != nil {
+			go func() {
+				errChan <- buildWithDocker(service.Image, *service.BuildContext, service.BuildFile)
+			}()
+		} else if service.BuildCmd != nil {
+			go func() {
+				errChan <- buildWithCustomCmd(service.Image, *service.BuildCmd)
+			}()
 		}
-		image := service.Image
-		cmdArgs := []string{"docker", "build", *service.BuildContext, "-t", image}
-		if service.BuildFile != nil {
-			cmdArgs = append(cmdArgs, "-f", *service.BuildFile)
-		}
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		fmt.Println("Building image", image)
-		go func() {
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				err = fmt.Errorf("building image '%s' failed: %w\n%s", image, err, output)
-			}
-			errChan <- err
-		}()
 		numBuilds += 1
 	}
 	errs := make([]error, numBuilds)
@@ -143,4 +136,28 @@ func buildDockerImages(config config.DevnetConfig) error {
 		errs = append(errs, <-errChan)
 	}
 	return errors.Join(errs...)
+}
+
+func buildWithDocker(imageName string, buildContext string, buildFile *string) error {
+	cmdArgs := []string{"build", buildContext, "-t", imageName}
+	if buildFile != nil {
+		cmdArgs = append(cmdArgs, "-f", *buildFile)
+	}
+	cmd := exec.Command("docker", cmdArgs...)
+	fmt.Println("Building image", imageName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("building image '%s' failed: %w\n%s", imageName, err, output)
+	}
+	return nil
+}
+
+func buildWithCustomCmd(imageName string, buildCmd string) error {
+	cmd := exec.Command("sh", "-c", buildCmd)
+	fmt.Println("Building image", imageName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("building image '%s' failed: %w\n%s", imageName, err, output)
+	}
+	return nil
 }

@@ -55,7 +55,7 @@ services:
       # This expands to the RPC node's URL
       RPC_URL: "$http_rpc_url"
       PRIVATE_KEY: "$keys.traffic_generator_ecdsa_keys.private_key"
-    cmd: ["sh", "-c", "sleep 30 ; npm run start:traffic"]
+    cmd: ["npm", "run", "start:traffic"]
 
 keys:
   - name: operator_ecdsa_keys
