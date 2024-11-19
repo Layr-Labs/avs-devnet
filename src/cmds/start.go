@@ -90,8 +90,6 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 
 // Uploads the local repositories to the enclave
 func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
-	alreadyUploaded := make(map[string]bool)
-
 	for _, deployment := range config.Deployments {
 		if deployment.Repo == "" {
 			continue
@@ -103,7 +101,7 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
 			continue
 		}
-		err = uploadLocalRepo(deployment, repoUrl.Path, enclaveCtx, alreadyUploaded)
+		err = uploadLocalRepo(deployment, repoUrl.Path, enclaveCtx)
 		if err != nil {
 			return fmt.Errorf("local repo '%s' uploading failed: %w", repoUrl.Path, err)
 		}
@@ -111,18 +109,13 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 	return nil
 }
 
-func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext, alreadyUploaded map[string]bool) error {
+func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext) error {
 	scriptPath := deployment.GetScriptPath()
 	absRepoPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return err
 	}
 	scriptOrigin := filepath.Join(absRepoPath, deployment.ContractsPath, scriptPath)
-
-	// Skip if already uploaded
-	if alreadyUploaded[scriptOrigin] {
-		return nil
-	}
 
 	outputDir, err := os.MkdirTemp(os.TempDir(), "avs-devnet-")
 	if err != nil {
@@ -180,12 +173,11 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 		return err
 	}
 	// Upload the file with the script path as the name
-	artifactName := repoPath + deployment.ContractsPath + scriptPath
+	artifactName := deployment.Name + "-script"
 	_, _, err = enclaveCtx.UploadFiles(outputDir, artifactName)
 	if err != nil {
 		return fmt.Errorf("file uploading failed: %w", err)
 	}
-	alreadyUploaded[scriptOrigin] = true
 	return nil
 }
 

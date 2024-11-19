@@ -42,7 +42,7 @@ def deploy_generic_contract(plan, context, deployment):
             contract_name = split_path[1]
             script_path = split_path[0] + ".sol"
 
-        input_artifacts.append(("/app/", repo + contracts_path + script_path))
+        input_artifacts.append(("/app/", deployment_name + "-script"))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
