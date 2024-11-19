@@ -317,7 +317,7 @@ artifacts:
 # See https://github.com/ethpandaops/ethereum-package for more information
 ethereum_package:
   participants:
-    - el_type: erigon
+    - el_type: besu
   additional_services:
     - blockscout
 ```
