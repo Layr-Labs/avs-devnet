@@ -1,3 +1,12 @@
+# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
+FOUNDRY_IMAGE = ImageBuildSpec(
+    image_name="Layr-Labs/foundry",
+    build_context_dir="./dockerfiles/",
+    build_file="contract_deployer.Dockerfile",
+    target_stage="foundry",
+)
+
+
 def generate_artifacts(plan, context, artifacts):
     for artifact_name in artifacts:
         generate_artifact(plan, context, artifact_name)
@@ -41,16 +50,12 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
 def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
+    cmd = "cast send --value {} --private-key {} --rpc-url {} {}".format(
+        amount, funded_private_key, http_rpc_url, to
+    )
     plan.run_sh(
-        image="ghcr.io/foundry-rs/foundry:nightly-471e4ac317858b3419faaee58ade30c0671021e0",
-        run="cast send --value "
-        + amount
-        + " --private-key "
-        + funded_private_key
-        + " --rpc-url "
-        + http_rpc_url
-        + " "
-        + to,
+        image=FOUNDRY_IMAGE,
+        run=cmd,
         description="Depositing funds to account",
     )
 

@@ -5,7 +5,8 @@ shared_utils = import_module("../shared_utils.star")
 FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry",
     build_context_dir="../dockerfiles/",
-    build_file="foundry.Dockerfile",
+    build_file="contract_deployer.Dockerfile",
+    target_stage="foundry",
 )
 
 
@@ -152,10 +153,8 @@ def generate_deploy_cmd(context, script, contract_name, user_extra_args, verify)
     target_contract_arg = ("--tc " + contract_name) if contract_name != None else ""
     extra_args = " ".join([verify_args, target_contract_arg])
 
-    cmd = (
-        "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-            http_rpc_url, private_key, extra_args, script, user_extra_args
-        )
+    cmd = "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
+        http_rpc_url, private_key, extra_args, script, user_extra_args
     )
     return cmd
 
