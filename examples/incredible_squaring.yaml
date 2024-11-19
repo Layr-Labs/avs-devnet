@@ -16,7 +16,7 @@ deployments:
       avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
 
 services:
-  - name: "aggregator"
+  - name: aggregator
     image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
     ports:
       rpc:
@@ -37,7 +37,7 @@ services:
       - "--credible-squaring-deployment"
       - "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json"
 
-  - name: "operator1"
+  - name: operator
     image: "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest"
     ports:
       node:
@@ -48,19 +48,19 @@ services:
     input:
       /usr/src/app/config-files/:
         - operator-config
-        - operator1_bls_keys
-        - operator1_ecdsa_keys
+        - operator_bls_keys
+        - operator_ecdsa_keys
     env:
-      OPERATOR_ECDSA_KEY_PASSWORD: $keys.operator1_ecdsa_keys.password
-      OPERATOR_BLS_KEY_PASSWORD: $keys.operator1_bls_keys.password
+      OPERATOR_ECDSA_KEY_PASSWORD: $keys.operator_ecdsa_keys.password
+      OPERATOR_BLS_KEY_PASSWORD: $keys.operator_bls_keys.password
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 keys:
   # This generates new keypairs for the operator
-  - name: "operator1_bls_keys"
-    type: "bls"
-  - name: "operator1_ecdsa_keys"
-    type: "ecdsa"
+  - name: operator_bls_keys
+    type: bls
+  - name: operator_ecdsa_keys
+    type: ecdsa
   # This ensures the aggregator has funds
   # TODO: specify private key only
   - address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
@@ -87,7 +87,7 @@ artifacts:
     files:
       operator-config.yaml: |
         production: False
-        operator_address: {{.keys.operator1_ecdsa_keys.address}}
+        operator_address: {{.keys.operator_ecdsa_keys.address}}
         avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
         operator_state_retriever_address: {{.operator_state_retriever_address}}
         eth_rpc_url: {{.http_rpc_url}}
