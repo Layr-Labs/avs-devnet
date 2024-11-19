@@ -36,10 +36,10 @@ def generate_input_files(plan, context, input_args):
         if len(artifact_names) == 0:
             continue
         if len(artifact_names) == 1:
-            artifact = shared_utils.generate_artifact(plan, context, artifact_names[0])
+            artifact = shared_utils.ensure_generated(plan, context, artifact_names[0])
         else:
             artifacts = [
-                shared_utils.generate_artifact(plan, context, n) for n in artifact_names
+                shared_utils.ensure_generated(plan, context, n) for n in artifact_names
             ]
             artifact = Directory(artifact_names=artifacts)
 
