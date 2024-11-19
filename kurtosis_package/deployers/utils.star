@@ -86,7 +86,7 @@ def gen_deployer_img(repo, ref, path):
 
 def generate_input_artifacts(plan, context, input, root):
     artifacts, files = parse_input_files(input, root)
-    shared_utils.generate_artifacts(plan, context, artifacts)
+    shared_utils.ensure_all_generated(plan, context, artifacts)
     return files
 
 

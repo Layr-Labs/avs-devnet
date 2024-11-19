@@ -7,25 +7,40 @@ FOUNDRY_IMAGE = ImageBuildSpec(
 )
 
 
-def generate_artifacts(plan, context, artifacts):
+def ensure_all_generated(plan, context, artifacts):
+    """
+    Ensures all the given artifacts are generated.
+    """
     for artifact_name in artifacts:
-        generate_artifact(plan, context, artifact_name)
+        ensure_generated(plan, context, artifact_name)
 
 
-def generate_artifact(plan, context, artifact_name):
+def ensure_generated(plan, context, artifact_name):
+    """
+    Ensures an artifact was already generated, and returns its artifact name.
+    """
+    # If it's not in the context, we assume it's auto-generated
     if artifact_name not in context.artifacts:
         return artifact_name
+
+    # If it was already generated, we skip it
     if context.artifacts[artifact_name].get("generated", False):
         return artifact_name
+
     artifact_files = context.artifacts[artifact_name].get("files", {})
     additional_data = context.artifacts[artifact_name].get("additional_data", {})
+
+    # Make a copy of the context data to allow for modifications
     data = dict(context.data)
+
     for artifact, vars in additional_data.items():
         for varname, json_field in vars.items():
             data[varname] = read_json_artifact(plan, artifact, json_field)
+
     config = {}
     for name, template in artifact_files.items():
         config[name] = struct(template=template, data=data)
+
     artifact = plan.render_templates(
         config=config,
         name=artifact_name,
