@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -14,10 +15,18 @@ type Deployment struct {
 }
 
 type Service struct {
-	Name         string  `yaml:"name"`
-	Image        string  `yaml:"image"`
+	// The service name
+	Name string `yaml:"name"`
+	// The docker image's name
+	Image string `yaml:"image"`
+	// Optional. A custom build command to run to build the docker image.
+	// Ignored if BuildContext is set.
+	BuildCmd *string `yaml:"build_cmd"`
+	// Optional. The build context to use to build the docker image.
 	BuildContext *string `yaml:"build_context"`
-	BuildFile    *string `yaml:"build_file"`
+	// Optional. The build file to specify when building the docker image.
+	// Ignored unless BuildContext is set.
+	BuildFile *string `yaml:"build_file"`
 	// non-exhaustive
 }
 
@@ -45,31 +54,5 @@ func Unmarshal(file []byte) (DevnetConfig, error) {
 	return config, nil
 }
 
-const DefaultConfig = `deployments:
-  # Deploy EigenLayer
-  - type: EigenLayer
-    ref: v0.4.2-mainnet-pepe
-    # Whitelist a single strategy named MockETH, backed by a mock-token
-    strategies: [MockETH]
-    operators:
-      # Register a single operator with EigenLayer
-      - name: operator1
-        keys: operator1_ecdsa
-        # Deposit 1e17 tokens into the MockETH strategy
-        strategies:
-          MockETH: 100000000000000000
-
-# Specify keys to generate
-keys:
-  - name: operator1_ecdsa
-    type: ecdsa
-  - name: operator1_bls
-    type: bls
-
-# ethereum-package configuration
-ethereum_package:
-  participants:
-    - el_type: besu
-  additional_services:
-    - blockscout
-`
+//go:embed default_config.yaml
+var DefaultConfig string
