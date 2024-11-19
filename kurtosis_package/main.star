@@ -47,6 +47,8 @@ def run(plan, args={}):
     for service in args.services:
         service_utils.add_service(plan, service, context)
 
+    shared_utils.ensure_all_generated(plan, context, context.artifacts)
+
     return context
 
 
