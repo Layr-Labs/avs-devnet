@@ -97,6 +97,13 @@ kurtosis_incredible_squaring: ## 🚀 Start the devnet with the Incredible Squar
 	@echo "Starting devnet with incredible_squaring example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/incredible_squaring.yaml
 
+# TODO: remove this once we have better testing
+check_devnet:
+	sleep 60
+	# Check that all services are marked as "RUNNING", otherwise fail and print the status
+	kurtosis enclave inspect devnet | tee output.txt
+	grep -q "STOPPED" output.txt && exit 1 || true
+
 # hello-world-avs example
 
 HELLO_WORLD_REF:=9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600
