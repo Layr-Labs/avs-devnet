@@ -98,6 +98,7 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 		if err != nil {
 			return fmt.Errorf("repo '%s' is invalid: %w", deployment.Repo, err)
 		}
+		// If 'repo' starts with file:// or is without a scheme, it's a local repo
 		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
 			continue
 		}
@@ -109,6 +110,10 @@ func uploadLocalRepos(config config.DevnetConfig, enclaveCtx *enclaves.EnclaveCo
 	return nil
 }
 
+// Uploads the script of a single deployment from the repo at the given path to an enclave.
+// The deployment script is flattened and uploaded with the deployment name suffixed with '-script'.
+// The resulting artifact's structure is similar to the repo's structure, but with only the script and foundry config.
+// TODO: to avoid having foundry as a dependency, we should use it via docker
 func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext) error {
 	scriptPath := deployment.GetScriptPath()
 	absRepoPath, err := filepath.Abs(repoPath)
@@ -117,6 +122,7 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	}
 	scriptOrigin := filepath.Join(absRepoPath, deployment.ContractsPath, scriptPath)
 
+	// Output files in a temp dir
 	outputDir, err := os.MkdirTemp(os.TempDir(), "avs-devnet-")
 	if err != nil {
 		return fmt.Errorf("tempdir creation failed: %w", err)
@@ -130,6 +136,7 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 		return fmt.Errorf("output dir creation failed: %w", err)
 	}
 
+	// Verify the script exists
 	if !fileExists(scriptOrigin) {
 		return fmt.Errorf("file '%s' doesn't exist", scriptOrigin)
 	}
@@ -147,12 +154,13 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	if err != nil {
 		return fmt.Errorf("forge install failed: %w, with output: %s", err, string(output))
 	}
-	// Flatten the script into a single file
+	// Flatten the script into a single file before upload
 	output, err = exec.Command("forge", "flatten", "-o", scriptDestination, scriptOrigin).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("script flattening failed: %w, with output: %s", err, string(output))
 	}
 
+	// Copy the foundry config inside the contracts dir
 	foundryConfigRelPath := filepath.Join(deployment.ContractsPath, "foundry.toml")
 	foundryConfig, err := os.ReadFile(filepath.Join(absRepoPath, foundryConfigRelPath))
 	if err != nil {
@@ -172,7 +180,7 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	if err != nil {
 		return err
 	}
-	// Upload the file with the script path as the name
+	// Upload the file to the enclave
 	artifactName := deployment.Name + "-script"
 	_, _, err = enclaveCtx.UploadFiles(outputDir, artifactName)
 	if err != nil {
@@ -181,7 +189,8 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	return nil
 }
 
-// Builds the local docker images for the services in the configuration
+// Builds the local docker images for the services in the configuration.
+// Starts multiple builds in parallel.
 func buildDockerImages(config config.DevnetConfig) error {
 	errChan := make(chan error)
 	numBuilds := 0
@@ -197,6 +206,7 @@ func buildDockerImages(config config.DevnetConfig) error {
 		}
 		numBuilds += 1
 	}
+	// Check that all builds were successful and fail if not
 	errs := make([]error, numBuilds)
 	for range numBuilds {
 		errs = append(errs, <-errChan)
@@ -204,6 +214,7 @@ func buildDockerImages(config config.DevnetConfig) error {
 	return errors.Join(errs...)
 }
 
+// Builds a docker image with the given name from the given build context and (optional) file.
 func buildWithDocker(imageName string, buildContext string, buildFile *string) error {
 	cmdArgs := []string{"build", buildContext, "-t", imageName}
 	if buildFile != nil {
@@ -218,6 +229,8 @@ func buildWithDocker(imageName string, buildContext string, buildFile *string) e
 	return nil
 }
 
+// Builds a docker image with the given name with a custom command.
+// The command is executed inside a shell.
 func buildWithCustomCmd(imageName string, buildCmd string) error {
 	cmd := exec.Command("sh", "-c", buildCmd)
 	fmt.Println("Building image", imageName)
