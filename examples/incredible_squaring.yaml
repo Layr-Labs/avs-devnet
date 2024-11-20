@@ -2,12 +2,12 @@
 deployments:
   - type: EigenLayer
     # This commit corresponds to the incredible-squaring commit below
-    ref: "f13e1c21c5c4a90f1550fb80c132428bbacd731c"
+    ref: "v0.3.3-mainnet-rewards"
     # NOTE: operator registration is done at operator startup
 
   - name: incredible-squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "d05341ef33e5853fd3ecef831ae4dcfbf29c5299"
+    ref: "1d8d5915d01169bd18f3f242ecc17f5884fca824"
     contracts_path: "contracts"
     script: script/IncredibleSquaringDeployer.s.sol
     input:
