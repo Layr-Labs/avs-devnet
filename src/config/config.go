@@ -68,4 +68,8 @@ func (c DevnetConfig) Marshal() []byte {
 }
 
 //go:embed default_config.yaml
-var DefaultConfig string
+var defaultConfig string
+
+func DefaultConfig() string {
+	return defaultConfig
+}

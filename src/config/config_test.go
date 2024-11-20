@@ -29,7 +29,7 @@ func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string
 }
 
 func TestLoadDefaultConfig(t *testing.T) {
-	_, err := Unmarshal([]byte(DefaultConfig))
+	_, err := Unmarshal([]byte(defaultConfig))
 	assert.NoError(t, err, "Couldn't parse default config")
 }
 
