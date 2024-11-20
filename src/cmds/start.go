@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -37,11 +36,7 @@ func Start(ctx *cli.Context) error {
 
 // Starts the devnet with the given configuration
 func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string) error {
-	configBytes, err := os.ReadFile(configPath)
-	if err != nil {
-		return err
-	}
-	config, err := config.Unmarshal(configBytes)
+	config, err := config.LoadFromPath(configPath)
 	if err != nil {
 		return err
 	}
@@ -69,7 +64,7 @@ func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string
 	}
 
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
-	starlarkConfig.SerializedParams = string(configBytes)
+	starlarkConfig.SerializedParams = string(config.Marshal())
 
 	var responseChan chan progress_reporters.KurtosisResponse
 	// TODO: use cancel func if needed
