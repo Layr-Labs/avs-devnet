@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -17,8 +18,7 @@ import (
 )
 
 // Starts the devnet with the given context
-func Start(ctx *cli.Context) error {
-	fmt.Println("Starting devnet...")
+func StartCmd(ctx *cli.Context) error {
 	pkgName := ctx.String(flags.KurtosisPackageFlag.Name)
 	devnetName, configPath, err := parseArgs(ctx)
 	if err != nil {
@@ -27,55 +27,68 @@ func Start(ctx *cli.Context) error {
 	if !fileExists(configPath) {
 		return cli.Exit("Config file doesn't exist: "+configPath, 2)
 	}
-
-	if err := startDevnet(ctx, pkgName, devnetName, configPath); err != nil {
+	devnetConfig, err := config.LoadFromPath(configPath)
+	if err != nil {
 		return cli.Exit(err, 3)
+	}
+	cfg := StartOptions{
+		KurtosisPackageUrl: pkgName,
+		DevnetName:         devnetName,
+		DevnetConfig:       devnetConfig,
+	}
+	err = Start(ctx.Context, cfg)
+	if err != nil {
+		return cli.Exit(err, 4)
 	}
 	return nil
 }
 
-// Starts the devnet with the given configuration
-func startDevnet(ctx *cli.Context, pkgName, devnetName string, configPath string) error {
-	config, err := config.LoadFromPath(configPath)
-	if err != nil {
-		return err
-	}
+// Options accepted by Start
+type StartOptions struct {
+	KurtosisPackageUrl string
+	DevnetName         string
+	DevnetConfig       config.DevnetConfig
+}
 
+// Starts the devnet with the given context
+func Start(ctx context.Context, cfg StartOptions) error {
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize kurtosis context: %w", err)
 	}
-	if kurtosisCtx.EnclaveExists(ctx.Context, devnetName) {
+	if kurtosisCtx.EnclaveExists(ctx, cfg.DevnetName) {
 		return errors.New("devnet already running")
 	}
-	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx.Context, devnetName)
+	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx, cfg.DevnetName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create enclave: %w", err)
 	}
 
-	err = buildDockerImages(config)
+	err = buildDockerImages(cfg.DevnetConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed when building images: %w", err)
 	}
 
-	err = uploadLocalRepos(config, enclaveCtx)
+	err = uploadLocalRepos(cfg.DevnetConfig, enclaveCtx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed when uploading local repos: %w", err)
 	}
 
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
-	starlarkConfig.SerializedParams = string(config.Marshal())
+	starlarkConfig.SerializedParams = string(cfg.DevnetConfig.Marshal())
+
+	fmt.Println("Starting devnet...")
 
 	var responseChan chan progress_reporters.KurtosisResponse
 	// TODO: use cancel func if needed
 	// var cancel context.CancelFunc
-	if strings.HasPrefix(pkgName, "github.com/") {
-		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx.Context, pkgName, starlarkConfig)
+	if strings.HasPrefix(cfg.KurtosisPackageUrl, "github.com/") {
+		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx, cfg.KurtosisPackageUrl, starlarkConfig)
 	} else {
-		responseChan, _, err = enclaveCtx.RunStarlarkPackage(ctx.Context, pkgName, starlarkConfig)
+		responseChan, _, err = enclaveCtx.RunStarlarkPackage(ctx, cfg.KurtosisPackageUrl, starlarkConfig)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("failed when running kurtosis package: %w", err)
 	}
 
 	reporter := progress_reporters.NewProgressBarReporter()

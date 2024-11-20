@@ -33,7 +33,7 @@ func main() {
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    cmds.Start,
+		Action:    cmds.StartCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
