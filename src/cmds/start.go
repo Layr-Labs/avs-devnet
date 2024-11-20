@@ -77,15 +77,20 @@ func Start(ctx context.Context, cfg StartOptions) error {
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
 	starlarkConfig.SerializedParams = string(cfg.DevnetConfig.Marshal())
 
+	kurtosisPkg := cfg.KurtosisPackageUrl
+	if kurtosisPkg == "" {
+		kurtosisPkg = flags.DefaultKurtosisPackage
+	}
+
 	fmt.Println("Starting devnet...")
 
 	var responseChan chan progress_reporters.KurtosisResponse
 	// TODO: use cancel func if needed
 	// var cancel context.CancelFunc
-	if strings.HasPrefix(cfg.KurtosisPackageUrl, "github.com/") {
-		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx, cfg.KurtosisPackageUrl, starlarkConfig)
+	if strings.HasPrefix(kurtosisPkg, "github.com/") {
+		responseChan, _, err = enclaveCtx.RunStarlarkRemotePackage(ctx, kurtosisPkg, starlarkConfig)
 	} else {
-		responseChan, _, err = enclaveCtx.RunStarlarkPackage(ctx, cfg.KurtosisPackageUrl, starlarkConfig)
+		responseChan, _, err = enclaveCtx.RunStarlarkPackage(ctx, kurtosisPkg, starlarkConfig)
 	}
 	if err != nil {
 		return fmt.Errorf("failed when running kurtosis package: %w", err)
