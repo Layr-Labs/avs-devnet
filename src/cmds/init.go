@@ -37,7 +37,7 @@ func Init(cfg InitOptions) error {
 	if err != nil {
 		return err
 	}
-	_, err = file.WriteString(config.DefaultConfig())
+	_, err = file.WriteString(config.DefaultConfigStr())
 	if err != nil {
 		return err
 	}
