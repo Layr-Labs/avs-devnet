@@ -2,7 +2,7 @@
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600"
+    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
     contracts_path: "contracts"
     script: script/DeployEigenLayerCore.s.sol
     env:
@@ -17,7 +17,7 @@ deployments:
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600"
+    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:
