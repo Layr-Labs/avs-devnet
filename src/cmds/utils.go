@@ -28,7 +28,7 @@ func parseArgs(ctx *cli.Context) (devnetName string, fileName string, err error)
 		}
 		devnetName = name
 	}
-	return fileName, devnetName, err
+	return devnetName, fileName, err
 }
 
 // Checks if a file exists at the given path

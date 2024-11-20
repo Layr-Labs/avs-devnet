@@ -10,7 +10,7 @@ import (
 
 // Creates a new devnet configuration with the given context
 func Init(ctx *cli.Context) error {
-	configFileName, _, err := parseArgs(ctx)
+	_, configFileName, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}

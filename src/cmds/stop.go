@@ -9,7 +9,7 @@ import (
 
 // Stops the devnet with the given context
 func Stop(ctx *cli.Context) error {
-	_, devnetName, err := parseArgs(ctx)
+	devnetName, _, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}

@@ -20,7 +20,7 @@ import (
 func Start(ctx *cli.Context) error {
 	fmt.Println("Starting devnet...")
 	pkgName := ctx.String(flags.KurtosisPackageFlag.Name)
-	configPath, devnetName, err := parseArgs(ctx)
+	devnetName, configPath, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
