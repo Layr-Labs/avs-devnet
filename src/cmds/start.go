@@ -35,7 +35,6 @@ func StartCmd(ctx *cli.Context) error {
 		KurtosisPackageUrl: pkgName,
 		DevnetName:         devnetName,
 		DevnetConfig:       devnetConfig,
-		ShowProgressBar:    true,
 	}
 	err = Start(ctx.Context, opts)
 	if err != nil {
@@ -49,7 +48,6 @@ type StartOptions struct {
 	KurtosisPackageUrl string
 	DevnetName         string
 	DevnetConfig       config.DevnetConfig
-	ShowProgressBar    bool
 }
 
 // Starts the devnet with the given context
@@ -98,10 +96,7 @@ func Start(ctx context.Context, opts StartOptions) error {
 		return fmt.Errorf("failed when running kurtosis package: %w", err)
 	}
 
-	var reporter progress_reporters.Reporter
-	if opts.ShowProgressBar {
-		reporter = progress_reporters.NewProgressBarReporter()
-	}
+	reporter := progress_reporters.NewProgressBarReporter()
 	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 

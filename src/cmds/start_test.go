@@ -10,19 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStartDefaultDevnet(t *testing.T) {
+func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
+	name, err := ToValidEnclaveName(t.Name())
+	assert.NoError(t, err, "Failed to generate test name")
+
 	opts := StartOptions{
 		KurtosisPackageUrl: "../../kurtosis_package",
-		DevnetName:         t.Name(),
-		DevnetConfig:       config.DefaultConfig(),
+		DevnetName:         name,
+		DevnetConfig:       devnetConfig,
 	}
 	ctx := context.Background()
 	// Cleanup devnet after test
 	t.Cleanup(func() { Stop(ctx, opts.DevnetName) })
 
-	err := Start(ctx, opts)
+	err = Start(ctx, opts)
 	assert.NoError(t, err, "Failed to start new devnet")
 }
+
+// func TestStartDefaultDevnet(t *testing.T) {
+// 	startDevnet(t, config.DefaultConfig())
+// }
 
 func TestStartExampleDevnets(t *testing.T) {
 	examplesDir := "../../examples"
@@ -38,26 +45,15 @@ func TestStartExampleDevnets(t *testing.T) {
 		if ext != ".yaml" && ext != ".yml" {
 			continue
 		}
+		examplePath := filepath.Join(examplesDir, fileName)
+		parsedConfig, err := config.LoadFromPath(examplePath)
+		assert.NoError(t, err, "Failed to parse example config")
+
 		t.Run(fileName, func(t *testing.T) {
-			examplePath := filepath.Join(examplesDir, fileName)
-			devnetConfig, err := config.LoadFromPath(examplePath)
-			assert.NoError(t, err, "Failed to parse example config")
-
-			name, err := ToValidEnclaveName(t.Name())
-			assert.NoError(t, err, "Failed to generate test name")
-
-			opts := StartOptions{
-				KurtosisPackageUrl: "../../kurtosis_package",
-				DevnetName:         name,
-				DevnetConfig:       devnetConfig,
-			}
-			ctx := context.Background()
-			// Cleanup devnet after test
-			t.Cleanup(func() { Stop(ctx, opts.DevnetName) })
-
-			t.Log("Running test with devnet name:", opts.DevnetName)
-			err = Start(ctx, opts)
-			assert.NoError(t, err, "Failed to start new devnet")
+			// Don't reference variables outside function
+			devnetConfig := parsedConfig
+			// t.Parallel()
+			startDevnet(t, devnetConfig)
 		})
 	}
 }
