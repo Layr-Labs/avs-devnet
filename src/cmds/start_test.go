@@ -19,7 +19,7 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 	}
 	ctx := context.Background()
 	// Cleanup devnet after test
-	t.Cleanup(func() { Stop(ctx, opts.DevnetName) })
+	t.Cleanup(func() { _ = Stop(ctx, opts.DevnetName) })
 
 	err = Start(ctx, opts)
 	assert.NoError(t, err, "Failed to start new devnet")
