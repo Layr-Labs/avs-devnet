@@ -106,5 +106,3 @@ artifacts:
 ethereum_package:
   additional_services:
     - blockscout
-  network_params:
-    seconds_per_slot: 3
