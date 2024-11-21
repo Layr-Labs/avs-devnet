@@ -15,8 +15,8 @@ func InitCmd(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
-	cfg := InitOptions{configFileName}
-	err = Init(cfg)
+	opts := InitOptions{configFileName}
+	err = Init(opts)
 	if err != nil {
 		return cli.Exit(err, 2)
 	}
@@ -29,11 +29,11 @@ type InitOptions struct {
 }
 
 // Creates a new devnet configuration according to the config
-func Init(cfg InitOptions) error {
-	if fileExists(cfg.ConfigFileName) {
-		return errors.New("Config file already exists: " + cfg.ConfigFileName)
+func Init(opts InitOptions) error {
+	if fileExists(opts.ConfigFileName) {
+		return errors.New("Config file already exists: " + opts.ConfigFileName)
 	}
-	file, err := os.Create(cfg.ConfigFileName)
+	file, err := os.Create(opts.ConfigFileName)
 	if err != nil {
 		return err
 	}

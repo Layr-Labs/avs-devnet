@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: this is repeated in multiple tests
 func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string)) {
 	examplesDir := "../../examples"
 	dir, err := os.ReadDir(examplesDir)

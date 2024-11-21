@@ -66,6 +66,9 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 	var totalSteps uint32
 	var currentExecutionStep ExecutionStep
 	for line := range responseChan {
+		if reporter == nil {
+			continue
+		}
 		if line.GetProgressInfo() != nil {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()

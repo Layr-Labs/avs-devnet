@@ -31,12 +31,13 @@ func StartCmd(ctx *cli.Context) error {
 	if err != nil {
 		return cli.Exit(err, 3)
 	}
-	cfg := StartOptions{
+	opts := StartOptions{
 		KurtosisPackageUrl: pkgName,
 		DevnetName:         devnetName,
 		DevnetConfig:       devnetConfig,
+		ShowProgressBar:    true,
 	}
-	err = Start(ctx.Context, cfg)
+	err = Start(ctx.Context, opts)
 	if err != nil {
 		return cli.Exit(err, 4)
 	}
@@ -48,36 +49,37 @@ type StartOptions struct {
 	KurtosisPackageUrl string
 	DevnetName         string
 	DevnetConfig       config.DevnetConfig
+	ShowProgressBar    bool
 }
 
 // Starts the devnet with the given context
-func Start(ctx context.Context, cfg StartOptions) error {
+func Start(ctx context.Context, opts StartOptions) error {
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
 		return fmt.Errorf("failed to initialize kurtosis context: %w", err)
 	}
-	if kurtosisCtx.EnclaveExists(ctx, cfg.DevnetName) {
+	if kurtosisCtx.EnclaveExists(ctx, opts.DevnetName) {
 		return errors.New("devnet already running")
 	}
-	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx, cfg.DevnetName)
+	enclaveCtx, err := kurtosisCtx.CreateEnclave(ctx, opts.DevnetName)
 	if err != nil {
 		return fmt.Errorf("failed to create enclave: %w", err)
 	}
 
-	err = buildDockerImages(cfg.DevnetConfig)
+	err = buildDockerImages(opts.DevnetConfig)
 	if err != nil {
 		return fmt.Errorf("failed when building images: %w", err)
 	}
 
-	err = uploadLocalRepos(cfg.DevnetConfig, enclaveCtx)
+	err = uploadLocalRepos(opts.DevnetConfig, enclaveCtx)
 	if err != nil {
 		return fmt.Errorf("failed when uploading local repos: %w", err)
 	}
 
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
-	starlarkConfig.SerializedParams = string(cfg.DevnetConfig.Marshal())
+	starlarkConfig.SerializedParams = string(opts.DevnetConfig.Marshal())
 
-	kurtosisPkg := cfg.KurtosisPackageUrl
+	kurtosisPkg := opts.KurtosisPackageUrl
 	if kurtosisPkg == "" {
 		kurtosisPkg = flags.DefaultKurtosisPackage
 	}
@@ -96,7 +98,10 @@ func Start(ctx context.Context, cfg StartOptions) error {
 		return fmt.Errorf("failed when running kurtosis package: %w", err)
 	}
 
-	reporter := progress_reporters.NewProgressBarReporter()
+	var reporter progress_reporters.Reporter
+	if opts.ShowProgressBar {
+		reporter = progress_reporters.NewProgressBarReporter()
+	}
 	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 
