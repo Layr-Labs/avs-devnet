@@ -14,7 +14,10 @@ Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 As part of that, you'll also need to install Docker.
 
-For local development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
+For deploying local contracts, [foundry needs to be installed](https://book.getfoundry.sh/getting-started/installation).
+Also, only contracts inside foundry projects are supported as of now.
+
+For development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
 
 > [!IMPORTANT]  
 > To be able to [install the CLI via `go`](#installation), you'll need to add `$HOME/go/bin` to your `PATH`.
