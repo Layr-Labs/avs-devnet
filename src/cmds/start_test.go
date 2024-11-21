@@ -29,6 +29,7 @@ func TestStartDefaultDevnet(t *testing.T) {
 	startDevnet(t, config.DefaultConfig())
 }
 
+// TODO: fix this test
 // func TestStartExampleDevnets(t *testing.T) {
 // 	examplesDir := "../../examples"
 // 	dir, err := os.ReadDir(examplesDir)
