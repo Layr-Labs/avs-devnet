@@ -7,10 +7,10 @@ To release a new version of the CLI, follow the steps below:
 > [!WARNING]
 > You need to have write permission to this repo to release a new version
 
-- [ ] Checkout `master` and pull the latest changes:
+- [ ] Checkout `dev` and pull the latest changes:
 
     ```sh
-    git checkout master && git pull origin master
+    git checkout dev && git pull origin dev
     ```
 
 - [ ] In your local clone, create a new tag:
