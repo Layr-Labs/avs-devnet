@@ -188,6 +188,8 @@ deployments:
     script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
     # Extra args passed on to `forge script`
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    # Verify with local blockscout explorer (default: false)
+    verify: true
     # Environment variables to set for deployment
     env:
       # Key: env variable name
