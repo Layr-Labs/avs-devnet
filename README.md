@@ -160,6 +160,7 @@ COMMANDS:
    start        Start devnet from configuration file
    stop         Stop devnet from configuration file
    get-address  Get a devnet contract or EOA address
+   get-ports    Get the published ports on the devnet
    help, h      Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
