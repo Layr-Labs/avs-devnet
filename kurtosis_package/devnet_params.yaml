@@ -18,7 +18,5 @@ keys:
     type: bls
 
 ethereum_package:
-  participants:
-    - el_type: besu
   additional_services:
     - blockscout

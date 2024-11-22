@@ -103,7 +103,5 @@ artifacts:
         token_strategy_addr: {{.token_strategy_addr}}
 
 ethereum_package:
-  participants:
-    - el_type: besu
   additional_services:
     - blockscout
