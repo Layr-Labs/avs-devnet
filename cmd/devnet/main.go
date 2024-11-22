@@ -54,6 +54,15 @@ func main() {
 		Action:    cmds.GetAddress,
 	})
 
+	app.Commands = append(app.Commands, &cli.Command{
+		Name:      "get-ports",
+		Usage:     "Get the published ports on the devnet",
+		Args:      true,
+		ArgsUsage: "[<config-file>]",
+		Flags:     []cli.Flag{},
+		Action:    cmds.GetPorts,
+	})
+
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
