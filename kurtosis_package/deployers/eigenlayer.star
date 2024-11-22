@@ -58,6 +58,13 @@ def deploy_mocktoken(plan, context, verify):
         description="Deploying 'ERC20Mock'",
     )
     token_address = result.output
+    # We check this for good measure. Since we're ignoring error messages this could fail silently.
+    plan.verify(
+        value=token_address,
+        assertion="!=",
+        target_value="",
+        description="Verifying token deployment",
+    )
     context.data["addresses"]["mocktoken"] = token_address
 
     return token_address
