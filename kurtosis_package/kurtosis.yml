@@ -5,3 +5,5 @@ replace:
   # Fix to a specific version of kurtosis ethereum package to avoid breaking changes
   # Version is from 2024-11-01
   github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@861cf2ec532efe6cc2496f53af192826607e7524
+  # Version from 2024-11-22
+  github.com/kurtosis-tech/prometheus-package: github.com/kurtosis-tech/prometheus-package@581d6d5ad433092964255399275079b57686a2b3
