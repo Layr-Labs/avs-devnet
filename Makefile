@@ -9,6 +9,7 @@ KURTOSIS_DIR:=kurtosis_package/
 PACKAGE_ENV_VAR:=AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)
 
 INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
+CURRENT_COMMIT:=$(shell git describe --always --abbrev=8 --dirty)
 
 
 ##### General #####
@@ -20,7 +21,7 @@ deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 
 install: ## 📦 Install the CLI
 	@echo "Installing package..."
-	CGO_ENABLED=0 go install -ldflags '-X flags.DefaultKurtosisPackage=$(KURTOSIS_DIR)' ./...
+	CGO_ENABLED=0 go install -ldflags '-X main.version=dev-$(CURRENT_COMMIT) -X flags.DefaultKurtosisPackage=$(KURTOSIS_DIR)' -v ./...
 	@asdf reshim 2> /dev/null || true
 	@echo
 	@echo "Installation successfull!"
