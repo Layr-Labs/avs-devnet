@@ -5,8 +5,7 @@
 
 ##### Variables #####
 
-KURTOSIS_DIR:=kurtosis_package/
-PACKAGE_ENV_VAR:=AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)
+KURTOSIS_DIR:=$(shell cd kurtosis_package/ && pwd -P)
 
 INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
 CURRENT_COMMIT:=$(shell git describe --always --abbrev=8 --dirty)
