@@ -9,8 +9,8 @@ Parameters
 
 Licensor:             Layr Labs, Inc.
 
-Licensed Work:        eigensdk-rs
-                      The Licensed Work is (c) 2023 Layr Labs, Inc.
+Licensed Work:        avs-devnet
+                      The Licensed Work is (c) 2024 Layr Labs, Inc.
 
 Additional Use Grant:
 
@@ -34,7 +34,7 @@ EigenDA means the data availability protocol built on top of the EigenLayer
 Protocol as further described in the documentation
 [here](https://docs.eigenlayer.xyz/eigenda/overview), as updated from time to time.
 
-Change Date:          2026-03-31 (March 31st, 2026)
+Change Date:          2027-11-25 (November 25th, 2027)
 
 Change License:       MIT
 
