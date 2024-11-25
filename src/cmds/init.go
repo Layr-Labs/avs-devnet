@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,31 +10,34 @@ import (
 )
 
 // Creates a new devnet configuration with the given context
-func Init(ctx *cli.Context) error {
-	configFileName, _, err := parseArgs(ctx)
+func InitCmd(ctx *cli.Context) error {
+	_, configFileName, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
-	if fileExists(configFileName) {
-		return cli.Exit("Config file already exists: "+configFileName, 2)
-	}
-
-	fmt.Println("Creating new devnet configuration file in", configFileName)
-
-	err = initializeConfigFile(configFileName)
+	opts := InitOptions{configFileName}
+	err = Init(opts)
 	if err != nil {
-		return cli.Exit(err, 3)
+		return cli.Exit(err, 2)
 	}
+	fmt.Println("Initialized configuration file:", configFileName)
 	return nil
 }
 
-// Creates a default devnet configuration in the given file path
-func initializeConfigFile(configFileName string) error {
-	file, err := os.Create(configFileName)
+type InitOptions struct {
+	ConfigFileName string
+}
+
+// Creates a new devnet configuration according to the config
+func Init(opts InitOptions) error {
+	if fileExists(opts.ConfigFileName) {
+		return errors.New("Config file already exists: " + opts.ConfigFileName)
+	}
+	file, err := os.Create(opts.ConfigFileName)
 	if err != nil {
 		return err
 	}
-	_, err = file.WriteString(config.DefaultConfig)
+	_, err = file.WriteString(config.DefaultConfigStr())
 	if err != nil {
 		return err
 	}
