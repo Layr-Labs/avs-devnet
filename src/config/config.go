@@ -46,12 +46,17 @@ type Service struct {
 	// non-exhaustive
 }
 
+// A devnet specification
 type DevnetConfig struct {
+	// Contains contract groups to deploy
 	Deployments []Deployment `yaml:"deployments"`
-	Services    []Service    `yaml:"services"`
+	// Contains off-chain services to start
+	Services []Service `yaml:"services"`
 	// non-exhaustive
+	raw []byte
 }
 
+// Loads a DevnetConfig from a file
 func LoadFromPath(filePath string) (DevnetConfig, error) {
 	var config DevnetConfig
 	file, err := os.ReadFile(filePath)
@@ -61,8 +66,10 @@ func LoadFromPath(filePath string) (DevnetConfig, error) {
 	return Unmarshal(file)
 }
 
+// Loads a DevnetConfig from a byte slice
 func Unmarshal(file []byte) (DevnetConfig, error) {
 	var config DevnetConfig
+	config.raw = file
 	err := yaml.Unmarshal(file, &config)
 	if err != nil {
 		return config, err
@@ -70,5 +77,20 @@ func Unmarshal(file []byte) (DevnetConfig, error) {
 	return config, nil
 }
 
+// Serializes the config.
+// If read from a file, the serialized config will be the same as the file's content.
+func (c DevnetConfig) Marshal() []byte {
+	return c.raw
+}
+
 //go:embed default_config.yaml
-var DefaultConfig string
+var defaultConfig []byte
+
+func DefaultConfig() DevnetConfig {
+	cfg, _ := Unmarshal(defaultConfig)
+	return cfg
+}
+
+func DefaultConfigStr() string {
+	return string(defaultConfig)
+}

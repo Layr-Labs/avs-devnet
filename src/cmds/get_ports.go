@@ -9,7 +9,7 @@ import (
 )
 
 func GetPorts(ctx *cli.Context) error {
-	_, devnetName, err := parseArgs(ctx)
+	devnetName, _, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
