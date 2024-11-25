@@ -58,7 +58,7 @@ def deploy_mocktoken(plan, context, verify):
         description="Deploying 'ERC20Mock'",
     )
     token_address = result.output
-    # We check this for good measure. Since we're ignoring error messages this could fail silently.
+    # run_sh doesn't check the exit code of the command, so we verify the result.
     plan.verify(
         value=token_address,
         assertion="!=",
