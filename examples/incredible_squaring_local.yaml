@@ -2,6 +2,12 @@
 # This file can be used inside the incredible-squaring-avs repo to
 # start a devnet with any local changes
 # TODO: move this to the incredible-squaring-avs repo
+
+# To run this example:
+# 1. Clone the https://github.com/Layr-Labs/incredible-squaring-avs repo
+# 2. Copy this file inside that repo (on the root)
+# 3. While inside that repo, run `devnet start incredible_squaring_local.yaml`
+
 deployments:
   - type: EigenLayer
     # This commit corresponds to the incredible-squaring commit below
