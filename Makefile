@@ -6,7 +6,6 @@
 ##### Variables #####
 
 KURTOSIS_DIR:=kurtosis_package/
-KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
 PACKAGE_ENV_VAR:=AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)
 
 INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
@@ -19,19 +18,16 @@ help: ## 📚 Show help for each of the Makefile recipes
 
 deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 
-install: generate_envscript ## 📦 Install the CLI
+install: ## 📦 Install the CLI
 	@echo "Installing package..."
-	go install ./...
+	CGO_ENABLED=0 go install -ldflags '-X flags.DefaultKurtosisPackage=$(KURTOSIS_DIR)' ./...
 	@asdf reshim 2> /dev/null || true
 	@echo
 	@echo "Installation successfull!"
-	@echo "Package was installed in $(INSTALLATION_DIR)"
+	@echo "Package was installed to $(INSTALLATION_DIR)"
 	@echo $(PATH) | grep -q $(INSTALLATION_DIR) || echo "\nWARNING: $(INSTALLATION_DIR) doesn't seem to be in your PATH.\
 		\nIf the command can't be found, try adding to your ~/.bashrc the following line and restarting your shell:\
-		\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\"\
-		\n"
-	@echo
-	@echo "Remember to run 'source env.sh' to set the environment variables"
+		\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\""
 
 fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 
@@ -46,12 +42,6 @@ test: ## 🧪 Run tests
 cli_deps:
 	@echo "Installing Go dependencies..."
 	go mod tidy
-
-# This generates the env.sh script that sets envvars for local development
-# of the CLI + Kurtosis-package combo
-generate_envscript:
-	echo "export $(PACKAGE_ENV_VAR)" > env.sh
-	chmod u+x env.sh
 
 devnet.yaml:
 	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go init
