@@ -1,0 +1,62 @@
+deployments:
+  # Deploy EigenLayer
+  - type: EigenLayer
+    ref: v0.4.2-mainnet-pepe
+    # Whitelist a single strategy named MockETH, backed by a mock-token
+    strategies: [MockETH]
+    operators:
+      # Register a single operator with EigenLayer
+      - name: operator1
+        keys: operator1_ecdsa
+        # Deposit 1e17 tokens into the MockETH strategy
+        strategies:
+          MockETH: 100000000000000000
+
+  - name: EigenDA
+    repo: https://github.com/Layr-Labs/eigenda.git
+    ref: master
+    contracts_path: contracts
+    script: script/SetUpEigenDA.s.sol:SetupEigenDA
+    input:
+      script/input/: eigenda_deploy_config
+    output:
+      eigenda_addresses: script/output/eigenda_deploy_output.json
+
+services: []
+
+# Specify keys to generate
+keys:
+  - name: operator1_ecdsa
+    type: ecdsa
+  - name: operator1_bls
+    type: bls
+
+artifacts:
+  eigenda_deploy_config:
+    files:
+      eigenda_deploy_config.json: |
+        {
+          "numStrategies": 0,
+          "confirmerPrivateKey": "{{.deployer_private_key}}",
+          "stakerPrivateKeys": [],
+          "stakerTokenAmounts": [],
+          "operatorPrivateKeys": [],
+          "useDefaults": true,
+          "eigenLayerCommunityMultisig": "",
+          "eigenLayerOperationsMultisig": "",
+          "eigenLayerPauserMultisig": "",
+          "eigenDACommunityMultisig": "",
+          "eigenDAPauser": "",
+          "churner": "",
+          "ejector": "",
+          "initialSupply": 1e12,
+          "tokenOwner": "",
+          "maxOperatorCount": 3
+        }
+
+# ethereum-package configuration
+ethereum_package:
+  additional_services:
+    - blockscout
+  network_params:
+    seconds_per_slot: 3
