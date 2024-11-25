@@ -9,6 +9,6 @@ import (
 func TestGenerateInitialConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	configFile := tempDir + "/test_devnet.yaml"
-	err := initializeConfigFile(configFile)
+	err := Init(InitOptions{configFile})
 	assert.NoError(t, err, "Failed to create new config file")
 }

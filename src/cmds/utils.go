@@ -22,13 +22,13 @@ func parseArgs(ctx *cli.Context) (devnetName string, fileName string, err error)
 		fileName = "devnet.yaml"
 		devnetName = "devnet"
 	} else {
-		name, err := nameFromConfigFile(fileName)
+		name, err := EnclaveNameFromFileName(fileName)
 		if err != nil {
 			return "", "", err
 		}
 		devnetName = name
 	}
-	return fileName, devnetName, err
+	return devnetName, fileName, err
 }
 
 // Checks if a file exists at the given path
@@ -38,10 +38,16 @@ func fileExists(filePath string) bool {
 }
 
 // Extracts the devnet name from the given configuration file name
-func nameFromConfigFile(fileName string) (string, error) {
+func EnclaveNameFromFileName(fileName string) (string, error) {
 	name := filepath.Base(fileName)
 	name = strings.Split(name, ".")[0]
-	name = strings.ReplaceAll(name, "_", "-")
+	return ToValidEnclaveName(name)
+}
+
+func ToValidEnclaveName(name string) (string, error) {
+	for _, r := range []string{"_", "/", "."} {
+		name = strings.ReplaceAll(name, r, "-")
+	}
 	matches, err := regexp.MatchString("^[-A-Za-z0-9]{1,60}$", name)
 	if err != nil {
 		// Error in regex pattern
