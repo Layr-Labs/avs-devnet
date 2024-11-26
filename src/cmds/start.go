@@ -21,7 +21,7 @@ import (
 
 // Starts the devnet with the given context
 func StartCmd(ctx *cli.Context) error {
-	pkgName := ctx.String(flags.KurtosisPackageFlag.Name)
+	pkgName := flags.KurtosisPackageFlag.Get(ctx)
 	devnetName, configPath, err := parseArgs(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
