@@ -30,6 +30,23 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 	assert.NoError(t, err, "Failed to start new devnet")
 }
 
+func goToDir(t *testing.T, destination string) {
+	dir, err := os.Getwd()
+	assert.NoError(t, err, "Failed to get cwd")
+
+	err = os.Chdir(destination)
+	assert.NoError(t, err, "Failed to go to repo root")
+
+	t.Cleanup(func() {
+		// Return to the original directory
+		err = os.Chdir(dir)
+		// Panic if failed, to avoid running other tests in the wrong directory
+		if err != nil {
+			panic(err)
+		}
+	})
+}
+
 func TestStartDefaultDevnet(t *testing.T) {
 	t.Parallel()
 	startDevnet(t, config.DefaultConfig())
@@ -44,12 +61,10 @@ func TestStartIncredibleSquaring(t *testing.T) {
 }
 
 func TestStartLocalHelloWorld(t *testing.T) {
-	t.Parallel()
-	err := os.Chdir("../../")
-	assert.NoError(t, err, "Failed to go to repo root")
+	goToDir(t, "../../")
 
 	// Clone the hello-world-avs repo
-	err = exec.Command("make", "examples/hello-world-avs").Run()
+	err := exec.Command("make", "examples/hello-world-avs").Run()
 	assert.NoError(t, err, "Failed to make hello-world-avs repo")
 
 	configFile := "examples/hello_world_local.yaml"
@@ -57,7 +72,6 @@ func TestStartLocalHelloWorld(t *testing.T) {
 	assert.NoError(t, err, "Failed to parse example config")
 
 	// Move inside the repo and start the devnet
-	err = os.Chdir("examples/hello-world-avs")
-	assert.NoError(t, err, "Failed to go to hello-world-avs repo")
+	goToDir(t, "examples/hello-world-avs")
 	startDevnet(t, devnetConfig)
 }
