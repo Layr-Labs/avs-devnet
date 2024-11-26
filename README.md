@@ -135,9 +135,19 @@ If the build file is named something other than `Dockerfile`, or isn't located i
 ```yaml
 services:
   - name: my-service
-    image: some-local-image-name
+    image: name-for-the-image
     build_context: path/to/context
     build_file: path/to/context/Dockerfile
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-service
+    image: name-for-the-image
+    build_cmd: "docker build . -t name-for-the-image && touch .finished"
 ```
 
 ### More Help
@@ -244,14 +254,17 @@ deployments:
 # Lists the services to start after the contracts are deployed
 services:
     # Name for the service
-  - name: "aggregator"
+  - name: my-service
     # The docker image to use
-    image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    image: image-name
     # Local images are built automatically when specifying `build_context`
     # Specifies the context for the image's dockerfile
     build_context: path/to/context
     # Optional. Used to override the default of "build_context/Dockerfile".
     build_file: path/to/context/Dockerfile
+    # Specifies a custom command for building the image.
+    # This overrides the `build_context` and `build_file` options.
+    build_cmd: "docker build . -t image-name && touch somefile.txt"
     # The ports to expose on the container
     ports:
       # The key is a name for the port
