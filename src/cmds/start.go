@@ -210,15 +210,16 @@ func buildDockerImages(config config.DevnetConfig) error {
 	numBuilds := 0
 	for _, service := range config.Services {
 		if service.BuildContext != nil {
+			numBuilds += 1
 			go func() {
 				errChan <- buildWithDocker(service.Image, *service.BuildContext, service.BuildFile)
 			}()
 		} else if service.BuildCmd != nil {
+			numBuilds += 1
 			go func() {
 				errChan <- buildWithCustomCmd(service.Image, *service.BuildCmd)
 			}()
 		}
-		numBuilds += 1
 	}
 	// Check that all builds were successful and fail if not
 	errs := make([]error, numBuilds)
