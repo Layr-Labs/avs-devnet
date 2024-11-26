@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/Layr-Labs/avs-devnet/src/config"
@@ -26,5 +27,14 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 }
 
 func TestStartDefaultDevnet(t *testing.T) {
+	t.Parallel()
 	startDevnet(t, config.DefaultConfig())
+}
+
+func TestStartIncredibleSquaring(t *testing.T) {
+	t.Parallel()
+	examplePath := filepath.Join("../../examples/incredible_squaring.yaml")
+	parsedConfig, err := config.LoadFromPath(examplePath)
+	assert.NoError(t, err, "Failed to parse example config")
+	startDevnet(t, parsedConfig)
 }
