@@ -16,7 +16,7 @@ var rootDir string = func() string {
 	if err != nil {
 		panic(err)
 	}
-	return rootDir
+	return filepath.Join(rootDir, "../..")
 }()
 
 func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
