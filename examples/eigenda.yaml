@@ -9,7 +9,51 @@ deployments:
     output:
       eigenda_addresses: script/output/eigenda_deploy_output.json
 
-services: []
+  # - name: MockRollup
+  #   repo: https://github.com/Layr-Labs/eigenda.git
+  #   ref: master
+  #   contracts_path: contracts
+  #   script: script/MockRollupDeployer.s.sol:MockRollupDeployer
+  #   extra_args: "--sig run(address) -- $EIGENDA_SERVICE_MANAGER"
+  #   env:
+  #     EIGENDA_SERVICE_MANAGER: $deployments.EigenDA.eigenda_addresses.eigenda_service_manager
+
+services:
+  - name: localstack
+    image: localstack/localstack
+    ports:
+      gateway:
+        number: 4566
+        transport_protocol: TCP
+        application_protocol: "http"
+    cmd: []
+
+  - name: churner
+    image: eigenda-churner
+    build_cmd: "docker build . -t eigenda-churner --target churner"
+    ports:
+      grpc:
+        number: 8080
+        transport_protocol: TCP
+        application_protocol: "grpc"
+      metrics:
+        number: 9100
+        transport_protocol: TCP
+        application_protocol: "http"
+    env:
+      CHURNER_HOSTNAME: "unused"
+      CHURNER_GRPC_PORT: "8080"
+      # TODO: fill next two with addresses
+      CHURNER_BLS_OPERATOR_STATE_RETRIVER: "required"
+      CHURNER_EIGENDA_SERVICE_MANAGER: "required"
+      CHURNER_CHAIN_RPC: "$http_rpc_url"
+      CHURNER_PRIVATE_KEY: "$deployer_private_key"
+      CHURNER_GRAPH_URL: ""
+      CHURNER_INDEXER_PULL_INTERVAL: "1s"
+      CHURNER_ENABLE_METRICS: "true"
+      CHURNER_METRICS_HTTP_PORT: "9100"
+      CHURNER_CHURN_APPROVAL_INTERVAL: "900s"
+    cmd: []
 
 # Specify keys to generate
 keys:
