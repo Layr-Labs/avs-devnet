@@ -4,18 +4,27 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/Layr-Labs/avs-devnet/src/config"
 	"github.com/stretchr/testify/assert"
 )
 
+var rootDir string = func() string {
+	rootDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return rootDir
+}()
+
 func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 	name, err := ToValidEnclaveName(t.Name())
 	assert.NoError(t, err, "Failed to generate test name")
 
 	opts := StartOptions{
-		KurtosisPackageUrl: "../../kurtosis_package",
+		KurtosisPackageUrl: filepath.Join(rootDir, "kurtosis_package"),
 		DevnetName:         name,
 		DevnetConfig:       devnetConfig,
 	}
@@ -61,6 +70,7 @@ func TestStartIncredibleSquaring(t *testing.T) {
 }
 
 func TestStartLocalHelloWorld(t *testing.T) {
+	// NOTE: we don't run t.Parallel() here because we need to change the working directory
 	goToDir(t, "../../")
 
 	// Clone the hello-world-avs repo
