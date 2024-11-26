@@ -1,17 +1,4 @@
 deployments:
-  # Deploy EigenLayer
-  - type: EigenLayer
-    ref: v0.4.2-mainnet-pepe
-    # Whitelist a single strategy named MockETH, backed by a mock-token
-    strategies: [MockETH]
-    operators:
-      # Register a single operator with EigenLayer
-      - name: operator1
-        keys: operator1_ecdsa
-        # Deposit 1e17 tokens into the MockETH strategy
-        strategies:
-          MockETH: 100000000000000000
-
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
     ref: master
