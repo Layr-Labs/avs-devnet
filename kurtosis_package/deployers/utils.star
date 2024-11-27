@@ -11,7 +11,7 @@ FOUNDRY_IMAGE = ImageBuildSpec(
 
 
 def deploy_generic_contract(plan, context, deployment):
-    deployment_name = deployment["name"]
+    name = deployment["name"]
     repo = deployment["repo"]
     is_remote_repo = repo.startswith("https://") or repo.startswith("http://")
     contracts_path = deployment.get("contracts_path", ".")
@@ -43,7 +43,7 @@ def deploy_generic_contract(plan, context, deployment):
             contract_name = split_path[1]
             script_path = split_path[0] + ".sol"
 
-        input_artifacts.append(("/app/", deployment_name + "-script"))
+        input_artifacts.append(("/app/", name + "-script"))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
@@ -60,12 +60,10 @@ def deploy_generic_contract(plan, context, deployment):
         files=input_files,
         store=store_specs,
         env_vars=env_vars,
-        description="Deploying '{}'".format(deployment_name),
+        description="Deploying '{}'".format(name),
         wait="600s",
     )
-    context.data["addresses"][deployment_name] = extract_addresses(
-        plan, context, addresses
-    )
+    context.data["addresses"][name] = extract_addresses(plan, context, addresses)
     return result
 
 
