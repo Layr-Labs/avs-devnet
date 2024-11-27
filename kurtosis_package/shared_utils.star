@@ -75,34 +75,32 @@ def send_funds(plan, context, to, amount="10ether"):
     )
 
 
-def generate_env_vars(context, env_vars):
+def generate_env_vars(plan, context, env_vars):
     return {
-        env_var_name: expand(context, env_var_value)
+        env_var_name: expand(plan, context, env_var_value)
         for env_var_name, env_var_value in env_vars.items()
     }
 
 
-def expand(context, var):
+def expand(plan, context, var):
     """
-    Replaces values starting with `$` to their dynamically evaluated counterpart.
-    Values starting with `$$` are not expanded, and the leading `$` is removed.
+    Replaces templates containing double brackets ("{{") to their dynamically evaluated counterpart.
 
-    Example: "$service.some_service_name.ip_address" -> <some_service_name's ip address>
+    Example: "{{.service.some_service_name.ip_address}}" -> <some_service_name's ip address>
     """
-    if not var.startswith("$"):
+    # NOTE: this is just an optimization to avoid template rendering if it doesn't need it
+    if var.find("{{") == -1:
         return var
 
-    if var.startswith("$$"):
-        return var[1:]
+    file_name = "expanded.txt"
 
-    path = var[1:].split(".")
-    value = context.data
-    for field in path:
-        value = value.get(field, None)
-        if value == None:
-            break
-
-    if value == None or type(value) == type({}):
-        fail("Invalid path: " + var)
-
-    return value
+    artifact = plan.render_templates(
+        config={file_name: struct(template=var, data=context.data)},
+        description="Expanding envvar '{}'".format(var),
+    )
+    result = plan.run_sh(
+        run="cat /artifact/" + file_name,
+        files={"/artifact": artifact},
+    )
+    expanded_value = result.output
+    return expanded_value

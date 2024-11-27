@@ -6,7 +6,9 @@ def add_service(plan, service_args, context):
     files = generate_input_files(plan, context, service_args.get("input", {}))
 
     ports = generate_port_specs(service_args.get("ports", {}))
-    env_vars = shared_utils.generate_env_vars(context, service_args.get("env", {}))
+    env_vars = shared_utils.generate_env_vars(
+        plan, context, service_args.get("env", {})
+    )
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
