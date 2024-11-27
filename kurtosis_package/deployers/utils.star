@@ -181,7 +181,7 @@ def extract_addresses(plan, context, addresses):
     for name, locator in addresses.items():
         split_locator = locator.split(":")
 
-        if split_locator != 2:
+        if len(split_locator) != 2:
             fail("Locator '{}' must have exactly one ':' character".format(locator))
 
         artifact, path = split_locator
