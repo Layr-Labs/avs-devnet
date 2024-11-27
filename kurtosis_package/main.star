@@ -24,7 +24,7 @@ def run(plan, args={}):
     data = {
         "http_rpc_url": http_rpc_url,
         "ws_rpc_url": ws_url,
-        "deployer_private_key": "0x" + private_key,
+        "deployer_private_key": private_key,
         "deployer_address": deployer_address,
     }
     plan.print("Initial data: " + json.indent(json.encode(data)))
