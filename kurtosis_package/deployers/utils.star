@@ -21,6 +21,7 @@ def deploy_generic_contract(plan, context, deployment):
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
     output = deployment.get("output", {})
+    addresses = deployment.get("addresses", {})
 
     contract_name = None
 
@@ -61,6 +62,9 @@ def deploy_generic_contract(plan, context, deployment):
         env_vars=env_vars,
         description="Deploying '{}'".format(deployment_name),
         wait="600s",
+    )
+    context.data["addresses"][deployment_name] = extract_addresses(
+        plan, context, addresses
     )
     return result
 
@@ -172,3 +176,18 @@ def get_verify_args(context):
     if verify_url == "":
         return ""
     return "--verify --verifier blockscout --verifier-url {}/api?".format(verify_url)
+
+
+def extract_addresses(plan, context, addresses):
+    extracted_addresses = {}
+    for name, locator in addresses.items():
+        split_locator = locator.split(":")
+
+        if split_locator != 2:
+            fail("Locator '{}' must have exactly one ':' character".format(locator))
+
+        artifact, path = split_locator
+        address = shared_utils.read_json_artifact(plan, artifact, path)
+        extracted_addresses[name] = address
+
+    return extracted_addresses
