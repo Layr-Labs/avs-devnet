@@ -324,6 +324,27 @@ ethereum_package:
     - blockscout
 ```
 
+### Context object
+
+The *Context* is used when expanding templates.
+What follows is a list of its contents.
+
+#### `.http_rpc_url`
+
+The URL of the HTTP-RPC exposed on the first node of the underlying devnet.
+
+#### `.ws_rpc_url`
+
+The URL of the WebSocket-RPC exposed on the first node of the underlying devnet.
+
+#### `.deployer_private_key`
+
+The ECDSA private key used to deploy contracts.
+
+#### `.addresses.<deployment-name>.<contract-name>`
+
+The address of the contract `<contract-name>` from deployment `<deployment-name>`.
+
 ## Kurtosis package
 
 For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
