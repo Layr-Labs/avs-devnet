@@ -271,12 +271,13 @@ services:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Values inside double brackets '{{ }}' are expanded at runtime according
-      # to Go template syntax.
+      # Values inside double brackets '{{ }}' (templates) are expanded
+      # at runtime according to Go template syntax.
       # This example expands to the `ecdsa_keys` keystore's password
       ECDSA_KEY_PASSWORD: "{{.keys.ecdsa_keys.password}}"
     # Command to use when running the docker image
-    cmd: ["some", "option", "here"]
+    # Options may contain templates
+    cmd: ["some", "option", "here", "{{.keys.ecdsa_keys.address}}"]
 
 # Lists the keys to be generated at startup
 keys:
