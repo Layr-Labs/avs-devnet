@@ -15,7 +15,7 @@ deployments:
     script: script/DeployEigenLayerCore.s.sol
     env:
       # NOTE: this is used inside the deployer script
-      PRIVATE_KEY: "$deployer_private_key"
+      PRIVATE_KEY: "0x{{.deployer_private_key}}"
       # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
@@ -29,7 +29,7 @@ deployments:
     script: script/HelloWorldDeployer.s.sol
     env:
       # NOTE: this is used inside the deployer script
-      PRIVATE_KEY: "$deployer_private_key"
+      PRIVATE_KEY: "0x{{.deployer_private_key}}"
       # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
@@ -48,8 +48,8 @@ services:
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
       # This expands to the RPC node's URL
-      RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "$keys.operator_ecdsa_keys.private_key"
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.operator_ecdsa_keys.private_key}}"
     cmd: ["npm", "run", "start:operator"]
 
   - name: traffic-generator
@@ -60,8 +60,8 @@ services:
       /app/contracts/deployments/hello-world/: avs_addresses
     env:
       # This expands to the RPC node's URL
-      RPC_URL: "$http_rpc_url"
-      PRIVATE_KEY: "$keys.traffic_generator_ecdsa_keys.private_key"
+      RPC_URL: "{{.http_rpc_url}}"
+      PRIVATE_KEY: "{{.keys.traffic_generator_ecdsa_keys.private_key}}"
     cmd: ["npm", "run", "start:traffic"]
 
 keys:

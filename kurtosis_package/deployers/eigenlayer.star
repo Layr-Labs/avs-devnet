@@ -128,7 +128,7 @@ def whitelist_strategies(plan, context, strategies):
         [data["addresses"][strategy["name"]] for strategy in strategies]
     )
     flag_params = ",".join(["true" for _ in strategies])
-    cmd = "set -e ; cast send --rpc-url {rpc} --private-key {pk} \
+    cmd = "set -e ; cast send --rpc-url {rpc} --private-key 0x{pk} \
     {addr} 'addStrategiesToDepositWhitelist(address[],bool[])' '[{strategy_params}]' '[{flag_params}]'".format(
         rpc=data["http_rpc_url"],
         pk=data["deployer_private_key"],
