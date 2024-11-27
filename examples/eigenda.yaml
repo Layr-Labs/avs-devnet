@@ -8,15 +8,18 @@ deployments:
       script/input/: eigenda_deploy_config
     output:
       eigenda_addresses: script/output/eigenda_deploy_output.json
+    addresses:
+      serviceManager: "eigenda_addresses:.eigenDAServiceManager"
+      operatorStateRetriever: "eigenda_addresses:.operatorStateRetriever"
 
-  # - name: MockRollup
-  #   repo: https://github.com/Layr-Labs/eigenda.git
-  #   ref: master
-  #   contracts_path: contracts
-  #   script: script/MockRollupDeployer.s.sol:MockRollupDeployer
-  #   extra_args: "--sig run(address) -- $EIGENDA_SERVICE_MANAGER"
-  #   env:
-  #     EIGENDA_SERVICE_MANAGER: $deployments.EigenDA.eigenda_addresses.eigenda_service_manager
+  - name: MockRollup
+    repo: https://github.com/Layr-Labs/eigenda.git
+    ref: master
+    contracts_path: contracts
+    script: script/MockRollupDeployer.s.sol:MockRollupDeployer
+    extra_args: "--sig run(address) -- $EIGENDA_SERVICE_MANAGER"
+    env:
+      EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
 
 services:
   - name: localstack
@@ -43,17 +46,15 @@ services:
     env:
       CHURNER_HOSTNAME: "unused"
       CHURNER_GRPC_PORT: "8080"
-      # TODO: fill next two with addresses
-      CHURNER_BLS_OPERATOR_STATE_RETRIVER: "required"
-      CHURNER_EIGENDA_SERVICE_MANAGER: "required"
-      CHURNER_CHAIN_RPC: "$http_rpc_url"
-      CHURNER_PRIVATE_KEY: "$deployer_private_key"
+      CHURNER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      CHURNER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      CHURNER_CHAIN_RPC: "{{.http_rpc_url}}"
+      CHURNER_PRIVATE_KEY: "{{.deployer_private_key}}"
       CHURNER_GRAPH_URL: ""
       CHURNER_INDEXER_PULL_INTERVAL: "1s"
       CHURNER_ENABLE_METRICS: "true"
       CHURNER_METRICS_HTTP_PORT: "9100"
       CHURNER_CHURN_APPROVAL_INTERVAL: "900s"
-    cmd: []
 
 # Specify keys to generate
 keys:
@@ -68,7 +69,7 @@ artifacts:
       eigenda_deploy_config.json: |
         {
           "numStrategies": 0,
-          "confirmerPrivateKey": "{{.deployer_private_key}}",
+          "confirmerPrivateKey": "0x{{.deployer_private_key}}",
           "stakerPrivateKeys": [],
           "stakerTokenAmounts": [],
           "operatorPrivateKeys": [],
