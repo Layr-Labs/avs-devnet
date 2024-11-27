@@ -14,7 +14,7 @@ def deploy(plan, context, deployment):
     if len(strategies) > 0:
         deploy_mocktoken(plan, context, el_name, el_args["verify"])
 
-    config_name = generate_el_config(plan, context, strategies)
+    config_name = generate_el_config(plan, context, el_name, strategies)
     # TODO: insert as list if user specifies same path
     el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
 
@@ -90,8 +90,8 @@ def deploy_mocktoken(plan, context, deployment_name, verify):
     return token_address
 
 
-def generate_el_config(plan, context, strategies):
-    formatted_strategies = format_strategies(context, strategies)
+def generate_el_config(plan, context, deployment_name, strategies):
+    formatted_strategies = format_strategies(context, deployment_name, strategies)
     data = {
         "deployer_address": context.data["deployer_address"],
         "strategies": formatted_strategies,
@@ -108,7 +108,7 @@ def generate_el_config(plan, context, strategies):
     return artifact_name
 
 
-def format_strategies(context, strategies):
+def format_strategies(context, deployment_name, strategies):
     formatted_strategies = []
     for strategy in strategies:
         formatted_strategies.append(
@@ -116,7 +116,9 @@ def format_strategies(context, strategies):
                 {
                     "max_deposits": strategy["max_deposits"],
                     "max_per_deposit": strategy["max_per_deposit"],
-                    "token_address": context.data["addresses"]["mocktoken"],
+                    "token_address": context.data["addresses"][deployment_name][
+                        "mocktoken"
+                    ],
                     # This is the associated name in the output file
                     "token_symbol": strategy["name"],
                 }
