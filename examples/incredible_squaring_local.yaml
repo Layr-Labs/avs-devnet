@@ -60,8 +60,8 @@ services:
         - operator_bls_keys
         - operator_ecdsa_keys
     env:
-      OPERATOR_ECDSA_KEY_PASSWORD: $keys.operator_ecdsa_keys.password
-      OPERATOR_BLS_KEY_PASSWORD: $keys.operator_bls_keys.password
+      OPERATOR_ECDSA_KEY_PASSWORD: "{{.keys.operator_ecdsa_keys.password}}"
+      OPERATOR_BLS_KEY_PASSWORD: "{{.keys.operator_bls_keys.password}}"
     cmd: ["--config", "/usr/src/app/config-files/operator-config.yaml"]
 
 keys:

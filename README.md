@@ -193,8 +193,8 @@ deployments:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Variables starting with `$` are magic variables and change to the real value at runtime
-      PRIVATE_KEY: "$deployer_private_key"
+      # Values inside double brackets '{{ }}' are expanded at runtime according to Go template syntax
+      PRIVATE_KEY: "{{.deployer_private_key}}"
     # Input files to embed into the repo
     input:
       # Key: destination to insert the files in
@@ -271,9 +271,10 @@ services:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Values starting with `$` can be used to retrieve context information
+      # Values inside double brackets '{{ }}' are expanded at runtime according
+      # to Go template syntax.
       # This example expands to the `ecdsa_keys` keystore's password
-      ECDSA_KEY_PASSWORD: $keys.ecdsa_keys.password
+      ECDSA_KEY_PASSWORD: "{{.keys.ecdsa_keys.password}}"
     # Command to use when running the docker image
     cmd: ["some", "option", "here"]
 
