@@ -213,16 +213,24 @@ DEFAULT_STRATEGY = {
 }
 
 EL_CONTRACT_NAMES = [
-    "delegation",
+    "avsDirectory",
+    "avsDirectoryImplementation",
     "baseStrategyImplementation",
-    "delayedWithdrawalRouter",
+    "delegation",
+    "delegationImplementation",
     "eigenLayerPauserReg",
     "eigenLayerProxyAdmin",
     "eigenPodBeacon",
+    "eigenPodImplementation",
     "eigenPodManager",
+    "eigenPodManagerImplementation",
     "emptyContract",
+    "rewardsCoordinator",
+    "rewardsCoordinatorImplementation",
     "slasher",
+    "slasherImplementation",
     "strategyManager",
+    "strategyManagerImplementation",
 ]
 
 EL_DEFAULT = {
