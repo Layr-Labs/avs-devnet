@@ -14,6 +14,13 @@ deployments:
       script/output/3151908: eigenlayer_addresses
     output:
       avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
+    # Specify addresses to fetch from avs_addresses artifact
+    addresses:
+      credibleSquaringServiceManager: avs_addresses:.addresses.credibleSquaringServiceManager
+      credibleSquaringTaskManager: avs_addresses:.addresses.credibleSquaringTaskManager
+      erc20MockStrategy: avs_addresses:.addresses.erc20MockStrategy
+      operatorStateRetriever: avs_addresses:.addresses.operatorStateRetriever
+      registryCoordinator: avs_addresses:.addresses.registryCoordinator
 
 services:
   - name: aggregator
