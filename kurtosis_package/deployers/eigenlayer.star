@@ -3,23 +3,27 @@ utils = import_module("./utils.star")
 
 
 def deploy(plan, context, deployment):
-    plan.print("Initiating EigenLayer deployment")
-    strategies = parse_strategies(deployment.get("strategies", []))
+    el_args = EL_DEFAULT | deployment
+    el_name = el_args["name"]
+    plan.print("Initiating {} deployment".format(el_name))
+
+    strategies = parse_strategies(el_args["strategies"])
+
     if len(strategies) > 0:
-        deploy_mocktoken(plan, context, deployment.get("verify", False))
+        deploy_mocktoken(plan, context, el_name, el_args["verify"])
 
     config_name = generate_el_config(plan, context, strategies)
-    el_args = EL_DEFAULT | deployment
     # TODO: insert as list if user specifies same path
     el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
 
+    el_args["addresses"] = el_args["addresses"] | generate_addresses_arg(
+        "eigenlayer_addresses", strategies
+    )
+
     utils.deploy_generic_contract(plan, context, el_args)
 
-    read_addresses(plan, context, "eigenlayer_addresses", strategies)
-
-    whitelist_strategies(plan, context, strategies)
-
-    register_operators(plan, context, deployment.get("operators", []))
+    whitelist_strategies(plan, context, el_name, strategies)
+    register_operators(plan, context, el_name, el_args["operators"])
 
 
 def parse_strategies(raw_strategies):
@@ -34,7 +38,21 @@ def parse_strategies(raw_strategies):
     return parsed_strategies
 
 
-def deploy_mocktoken(plan, context, verify):
+def generate_addresses_arg(el_output, strategies):
+    addresses = {}
+    for name in EL_CONTRACT_NAMES:
+        addresses[name] = el_output + ":.addresses." + name
+
+    # Specify addresses to read from the output
+    for strategy in strategies:
+        name = strategy["name"]
+        path = el_output + ".addresses.strategies." + name
+        addresses[name] = path
+
+    return addresses
+
+
+def deploy_mocktoken(plan, context, deployment_name, verify):
     repo = "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref = "83e64c8f11439028186380ef0ed35eea6316ec47"
     path = "contracts"
@@ -65,7 +83,7 @@ def deploy_mocktoken(plan, context, verify):
         target_value="",
         description="Verifying token deployment",
     )
-    context.data["addresses"]["mocktoken"] = token_address
+    context.data["addresses"][deployment_name]["mocktoken"] = token_address
 
     return token_address
 
@@ -105,34 +123,16 @@ def format_strategies(context, strategies):
     return ", ".join(formatted_strategies)
 
 
-def read_addresses(plan, context, output_name, strategies):
-    # TODO: store these in a sub-dict inside the context
-    addresses = context.data["addresses"]
-    addresses["delegation"] = shared_utils.read_json_artifact(
-        plan, output_name, ".addresses.delegation"
-    )
-    addresses["strategy_manager"] = shared_utils.read_json_artifact(
-        plan, output_name, ".addresses.strategyManager"
-    )
-    for strategy in strategies:
-        name = strategy["name"]
-        address = shared_utils.read_json_artifact(
-            plan, output_name, ".addresses.strategies." + name
-        )
-        context.data["addresses"][name] = address
-
-
-def whitelist_strategies(plan, context, strategies):
+def whitelist_strategies(plan, context, deployment_name, strategies):
     data = context.data
-    strategy_params = ",".join(
-        [data["addresses"][strategy["name"]] for strategy in strategies]
-    )
+    addresses = data["addresses"][deployment_name]
+    strategy_params = ",".join([addresses[strategy["name"]] for strategy in strategies])
     flag_params = ",".join(["true" for _ in strategies])
     cmd = "set -e ; cast send --rpc-url {rpc} --private-key 0x{pk} \
     {addr} 'addStrategiesToDepositWhitelist(address[],bool[])' '[{strategy_params}]' '[{flag_params}]'".format(
         rpc=data["http_rpc_url"],
         pk=data["deployer_private_key"],
-        addr=data["addresses"]["strategy_manager"],
+        addr=addresses["strategyManager"],
         strategy_params=strategy_params,
         flag_params=flag_params,
     )
@@ -141,7 +141,7 @@ def whitelist_strategies(plan, context, strategies):
     )
 
 
-def register_operators(plan, context, operators):
+def register_operators(plan, context, deployment_name, operators):
     data = context.data
     for operator in operators:
         operator_name = operator["name"]
@@ -149,7 +149,7 @@ def register_operators(plan, context, operators):
         strategies = operator.get("strategies", [])
 
         operator_keys = data["keys"][keys_name]
-        addresses = data["addresses"]
+        addresses = data["addresses"][deployment_name]
 
         send_cmd = "cast send --rpc-url {rpc} --private-key {pk}".format(
             rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
@@ -164,7 +164,7 @@ def register_operators(plan, context, operators):
             )
         )
 
-        manager_addr = addresses["strategy_manager"]
+        manager_addr = addresses["strategyManager"]
         # TODO: allow other tokens
         token = addresses["mocktoken"]
         for strategy, amount in strategies.items():
@@ -212,6 +212,19 @@ DEFAULT_STRATEGY = {
     "max_per_deposit": MAX_UINT256,
 }
 
+EL_CONTRACT_NAMES = [
+    "delegation",
+    "baseStrategyImplementation",
+    "delayedWithdrawalRouter",
+    "eigenLayerPauserReg",
+    "eigenLayerProxyAdmin",
+    "eigenPodBeacon",
+    "eigenPodManager",
+    "emptyContract",
+    "slasher",
+    "strategyManager",
+]
+
 EL_DEFAULT = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
@@ -219,6 +232,7 @@ EL_DEFAULT = {
     "contracts_path": ".",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
+    "verify": False,
     "input": {},
     "output": {
         "eigenlayer_addresses": {
@@ -226,6 +240,9 @@ EL_DEFAULT = {
             "rename": "eigenlayer_deployment_output.json",
         }
     },
+    "addresses": {},
+    "strategies": [],
+    "operators": [],
 }
 
 EL_CONFIG_TEMPLATE = """
