@@ -7,6 +7,8 @@ def deploy(plan, context, deployment):
     el_name = el_args["name"]
     plan.print("Initiating {} deployment".format(el_name))
 
+    context.data["addresses"][el_name] = {}
+
     strategies = parse_strategies(el_args["strategies"])
 
     if len(strategies) > 0:
