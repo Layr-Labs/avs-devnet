@@ -7,7 +7,7 @@ FOUNDRY_IMAGE = ImageBuildSpec(
     build_context_dir="../dockerfiles/",
     build_file="contract_deployer.Dockerfile",
     target_stage="foundry",
-    build_args={"FOUNDRY_VERSION": FOUNDRY_VERSION},
+    build_args={"FOUNDRY_VERSION": shared_utils.FOUNDRY_VERSION},
 )
 
 
