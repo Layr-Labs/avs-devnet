@@ -17,7 +17,7 @@ deployments:
     ref: master
     contracts_path: contracts
     script: script/MockRollupDeployer.s.sol:MockRollupDeployer
-    extra_args: "--sig run(address) -- $EIGENDA_SERVICE_MANAGER"
+    extra_args: "--sig 'run(address)' -- $EIGENDA_SERVICE_MANAGER"
     env:
       EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
 
@@ -56,35 +56,138 @@ services:
       CHURNER_METRICS_HTTP_PORT: "9100"
       CHURNER_CHURN_APPROVAL_INTERVAL: "900s"
 
+  - name: disperser
+    image: eigenda-apiserver
+    build_cmd: "docker build . -t eigenda-apiserver --target apiserver"
+    ports:
+      grpc:
+        number: 8080
+        transport_protocol: TCP
+        application_protocol: "grpc"
+      metrics:
+        number: 9100
+        transport_protocol: TCP
+        application_protocol: "http"
+    env:
+      DISPERSER_SERVER_S3_BUCKET_NAME: "test-eigenda-blobstore"
+      DISPERSER_SERVER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
+      DISPERSER_SERVER_RATE_BUCKET_TABLE_NAME: ""
+      DISPERSER_SERVER_RATE_BUCKET_STORE_SIZE: "100000"
+      DISPERSER_SERVER_GRPC_PORT: "8080"
+      DISPERSER_SERVER_ENABLE_METRICS: "true"
+      DISPERSER_SERVER_METRICS_HTTP_PORT: "9100"
+      DISPERSER_SERVER_CHAIN_RPC: "{{.http_rpc_url}}"
+      DISPERSER_SERVER_PRIVATE_KEY: "{{.keys.disperser_key.private_key}}"
+      DISPERSER_SERVER_NUM_CONFIRMATIONS: "0"
+      DISPERSER_SERVER_REGISTERED_QUORUM_ID: "0,1"
+      DISPERSER_SERVER_TOTAL_UNAUTH_BYTE_RATE: "10000000,10000000"
+      DISPERSER_SERVER_PER_USER_UNAUTH_BYTE_RATE: "32000,32000"
+      DISPERSER_SERVER_TOTAL_UNAUTH_BLOB_RATE: "10,10"
+      DISPERSER_SERVER_PER_USER_UNAUTH_BLOB_RATE: "2,2"
+      DISPERSER_SERVER_ENABLE_RATELIMITER: "true"
+      DISPERSER_SERVER_RETRIEVAL_BLOB_RATE: "4"
+      DISPERSER_SERVER_RETRIEVAL_BYTE_RATE: "10000000"
+      DISPERSER_SERVER_BUCKET_SIZES: "5s"
+      DISPERSER_SERVER_BUCKET_MULTIPLIERS: "1"
+      DISPERSER_SERVER_COUNT_FAILED: "true"
+      DISPERSER_SERVER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      DISPERSER_SERVER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      DISPERSER_SERVER_AWS_ENDPOINT_URL: "{{.services.localstack.ip_address}}:4566"
+      DISPERSER_SERVER_AWS_REGION: "us-east-1"
+      DISPERSER_SERVER_AWS_ACCESS_KEY_ID: localstack
+      DISPERSER_SERVER_AWS_SECRET_ACCESS_KEY: localstack
+
+  - name: encoder
+    image: eigenda-encoder
+    build_cmd: "docker build . -t eigenda-encoder --target encoder"
+    ports:
+      grpc:
+        number: 8080
+        transport_protocol: TCP
+        application_protocol: "grpc"
+      metrics:
+        number: 9100
+        transport_protocol: TCP
+        application_protocol: "http"
+    input:
+      /kzg/: kzg_config
+    env:
+      DISPERSER_ENCODER_S3_BUCKET_NAME: "test-eigenda-blobstore"
+      DISPERSER_ENCODER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
+      DISPERSER_ENCODER_RATE_BUCKET_TABLE_NAME: ""
+      DISPERSER_ENCODER_RATE_BUCKET_STORE_SIZE: "100000"
+      DISPERSER_ENCODER_GRPC_PORT: "8080"
+      DISPERSER_ENCODER_ENABLE_METRICS: "true"
+      DISPERSER_ENCODER_METRICS_HTTP_PORT: "9100"
+      DISPERSER_ENCODER_CHAIN_RPC: "{{.http_rpc_url}}"
+      DISPERSER_ENCODER_PRIVATE_KEY: "{{.keys.disperser_key.private_key}}"
+      DISPERSER_ENCODER_NUM_CONFIRMATIONS: "0"
+      DISPERSER_ENCODER_REGISTERED_QUORUM_ID: "0,1"
+      DISPERSER_ENCODER_TOTAL_UNAUTH_BYTE_RATE: "10000000,10000000"
+      DISPERSER_ENCODER_PER_USER_UNAUTH_BYTE_RATE: "32000,32000"
+      DISPERSER_ENCODER_TOTAL_UNAUTH_BLOB_RATE: "10,10"
+      DISPERSER_ENCODER_PER_USER_UNAUTH_BLOB_RATE: "2,2"
+      DISPERSER_ENCODER_ENABLE_RATELIMITER: "true"
+      DISPERSER_ENCODER_RETRIEVAL_BLOB_RATE: "4"
+      DISPERSER_ENCODER_RETRIEVAL_BYTE_RATE: "10000000"
+      DISPERSER_ENCODER_BUCKET_SIZES: "5s"
+      DISPERSER_ENCODER_BUCKET_MULTIPLIERS: "1"
+      DISPERSER_ENCODER_COUNT_FAILED: "true"
+      DISPERSER_ENCODER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      DISPERSER_ENCODER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      DISPERSER_ENCODER_AWS_ENDPOINT_URL: "{{.services.localstack.ip_address}}:4566"
+      DISPERSER_ENCODER_AWS_REGION: "us-east-1"
+      DISPERSER_ENCODER_AWS_ACCESS_KEY_ID: localstack
+      DISPERSER_ENCODER_AWS_SECRET_ACCESS_KEY: localstack
+      DISPERSER_ENCODER_G1_PATH: /kzg/g1.point
+      DISPERSER_ENCODER_G2_PATH: /kzg/g2.point
+      DISPERSER_ENCODER_CACHE_PATH: /kzg/cache
+      DISPERSER_ENCODER_SRS_ORDER: 3000
+      DISPERSER_ENCODER_SRS_LOAD: 2900
+      DISPERSER_ENCODER_MAX_CONCURRENT_REQUESTS: 16
+      DISPERSER_ENCODER_REQUEST_POOL_SIZE: 32
+
 # Specify keys to generate
 keys:
   - name: operator1_ecdsa
     type: ecdsa
   - name: operator1_bls
     type: bls
+  - name: disperser_key
+    type: ecdsa
 
 artifacts:
   eigenda_deploy_config:
     files:
-      eigenda_deploy_config.json: |
-        {
-          "numStrategies": 0,
-          "confirmerPrivateKey": "0x{{.deployer_private_key}}",
-          "stakerPrivateKeys": [],
-          "stakerTokenAmounts": [],
-          "operatorPrivateKeys": [],
-          "useDefaults": true,
-          "eigenLayerCommunityMultisig": "",
-          "eigenLayerOperationsMultisig": "",
-          "eigenLayerPauserMultisig": "",
-          "eigenDACommunityMultisig": "",
-          "eigenDAPauser": "",
-          "churner": "",
-          "ejector": "",
-          "initialSupply": 1e12,
-          "tokenOwner": "",
-          "maxOperatorCount": 3
-        }
+      eigenda_deploy_config.json:
+        template: |
+          {
+            "numStrategies": 0,
+            "confirmerPrivateKey": "0x{{.deployer_private_key}}",
+            "stakerPrivateKeys": [],
+            "stakerTokenAmounts": [],
+            "operatorPrivateKeys": [],
+            "useDefaults": true,
+            "eigenLayerCommunityMultisig": "",
+            "eigenLayerOperationsMultisig": "",
+            "eigenLayerPauserMultisig": "",
+            "eigenDACommunityMultisig": "",
+            "eigenDAPauser": "",
+            "churner": "",
+            "ejector": "",
+            "initialSupply": 1e12,
+            "tokenOwner": "",
+            "maxOperatorCount": 3
+          }
+
+  kzg_config:
+    files:
+      g1.point:
+        static_file: "inabox/resources/kzg/g1.point"
+      g2.point:
+        static_file: "inabox/resources/kzg/g2.point"
+      g2.point.powerOf2:
+        static_file: "inabox/resources/kzg/g2.point.powerOf2"
 
 # ethereum-package configuration
 ethereum_package:
