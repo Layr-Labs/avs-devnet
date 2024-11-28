@@ -1,9 +1,12 @@
+# Version from 2024-11-28
+FOUNDRY_VERSION = "nightly-c63aba816b76f9bad103b1275cc662a063919403"
 # NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
 FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry",
     build_context_dir="./dockerfiles/",
     build_file="contract_deployer.Dockerfile",
     target_stage="foundry",
+    build_args={"FOUNDRY_VERSION": FOUNDRY_VERSION},
 )
 
 
