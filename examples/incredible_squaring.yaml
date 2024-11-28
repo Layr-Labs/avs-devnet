@@ -31,8 +31,6 @@ services:
       - "--config"
       - "/usr/src/app/config-files/aggregator-config.yaml"
       - "--ecdsa-private-key"
-      # NOTE: aggregator key-pair is hardcoded in the deployment scripts
-      # TODO: use magic variable to embed this in the command
       - "{{.keys.aggregator_key.private_key}}"
       - "--credible-squaring-deployment"
       - "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json"
@@ -62,6 +60,7 @@ keys:
   - name: operator_ecdsa_keys
     type: ecdsa
   # This ensures the aggregator has funds
+  # NOTE: aggregator key-pair is hardcoded in the deployment scripts
   # TODO: specify private key only
   - name: aggregator_key
     address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
