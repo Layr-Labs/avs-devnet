@@ -1,5 +1,7 @@
 FROM debian:bookworm-slim AS foundry
 
+ARG FOUNDRY_VERSION
+
 # Install curl & git
 RUN apt update -y && \
     apt upgrade -y && \
@@ -10,7 +12,7 @@ RUN apt update -y && \
 RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="/root/.foundry/bin:${PATH}"
 
-RUN foundryup
+RUN foundryup --version ${FOUNDRY_VERSION}
 
 WORKDIR /app/
 

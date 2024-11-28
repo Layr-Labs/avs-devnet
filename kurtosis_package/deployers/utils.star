@@ -7,6 +7,10 @@ FOUNDRY_IMAGE = ImageBuildSpec(
     build_context_dir="../dockerfiles/",
     build_file="contract_deployer.Dockerfile",
     target_stage="foundry",
+    build_args={
+        # Version from 2024-11-28
+        "FOUNDRY_VERSION": "nightly-c63aba816b76f9bad103b1275cc662a063919403",
+    },
 )
 
 
