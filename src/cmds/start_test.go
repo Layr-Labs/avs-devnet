@@ -76,16 +76,15 @@ func TestStartLocalHelloWorld(t *testing.T) {
 	// NOTE: we don't run t.Parallel() here because we need to change the working directory
 	goToDir(t, "../../")
 
-	helloWorldRepo := filepath.Join(examplesDir, "hello-world-avs")
-
 	// Clone the hello-world-avs repo
-	err := exec.Command("make", helloWorldRepo).Run()
+	err := exec.Command("make", "examples/hello-world-avs").Run()
 	assert.NoError(t, err, "Failed to make hello-world-avs repo")
 
 	configFile := filepath.Join(examplesDir, "hello_world_local.yaml")
 	devnetConfig, err := config.LoadFromPath(configFile)
 	assert.NoError(t, err, "Failed to parse example config")
 
-	// Move inside the repo and start the devnet
+	// Start the devnet
+	helloWorldRepo := filepath.Join(examplesDir, "hello-world-avs")
 	startDevnet(t, devnetConfig, helloWorldRepo)
 }
