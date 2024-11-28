@@ -5,7 +5,7 @@ deployments:
     ref: "v0.3.3-mainnet-rewards"
     # NOTE: operator registration is done at operator startup
 
-  - name: incredible-squaring
+  - name: incredible_squaring
     repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref: "1d8d5915d01169bd18f3f242ecc17f5884fca824"
     contracts_path: "contracts"
@@ -14,6 +14,13 @@ deployments:
       script/output/3151908: eigenlayer_addresses
     output:
       avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
+    # Specify addresses to fetch from avs_addresses artifact
+    addresses:
+      serviceManager: avs_addresses:.addresses.credibleSquaringServiceManager
+      taskManager: avs_addresses:.addresses.credibleSquaringTaskManager
+      erc20MockStrategy: avs_addresses:.addresses.erc20MockStrategy
+      operatorStateRetriever: avs_addresses:.addresses.operatorStateRetriever
+      registryCoordinator: avs_addresses:.addresses.registryCoordinator
 
 services:
   - name: aggregator
@@ -78,18 +85,12 @@ artifacts:
         aggregator_server_ip_port_address: 0.0.0.0:8090
 
   operator-config:
-    # TODO: maybe add this eagerly
-    additional_data:
-      avs_addresses:
-        avs_registry_coordinator_address: ".addresses.registryCoordinator"
-        operator_state_retriever_address: ".addresses.operatorStateRetriever"
-        token_strategy_addr: ".addresses.erc20MockStrategy"
     files:
       operator-config.yaml: |
         production: False
         operator_address: {{.keys.operator_ecdsa_keys.address}}
-        avs_registry_coordinator_address: {{.avs_registry_coordinator_address}}
-        operator_state_retriever_address: {{.operator_state_retriever_address}}
+        avs_registry_coordinator_address: {{.addresses.incredible_squaring.registryCoordinator}}
+        operator_state_retriever_address: {{.addresses.incredible_squaring.operatorStateRetriever}}
         eth_rpc_url: {{.http_rpc_url}}
         eth_ws_url: {{.ws_rpc_url}}
         ecdsa_private_key_store_path: /usr/src/app/config-files/keys/1.ecdsa.key.json
@@ -100,7 +101,7 @@ artifacts:
         node_api_ip_port_address: "0.0.0.0:8080"
         enable_node_api: True
         register_operator_on_startup: True
-        token_strategy_addr: {{.token_strategy_addr}}
+        token_strategy_addr: {{.addresses.incredible_squaring.erc20MockStrategy}}
 
 ethereum_package:
   additional_services:
