@@ -23,6 +23,7 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 	name, err := ToValidEnclaveName(t.Name())
 	assert.NoError(t, err, "Failed to generate test name")
 
+	// TODO: set WorkingDir
 	opts := StartOptions{
 		KurtosisPackageUrl: filepath.Join(rootDir, "kurtosis_package"),
 		DevnetName:         name,
