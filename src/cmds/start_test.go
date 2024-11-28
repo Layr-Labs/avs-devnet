@@ -23,10 +23,10 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig) {
 	name, err := ToValidEnclaveName(t.Name())
 	assert.NoError(t, err, "Failed to generate test name")
 
-	// TODO: set WorkingDir
 	opts := StartOptions{
 		KurtosisPackageUrl: filepath.Join(rootDir, "kurtosis_package"),
 		DevnetName:         name,
+		WorkingDir:         filepath.Join(rootDir, "examples"),
 		DevnetConfig:       devnetConfig,
 	}
 	ctx := context.Background()
@@ -64,7 +64,7 @@ func TestStartDefaultDevnet(t *testing.T) {
 
 func TestStartIncredibleSquaring(t *testing.T) {
 	t.Parallel()
-	examplePath := "../../examples/incredible_squaring.yaml"
+	examplePath := filepath.Join(rootDir, "examples/incredible_squaring.yaml")
 	parsedConfig, err := config.LoadFromPath(examplePath)
 	assert.NoError(t, err, "Failed to parse example config")
 	startDevnet(t, parsedConfig)
@@ -78,7 +78,7 @@ func TestStartLocalHelloWorld(t *testing.T) {
 	err := exec.Command("make", "examples/hello-world-avs").Run()
 	assert.NoError(t, err, "Failed to make hello-world-avs repo")
 
-	configFile := "examples/hello_world_local.yaml"
+	configFile := filepath.Join(rootDir, "examples/hello_world_local.yaml")
 	devnetConfig, err := config.LoadFromPath(configFile)
 	assert.NoError(t, err, "Failed to parse example config")
 
