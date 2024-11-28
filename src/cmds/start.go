@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -86,6 +87,11 @@ func Start(ctx context.Context, opts StartOptions) error {
 	err = uploadLocalRepos(opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
 	if err != nil {
 		return fmt.Errorf("failed when uploading local repos: %w", err)
+	}
+
+	err = uploadStaticFiles(opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
+	if err != nil {
+		return fmt.Errorf("failed when uploading static files: %w", err)
 	}
 
 	starlarkConfig := starlark_run_config.NewRunStarlarkConfig()
@@ -179,24 +185,63 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 
 	// Copy the foundry config inside the contracts dir
 	foundryConfigRelPath := filepath.Join(deployment.ContractsPath, "foundry.toml")
-	foundryConfig, err := os.ReadFile(filepath.Join(repoPath, foundryConfigRelPath))
+	src := filepath.Join(repoPath, foundryConfigRelPath)
+	dst := filepath.Join(outputDir, foundryConfigRelPath)
+	err = fileCopy(src, dst)
 	if err != nil {
-		return fmt.Errorf("failed to read foundry.toml: %w", err)
+		return fmt.Errorf("failed when copying foundry.toml: %w", err)
 	}
-	file, err := os.Create(filepath.Join(outputDir, foundryConfigRelPath))
-	if err != nil {
-		return err
-	}
-	_, err = file.Write(foundryConfig)
-	if err != nil {
-		return err
-	}
-	file.Close()
+
 	// Upload the file to the enclave
 	artifactName := deployment.Name + "-script"
 	_, _, err = enclaveCtx.UploadFiles(outputDir, artifactName)
 	if err != nil {
 		return fmt.Errorf("file uploading failed: %w", err)
+	}
+	return nil
+}
+
+func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
+	for artifactName, artifactDetails := range config.Artifacts {
+		numStaticFiles := 0
+		numTemplates := 0
+		for _, fileAttrs := range artifactDetails.Files {
+			if fileAttrs.StaticFile != nil {
+				numStaticFiles += 1
+			} else if fileAttrs.Template != nil {
+				numTemplates += 1
+			} else {
+				return errors.New("artifact must have either a static file or a template")
+			}
+		}
+		if numStaticFiles > 0 && numTemplates > 0 {
+			return errors.New("artifacts with both static files and templates are not yet supported")
+		}
+		// Skip artifacts with templates only
+		if numStaticFiles == 0 {
+			continue
+		}
+
+		// Output files in a temp dir
+		outputDir, err := os.MkdirTemp(os.TempDir(), "avs-devnet-")
+		if err != nil {
+			return fmt.Errorf("tempdir creation failed: %w", err)
+		}
+		defer os.RemoveAll(outputDir)
+		for fileName, fileAttrs := range artifactDetails.Files {
+			// Copy the file to the temp dir
+			originFilePath := ensureAbs(dirContext, *fileAttrs.StaticFile)
+			destinationFilePath := filepath.Join(outputDir, fileName)
+			err := fileCopy(originFilePath, destinationFilePath)
+			if err != nil {
+				return fmt.Errorf("failed when copying file: %w", err)
+			}
+		}
+		// Upload temp dir to enclave
+		_, _, err = enclaveCtx.UploadFiles(outputDir, artifactName)
+		if err != nil {
+			return fmt.Errorf("file uploading failed: %w", err)
+		}
 	}
 	return nil
 }
@@ -266,4 +311,22 @@ func ensureAbs(baseDir string, path string) string {
 func executeCmdInsideDir(dir, cmd string) *exec.Cmd {
 	fullCmd := fmt.Sprintf("cd %s && %s", dir, cmd)
 	return exec.Command("sh", "-c", fullCmd)
+}
+
+func fileCopy(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer srcFile.Close()
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dstFile.Close()
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
+	}
+	return nil
 }
