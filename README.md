@@ -226,6 +226,11 @@ deployments:
         path: "script/output/devnet/M2_from_scratch_deployment_data.json"
         # The new name to give to the file
         rename: "eigenlayer_deployment_output.json"
+    # Specifies addresses to extract from output artifacts
+    addresses:
+      # Key: name of the address
+      # Value: `<artifact-name>:<jq-filter-to-apply>`, same syntax as `devnet get-address`
+      my_contract: "eigenlayer_addresses:.addresses.avsDirectoryImplementation"
 
     # Available types: eigenlayer
     # This autofills some of the other options, and allows access
@@ -312,7 +317,7 @@ artifacts:
       # Artifact name to fetch data from
       artifact_name:
         # Key: name of the variable to populate
-        # Value: JSONPath to the data
+        # Value: jq filter to extract the data
         # NOTE: this assumes that the data inside the artifact is a single JSON file
         some_variable: ".field1.foo[0]"
 
@@ -327,7 +332,9 @@ artifacts:
         {
           "a": 5,
           "someVariable": {{.some_variable}},
-          "deployerAddress": {{.deployer_address}}
+          "deployerAddress": {{.deployer_address}},
+          "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
+          "contractAddress": {{(index .addresses "deployment-name").my_contract}}
         }
 
 # Args to pass on to ethereum-package.
