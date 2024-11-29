@@ -9,12 +9,13 @@ def add_service(plan, service_args, context):
     env_vars = shared_utils.generate_env_vars(
         plan, context, service_args.get("env", {})
     )
+    cmd = [shared_utils.expand(plan, context, v) for v in service_args.get("cmd", [])]
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
         files=files,
         env_vars=env_vars,
-        cmd=service_args.get("cmd", []),
+        cmd=cmd,
         # TODO: use default user
         # We need to do this due to artifacts being owned by root
         user=User(uid=0, gid=0),
