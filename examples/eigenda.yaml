@@ -39,15 +39,18 @@ services:
     cmd: []
 
   - name: create-s3-bucket
-    image: badouralix/curl-jq
-    input:
-      /script/: create_s3_bucket.sh
+    image: amazon/aws-cli:2.13.2
     env:
-      AWS_URL: "{{.services.localstack.ip_address}}:4566"
+      AWS_ACCESS_KEY_ID: "localstack"
+      AWS_SECRET_ACCESS_KEY: "localstack"
     cmd:
-      - "sh"
-      - "-c"
-      - "chmod u+x /script/create_s3_bucket.sh && /script/create_s3_bucket.sh"
+      - "s3api"
+      - "create-bucket"
+      - "--endpoint-url=http://{{.services.localstack.ip_address}}:4566/"
+      - "--bucket"
+      - "test-eigenda-blobstore"
+      - "--region"
+      - "us-east-1"
 
   - name: churner
     image: eigenda-churner
@@ -266,6 +269,7 @@ services:
       NODE_ECDSA_KEY_PASSWORD: "{{.keys.operator1_ecdsa.password}}"
       NODE_BLS_KEY_FILE: /keys/bls/keys/1.bls.key.json
       NODE_BLS_KEY_PASSWORD: "{{.keys.operator1_bls.password}}"
+      NODE_REGISTER_AT_NODE_START: true
 
 # Specify keys to generate
 keys:
@@ -303,11 +307,6 @@ artifacts:
             "tokenOwner": "{{.deployer_address}}",
             "maxOperatorCount": 3
           }
-
-  create_s3_bucket.sh:
-    files:
-      create_s3_bucket.sh:
-        static_file: inabox/create-s3-bucket.sh
 
   kzg_config:
     files:
