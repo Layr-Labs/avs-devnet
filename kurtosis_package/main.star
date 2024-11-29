@@ -58,6 +58,13 @@ def parse_args(plan, args):
     deployments = args.get("deployments", [])
     services = args.get("services", [])
 
+    # Mark artifacts that have static files as generated
+    # TODO: support mixed artifacts
+    for artifact_name, artifact in artifacts.items():
+        files = artifact.get("files", {})
+        if any(["static_file" in file for file in files.values()]):
+            artifacts[artifact_name]["generated"] = True
+
     return struct(
         artifacts=artifacts,
         keys=keys,

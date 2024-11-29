@@ -38,8 +38,9 @@ def ensure_generated(plan, context, artifact_name):
             data[varname] = read_json_artifact(plan, artifact, json_field)
 
     config = {}
-    for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=data)
+    for file_name, file_data in artifact_files.items():
+        template = file_data["template"]
+        config[file_name] = struct(template=template, data=data)
 
     artifact = plan.render_templates(
         config=config,
