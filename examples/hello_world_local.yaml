@@ -15,7 +15,7 @@ deployments:
     script: script/DeployEigenLayerCore.s.sol:DeployEigenlayerCore
     env:
       # NOTE: this is used inside the deployer script
-      PRIVATE_KEY: "0x{{.deployer_private_key}}"
+      PRIVATE_KEY: "{{.deployer_private_key}}"
       # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
@@ -29,7 +29,7 @@ deployments:
     script: script/HelloWorldDeployer.s.sol
     env:
       # NOTE: this is used inside the deployer script
-      PRIVATE_KEY: "0x{{.deployer_private_key}}"
+      PRIVATE_KEY: "{{.deployer_private_key}}"
       # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
