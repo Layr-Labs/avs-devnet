@@ -4,6 +4,7 @@
 # - set up S3 bucket
 # - verify AWS params
 # - check if we need to provide unique private keys to each service
+# - # https://github.com/Layr-Labs/eigenda/blob/4ec69dc0cb88182bb6e6fb8054e8db4d6086200d/inabox/deploy/localstack.go#L47-L50
 deployments:
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
@@ -37,6 +38,17 @@ services:
         application_protocol: "http"
     cmd: []
 
+  - name: create-s3-bucket
+    image: badouralix/curl-jq
+    input:
+      /script/: create_s3_bucket.sh
+    env:
+      AWS_URL: "{{.services.localstack.ip_address}}:4566"
+    cmd:
+      - "sh"
+      - "-c"
+      - "chmod u+x /script/create_s3_bucket.sh && /script/create_s3_bucket.sh"
+
   - name: churner
     image: eigenda-churner
     build_cmd: "docker build . -t eigenda-churner --target churner"
@@ -57,7 +69,8 @@ services:
       CHURNER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
       CHURNER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
       CHURNER_CHAIN_RPC: "{{.http_rpc_url}}"
-      CHURNER_PRIVATE_KEY: "{{.deployer_private_key}}"
+      # This removes the leading 0x from the key
+      CHURNER_PRIVATE_KEY: "{{slice .keys.churner_key.private_key 2}}"
       CHURNER_GRAPH_URL: ""
       CHURNER_INDEXER_PULL_INTERVAL: "1s"
       CHURNER_ENABLE_METRICS: "true"
@@ -87,7 +100,8 @@ services:
       DISPERSER_SERVER_ENABLE_METRICS: "true"
       DISPERSER_SERVER_METRICS_HTTP_PORT: "9100"
       DISPERSER_SERVER_CHAIN_RPC: "{{.http_rpc_url}}"
-      DISPERSER_SERVER_PRIVATE_KEY: "{{.keys.disperser_key.private_key}}"
+      # This removes the leading 0x from the key
+      DISPERSER_SERVER_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
       DISPERSER_SERVER_NUM_CONFIRMATIONS: "0"
       DISPERSER_SERVER_REGISTERED_QUORUM_ID: "0,1"
       DISPERSER_SERVER_TOTAL_UNAUTH_BYTE_RATE: "10000000,10000000"
@@ -247,7 +261,7 @@ services:
       NODE_SRS_LOAD: 2900
       NODE_CHAIN_RPC: "{{.http_rpc_url}}"
       # TODO: check if we need this, and provide provide a unique one
-      NODE_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
+      NODE_PRIVATE_KEY: "{{slice .keys.operator1_ecdsa.private_key 2}}"
       NODE_ECDSA_KEY_FILE: /keys/ecdsa/keys/1.ecdsa.key.json
       NODE_ECDSA_KEY_PASSWORD: "{{.keys.operator1_ecdsa.password}}"
       NODE_BLS_KEY_FILE: /keys/bls/keys/1.bls.key.json
@@ -255,6 +269,10 @@ services:
 
 # Specify keys to generate
 keys:
+  - name: churner_key
+    type: ecdsa
+  - name: staker1_key
+    type: ecdsa
   - name: operator1_ecdsa
     type: ecdsa
   - name: operator1_bls
@@ -268,23 +286,28 @@ artifacts:
       eigenda_deploy_config.json:
         template: |
           {
-            "numStrategies": 0,
-            "confirmerPrivateKey": "0x{{.deployer_private_key}}",
-            "stakerPrivateKeys": [],
-            "stakerTokenAmounts": [],
-            "operatorPrivateKeys": [],
-            "useDefaults": true,
-            "eigenLayerCommunityMultisig": "",
-            "eigenLayerOperationsMultisig": "",
-            "eigenLayerPauserMultisig": "",
-            "eigenDACommunityMultisig": "",
-            "eigenDAPauser": "",
-            "churner": "",
-            "ejector": "",
-            "initialSupply": 1e12,
-            "tokenOwner": "",
+            "numStrategies": 2,
+            "confirmerPrivateKey": "{{.deployer_private_key}}",
+            "stakerPrivateKeys": ["{{.keys.staker1_key.private_key}}"],
+            "stakerTokenAmounts": [["0xe8d4a51000"], ["0xe8d4a51000"]],
+            "operatorPrivateKeys": ["{{.keys.operator1_ecdsa.private_key}}"],
+            "useDefaults": false,
+            "eigenLayerCommunityMultisig": "{{.deployer_address}}",
+            "eigenLayerOperationsMultisig": "{{.deployer_address}}",
+            "eigenLayerPauserMultisig": "{{.deployer_address}}",
+            "eigenDACommunityMultisig": "{{.deployer_address}}",
+            "eigenDAPauser": "{{.deployer_address}}",
+            "churner": "{{.keys.churner_key.address}}",
+            "ejector": "{{.deployer_address}}",
+            "initialSupply": "0x3635c9adc5dea00000",
+            "tokenOwner": "{{.deployer_address}}",
             "maxOperatorCount": 3
           }
+
+  create_s3_bucket.sh:
+    files:
+      create_s3_bucket.sh:
+        static_file: inabox/create-s3-bucket.sh
 
   kzg_config:
     files:
