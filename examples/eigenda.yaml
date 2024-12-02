@@ -232,6 +232,9 @@ services:
       BATCHER_KMS_KEY_DISABLE: true
       BATCHER_KMS_KEY_ID: ""
       BATCHER_KMS_KEY_REGION: ""
+      BATCHER_AWS_ACCESS_KEY_ID: "localstack"
+      BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
+      BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
 
   - name: retriever
     image: eigenda-retriever
