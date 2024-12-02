@@ -322,6 +322,21 @@ services:
       NODE_BLS_KEY_PASSWORD: "{{.keys.operator1_bls.password}}"
       NODE_REGISTER_AT_NODE_START: true
 
+  - name: traffic-generator
+    image: traffic-generator
+    build_cmd: docker build . -t traffic-generator -f trafficgenerator.Dockerfile
+    cmd:
+      - "--traffic-generator.disperser-hostname"
+      - "{{.services.disperser.ip_address}}"
+      - "--traffic-generator.disperser-port"
+      - "8080"
+      - "--traffic-generator.num-instances"
+      - "1"
+      - "--traffic-generator.request-interval"
+      - "5s"
+      - "--traffic-generator.data-size"
+      - "1024"
+
 # Specify keys to generate
 keys:
   - name: churner_key
@@ -358,11 +373,6 @@ artifacts:
             "tokenOwner": "{{.deployer_address}}",
             "maxOperatorCount": 3
           }
-
-  create_tables_with_schema.sh:
-    files:
-      create_tables_with_schema.sh:
-        static_file: inabox/create_tables_with_schema.sh
 
   kzg_config:
     files:
