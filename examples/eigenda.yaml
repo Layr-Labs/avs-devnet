@@ -52,6 +52,57 @@ services:
       - "--region"
       - "us-east-1"
 
+  - name: create-dynamo-metadata-table
+    image: amazon/aws-cli:2.13.2
+    env:
+      AWS_ACCESS_KEY_ID: "localstack"
+      AWS_SECRET_ACCESS_KEY: "localstack"
+    cmd:
+      - "dynamodb"
+      - "create-table"
+      - "--table-name"
+      - "test-BlobMetadata"
+      - "--attribute-definitions"
+      - "AttributeName=BlobHash,AttributeType=S"
+      - "AttributeName=MetadataHash,AttributeType=S" 
+      - "AttributeName=BlobStatus,AttributeType=N"
+      - "AttributeName=RequestedAt,AttributeType=N"
+      - "AttributeName=BatchHeaderHash,AttributeType=B"
+      - "AttributeName=BlobIndex,AttributeType=N"
+      - "AttributeName=Expiry,AttributeType=N"
+      - "--key-schema"
+      - "AttributeName=BlobHash,KeyType=HASH"
+      - "AttributeName=MetadataHash,KeyType=RANGE"
+      - "--provisioned-throughput"
+      - "ReadCapacityUnits=10,WriteCapacityUnits=10"
+      - "--global-secondary-indexes"
+      - "[{\"IndexName\": \"statusIndexName\", \"KeySchema\": [{\"AttributeName\": \"BlobStatus\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"RequestedAt\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}},{\"IndexName\": \"batchIndexName\",\"KeySchema\": [{\"AttributeName\": \"BatchHeaderHash\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"BlobIndex\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}},{\"IndexName\": \"expiryIndexName\",\"KeySchema\": [{\"AttributeName\": \"BlobStatus\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"Expiry\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}}]" 
+      - "--endpoint-url"
+      - "http://{{.services.localstack.ip_address}}:4566/"
+      - "--region"
+      - "us-east-1"
+
+  - name: create-dynamo-store-table
+    image: amazon/aws-cli:2.13.2
+    env:
+      AWS_ACCESS_KEY_ID: "localstack"
+      AWS_SECRET_ACCESS_KEY: "localstack"
+    cmd:
+      - "dynamodb"
+      - "create-table"
+      - "--table-name"
+      - "test-BucketStore"
+      - "--attribute-definitions"
+      - "AttributeName=RequesterID,AttributeType=S"
+      - "--key-schema"
+      - "AttributeName=RequesterID,KeyType=HASH"
+      - "--provisioned-throughput"
+      - "ReadCapacityUnits=10,WriteCapacityUnits=10"
+      - "--endpoint-url"
+      - "http://{{.services.localstack.ip_address}}:4566/"
+      - "--region"
+      - "us-east-1"
+
   - name: churner
     image: eigenda-churner
     build_cmd: "docker build . -t eigenda-churner --target churner"
@@ -119,7 +170,7 @@ services:
       DISPERSER_SERVER_COUNT_FAILED: "true"
       DISPERSER_SERVER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
       DISPERSER_SERVER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
-      DISPERSER_SERVER_AWS_ENDPOINT_URL: "{{.services.localstack.ip_address}}:4566"
+      DISPERSER_SERVER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
       DISPERSER_SERVER_AWS_REGION: "us-east-1"
       DISPERSER_SERVER_AWS_ACCESS_KEY_ID: localstack
       DISPERSER_SERVER_AWS_SECRET_ACCESS_KEY: localstack
@@ -307,6 +358,11 @@ artifacts:
             "tokenOwner": "{{.deployer_address}}",
             "maxOperatorCount": 3
           }
+
+  create_tables_with_schema.sh:
+    files:
+      create_tables_with_schema.sh:
+        static_file: inabox/create_tables_with_schema.sh
 
   kzg_config:
     files:
