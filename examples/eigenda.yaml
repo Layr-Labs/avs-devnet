@@ -6,6 +6,7 @@
 # - check if we need to provide unique private keys to each service
 # - # https://github.com/Layr-Labs/eigenda/blob/4ec69dc0cb88182bb6e6fb8054e8db4d6086200d/inabox/deploy/localstack.go#L47-L50
 deployments:
+  - type: EigenLayer
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
     ref: master
@@ -29,6 +30,64 @@ deployments:
       EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
 
 services:
+
+  - name: node
+    image: eigenda-node
+    build_cmd: "docker build . -t eigenda-node --target node"
+    ports:
+      dispersal:
+        number: 8080
+        transport_protocol: TCP
+        application_protocol: "grpc"
+      retrieval:
+        number: 8081
+        transport_protocol: TCP
+        application_protocol: "grpc"
+      nodeapi:
+        number: 9091
+        transport_protocol: TCP
+        application_protocol: "http"
+      metrics:
+        number: 9100
+        transport_protocol: TCP
+        application_protocol: "http"
+    input:
+      /kzg/: kzg_config
+      /keys/ecdsa: operator1_ecdsa
+      /keys/bls: operator1_bls
+    env:
+      NODE_LOG_LEVEL: debug
+      NODE_VERBOSE: true
+      NODE_HOSTNAME: node
+      NODE_DISPERSAL_PORT: 8080
+      NODE_RETRIEVAL_PORT: 8081
+      NODE_ENABLE_METRICS: true
+      NODE_METRICS_PORT: 9100
+      NODE_ENABLE_NODE_API: true
+      NODE_API_PORT: 9091
+      NODE_TIMEOUT: "20s"
+      NODE_QUORUM_ID_LIST: "0,1"
+      NODE_DB_PATH: "/var/nodedb"
+      NODE_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      NODE_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      # TODO: find a way to provide correct IP address, or if it's even needed
+      NODE_PUBLIC_IP_PROVIDER: mockip
+      NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
+      NODE_G1_PATH: /kzg/g1.point
+      NODE_G2_PATH: /kzg/g2.point
+      NODE_CACHE_PATH: /kzg/cache
+      NODE_SRS_ORDER: 3000
+      NODE_SRS_LOAD: 2900
+      NODE_CHAIN_RPC: "{{.http_rpc_url}}"
+      # TODO: check if we need this, and provide provide a unique one
+      NODE_PRIVATE_KEY: "{{slice .keys.operator1_ecdsa.private_key 2}}"
+      NODE_ECDSA_KEY_FILE: /keys/ecdsa/keys/1.ecdsa.key.json
+      NODE_ECDSA_KEY_PASSWORD: "{{.keys.operator1_ecdsa.password}}"
+      NODE_BLS_KEY_FILE: /keys/bls/keys/1.bls.key.json
+      NODE_BLS_KEY_PASSWORD: "{{.keys.operator1_bls.password}}"
+      NODE_REGISTER_AT_NODE_START: true
+
+
   - name: localstack
     image: localstack/localstack
     env:
@@ -204,39 +263,7 @@ services:
       DISPERSER_ENCODER_SRS_ORDER: 3000
       DISPERSER_ENCODER_SRS_LOAD: 2900
 
-  - name: batcher
-    image: eigenda-batcher
-    build_cmd: "docker build . -t eigenda-batcher --target batcher"
-    ports:
-      metrics:
-        number: 9100
-        transport_protocol: TCP
-        application_protocol: "http"
-    env:
-      BATCHER_LOG_LEVEL: debug
-      BATCHER_VERBOSE: true
-      BATCHER_S3_BUCKET_NAME: "test-eigenda-blobstore"
-      BATCHER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
-      BATCHER_PULL_INTERVAL: "1s"
-      BATCHER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
-      BATCHER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
-      BATCHER_ENCODER_ADDRESS: "{{.services.encoder.ip_address}}"
-      BATCHER_ENABLE_METRICS: true
-      BATCHER_METRICS_HTTP_PORT: 9100
-      BATCHER_BATCH_SIZE_LIMIT: 10240
-      BATCHER_USE_GRAPH: false
-      BATCHER_GRAPH_URL: ""
-      BATCHER_SRS_ORDER: 3000
-      BATCHER_CHAIN_RPC: "{{.http_rpc_url}}"
-      # This removes the leading "0x" from the private key
-      BATCHER_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
-      BATCHER_AWS_REGION: "us-east-1"
-      BATCHER_KMS_KEY_DISABLE: true
-      BATCHER_KMS_KEY_ID: ""
-      BATCHER_KMS_KEY_REGION: ""
-      BATCHER_AWS_ACCESS_KEY_ID: "localstack"
-      BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
-      BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
+
 
   - name: retriever
     image: eigenda-retriever
@@ -271,61 +298,41 @@ services:
       RETRIEVER_METRICS_HTTP_PORT: 9100
       RETRIEVER_GRAPH_URL: ""
 
-  - name: node
-    image: eigenda-node
-    build_cmd: "docker build . -t eigenda-node --target node"
+  - name: batcher
+    image: eigenda-batcher
+    build_cmd: "docker build . -t eigenda-batcher --target batcher"
     ports:
-      dispersal:
-        number: 8080
-        transport_protocol: TCP
-        application_protocol: "grpc"
-      retrieval:
-        number: 8081
-        transport_protocol: TCP
-        application_protocol: "grpc"
-      nodeapi:
-        number: 9091
-        transport_protocol: TCP
-        application_protocol: "http"
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
-    input:
-      /kzg/: kzg_config
-      /keys/ecdsa: operator1_ecdsa
-      /keys/bls: operator1_bls
+        wait: null
     env:
-      NODE_LOG_LEVEL: debug
-      NODE_VERBOSE: true
-      NODE_HOSTNAME: node
-      NODE_DISPERSAL_PORT: 8080
-      NODE_RETRIEVAL_PORT: 8081
-      NODE_ENABLE_METRICS: true
-      NODE_METRICS_PORT: 9100
-      NODE_ENABLE_NODE_API: true
-      NODE_API_PORT: 9091
-      NODE_TIMEOUT: "20s"
-      NODE_QUORUM_ID_LIST: "0,1"
-      NODE_DB_PATH: "/var/nodedb"
-      NODE_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
-      NODE_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
-      # TODO: find a way to provide correct IP address, or if it's even needed
-      NODE_PUBLIC_IP_PROVIDER: mockip
-      NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
-      NODE_G1_PATH: /kzg/g1.point
-      NODE_G2_PATH: /kzg/g2.point
-      NODE_CACHE_PATH: /kzg/cache
-      NODE_SRS_ORDER: 3000
-      NODE_SRS_LOAD: 2900
-      NODE_CHAIN_RPC: "{{.http_rpc_url}}"
-      # TODO: check if we need this, and provide provide a unique one
-      NODE_PRIVATE_KEY: "{{slice .keys.operator1_ecdsa.private_key 2}}"
-      NODE_ECDSA_KEY_FILE: /keys/ecdsa/keys/1.ecdsa.key.json
-      NODE_ECDSA_KEY_PASSWORD: "{{.keys.operator1_ecdsa.password}}"
-      NODE_BLS_KEY_FILE: /keys/bls/keys/1.bls.key.json
-      NODE_BLS_KEY_PASSWORD: "{{.keys.operator1_bls.password}}"
-      NODE_REGISTER_AT_NODE_START: true
+      BATCHER_LOG_LEVEL: debug
+      BATCHER_VERBOSE: true
+      BATCHER_S3_BUCKET_NAME: "test-eigenda-blobstore"
+      BATCHER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
+      BATCHER_PULL_INTERVAL: "1s"
+      BATCHER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      BATCHER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      BATCHER_ENCODER_ADDRESS: "{{.services.encoder.ip_address}}"
+      BATCHER_ENABLE_METRICS: true
+      BATCHER_METRICS_HTTP_PORT: 9100
+      BATCHER_BATCH_SIZE_LIMIT: 10240
+      BATCHER_USE_GRAPH: false
+      BATCHER_GRAPH_URL: ""
+      BATCHER_SRS_ORDER: 3000
+      BATCHER_CHAIN_RPC: "{{.http_rpc_url}}"
+      # This removes the leading "0x" from the private key
+      BATCHER_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
+      BATCHER_AWS_REGION: "us-east-1"
+      BATCHER_KMS_KEY_DISABLE: true
+      BATCHER_KMS_KEY_ID: ""
+      BATCHER_KMS_KEY_REGION: ""
+      BATCHER_AWS_ACCESS_KEY_ID: "localstack"
+      BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
+      BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
+
 
   - name: traffic-generator
     image: traffic-generator
