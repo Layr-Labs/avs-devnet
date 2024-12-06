@@ -86,7 +86,7 @@ services:
       NODE_BLS_KEY_FILE: /keys/bls/keys/1.bls.key.json
       NODE_BLS_KEY_PASSWORD: "{{.keys.operator1_bls.password}}"
       NODE_REGISTER_AT_NODE_START: true
-
+      NODE_PUBLIC_IP_CHECK_INTERVAL: 0
 
   - name: localstack
     image: localstack/localstack
@@ -370,7 +370,7 @@ artifacts:
         template: |
           {
             "numStrategies": 2,
-            "confirmerPrivateKey": "{{.deployer_private_key}}",
+            "confirmerPrivateKey": "{{.keys.disperser_key.private_key}}",
             "stakerPrivateKeys": ["{{.keys.staker1_key.private_key}}"],
             "stakerTokenAmounts": [["0xe8d4a51000"], ["0xe8d4a51000"]],
             "operatorPrivateKeys": ["{{.keys.operator1_ecdsa.private_key}}"],
