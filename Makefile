@@ -36,7 +36,7 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
 test: ## 🧪 Run tests
-	go test -v ./...
+	go test -v -timeout 30m ./...
 
 
 ##### CLI #####

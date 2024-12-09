@@ -38,8 +38,9 @@ def ensure_generated(plan, context, artifact_name):
             data[varname] = read_json_artifact(plan, artifact, json_field)
 
     config = {}
-    for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=data)
+    for file_name, file_data in artifact_files.items():
+        template = file_data["template"]
+        config[file_name] = struct(template=template, data=data)
 
     artifact = plan.render_templates(
         config=config,
@@ -54,7 +55,7 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
     input_dir = "/_input"
     result = plan.run_sh(
         image="badouralix/curl-jq",
-        run="jq -j {field} {input}/{path}".format(
+        run="jq -j '{field}' {input}/{path}".format(
             field=json_field, input=input_dir, path=file_path
         ),
         files={input_dir: artifact_name},
@@ -88,6 +89,14 @@ def expand(plan, context, var):
 
     Example: "{{.service.some_service_name.ip_address}}" -> <some_service_name's ip address>
     """
+    # Make sure we only expand strings
+    if type(var) == type(42) or type(var) == type(42.0) or type(var) == type(True):
+        return str(var)
+
+    # Fail if types aren't boolean, integer, float, or string
+    if type(var) != type(""):
+        fail("Cannot expand non-string value: {}".format(var))
+
     # NOTE: this is just an optimization to avoid template rendering if it doesn't need it
     if var.find("{{") == -1:
         return var

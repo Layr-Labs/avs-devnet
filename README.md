@@ -132,9 +132,19 @@ If the build file is named something other than `Dockerfile`, or isn't located i
 ```yaml
 services:
   - name: my-service
-    image: some-local-image-name
+    image: name-for-the-image
     build_context: path/to/context
     build_file: path/to/context/Dockerfile
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-service
+    image: name-for-the-image
+    build_cmd: "docker build . -t name-for-the-image && touch .finished"
 ```
 
 ### More Help
@@ -216,6 +226,11 @@ deployments:
         path: "script/output/devnet/M2_from_scratch_deployment_data.json"
         # The new name to give to the file
         rename: "eigenlayer_deployment_output.json"
+    # Specifies addresses to extract from output artifacts
+    addresses:
+      # Key: name of the address
+      # Value: `<artifact-name>:<jq-filter-to-apply>`, same syntax as `devnet get-address`
+      my_contract: "eigenlayer_addresses:.addresses.avsDirectoryImplementation"
 
     # Available types: eigenlayer
     # This autofills some of the other options, and allows access
@@ -241,14 +256,17 @@ deployments:
 # Lists the services to start after the contracts are deployed
 services:
     # Name for the service
-  - name: "aggregator"
+  - name: my-service
     # The docker image to use
-    image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    image: image-name
     # Local images are built automatically when specifying `build_context`
     # Specifies the context for the image's dockerfile
     build_context: path/to/context
     # Optional. Used to override the default of "build_context/Dockerfile".
     build_file: path/to/context/Dockerfile
+    # Specifies a custom command for building the image.
+    # This overrides the `build_context` and `build_file` options.
+    build_cmd: "docker build . -t image-name && touch somefile.txt"
     # The ports to expose on the container
     ports:
       # The key is a name for the port
@@ -271,12 +289,13 @@ services:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Values inside double brackets '{{ }}' are expanded at runtime according
-      # to Go template syntax.
+      # Values inside double brackets '{{ }}' (templates) are expanded
+      # at runtime according to Go template syntax.
       # This example expands to the `ecdsa_keys` keystore's password
       ECDSA_KEY_PASSWORD: "{{.keys.ecdsa_keys.password}}"
     # Command to use when running the docker image
-    cmd: ["some", "option", "here"]
+    # Options may contain templates
+    cmd: ["some", "option", "here", "{{.keys.ecdsa_keys.address}}"]
 
 # Lists the keys to be generated at startup
 keys:
@@ -299,7 +318,7 @@ artifacts:
       # Artifact name to fetch data from
       artifact_name:
         # Key: name of the variable to populate
-        # Value: JSONPath to the data
+        # Value: jq filter to extract the data
         # NOTE: this assumes that the data inside the artifact is a single JSON file
         some_variable: ".field1.foo[0]"
 
@@ -314,7 +333,9 @@ artifacts:
         {
           "a": 5,
           "someVariable": {{.some_variable}},
-          "deployerAddress": {{.deployer_address}}
+          "deployerAddress": {{.deployer_address}},
+          "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
+          "contractAddress": {{(index .addresses "deployment-name").my_contract}}
         }
 
 # Args to pass on to ethereum-package.
