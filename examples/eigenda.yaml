@@ -6,7 +6,6 @@
 # - check if we need to provide unique private keys to each service
 # - # https://github.com/Layr-Labs/eigenda/blob/4ec69dc0cb88182bb6e6fb8054e8db4d6086200d/inabox/deploy/localstack.go#L47-L50
 deployments:
-  - type: EigenLayer
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
     ref: master
@@ -30,7 +29,6 @@ deployments:
       EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
 
 services:
-
   - name: node
     image: eigenda-node
     build_cmd: "docker build . -t eigenda-node --target node"
@@ -125,7 +123,7 @@ services:
       - "test-BlobMetadata"
       - "--attribute-definitions"
       - "AttributeName=BlobHash,AttributeType=S"
-      - "AttributeName=MetadataHash,AttributeType=S" 
+      - "AttributeName=MetadataHash,AttributeType=S"
       - "AttributeName=BlobStatus,AttributeType=N"
       - "AttributeName=RequestedAt,AttributeType=N"
       - "AttributeName=BatchHeaderHash,AttributeType=B"
@@ -137,7 +135,7 @@ services:
       - "--provisioned-throughput"
       - "ReadCapacityUnits=10,WriteCapacityUnits=10"
       - "--global-secondary-indexes"
-      - "[{\"IndexName\": \"StatusIndex\", \"KeySchema\": [{\"AttributeName\": \"BlobStatus\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"RequestedAt\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}},{\"IndexName\": \"BatchIndex\",\"KeySchema\": [{\"AttributeName\": \"BatchHeaderHash\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"BlobIndex\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}},{\"IndexName\": \"Status-Expiry-Index\",\"KeySchema\": [{\"AttributeName\": \"BlobStatus\", \"KeyType\": \"HASH\"},{\"AttributeName\": \"Expiry\", \"KeyType\": \"RANGE\"}],\"Projection\": {\"ProjectionType\": \"ALL\"},\"ProvisionedThroughput\": {\"ReadCapacityUnits\": 5, \"WriteCapacityUnits\": 5}}]" 
+      - '[{"IndexName": "StatusIndex", "KeySchema": [{"AttributeName": "BlobStatus", "KeyType": "HASH"},{"AttributeName": "RequestedAt", "KeyType": "RANGE"}],"Projection": {"ProjectionType": "ALL"},"ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}},{"IndexName": "BatchIndex","KeySchema": [{"AttributeName": "BatchHeaderHash", "KeyType": "HASH"},{"AttributeName": "BlobIndex", "KeyType": "RANGE"}],"Projection": {"ProjectionType": "ALL"},"ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}},{"IndexName": "Status-Expiry-Index","KeySchema": [{"AttributeName": "BlobStatus", "KeyType": "HASH"},{"AttributeName": "Expiry", "KeyType": "RANGE"}],"Projection": {"ProjectionType": "ALL"},"ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}}]'
       - "--endpoint-url"
       - "http://{{.services.localstack.ip_address}}:4566/"
       - "--region"
@@ -263,8 +261,6 @@ services:
       DISPERSER_ENCODER_SRS_ORDER: 3000
       DISPERSER_ENCODER_SRS_LOAD: 2900
 
-
-
   - name: retriever
     image: eigenda-retriever
     build_cmd: "docker build . -t eigenda-retriever --target retriever"
@@ -333,7 +329,6 @@ services:
       BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
       BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
       BATCHER_FINALIZATION_BLOCK_DELAY: 0
-
 
   - name: traffic-generator
     image: traffic-generator
