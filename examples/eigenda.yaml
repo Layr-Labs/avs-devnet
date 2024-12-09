@@ -346,6 +346,35 @@ services:
       - "--traffic-generator.data-size"
       - "1024"
 
+  - name: eigenda-proxy
+    image: eigenda-proxy
+    build_context: eigenda-proxy
+    ports:
+      rpc:
+        number: 4242
+        transport_protocol: TCP
+        application_protocol: "http"
+      metrics:
+        number: 7300
+        transport_protocol: TCP
+        application_protocol: "http"
+    env:
+      EIGENDA_PROXY_ADDR: "0.0.0.0"
+      EIGENDA_PROXY_PORT: 4242
+      EIGENDA_PROXY_MEMSTORE_ENABLED: false
+      EIGENDA_PROXY_MEMSTORE_EXPIRATION: 45m
+      EIGENDA_PROXY_EIGENDA_SIGNER_PRIVATE_KEY_HEX: "{{slice .keys.proxy_signer.private_key 2}}"
+      EIGENDA_PROXY_EIGENDA_DISPERSER_RPC: "{{.services.disperser.ip_address}}:8080"
+      EIGENDA_PROXY_EIGENDA_SERVICE_MANAGER_ADDR: "{{.addresses.EigenDA.serviceManager}}"
+      EIGENDA_PROXY_EIGENDA_ETH_RPC: "{{.http_rpc_url}}"
+      EIGENDA_PROXY_EIGENDA_ETH_CONFIRMATION_DEPTH: 0
+      EIGENDA_PROXY_METRICS_ADDR: "0.0.0.0"
+      EIGENDA_PROXY_METRICS_ENABLED: true
+      EIGENDA_PROXY_METRICS_PORT: 7300
+      EIGENDA_PROXY_EIGENDA_GRPC_DISABLE_TLS: true
+      EIGENDA_PROXY_EIGENDA_DISABLE_POINT_VERIFICATION_MODE: true
+      EIGENDA_PROXY_EIGENDA_CERT_VERIFICATION_DISABLED: true
+
 # Specify keys to generate
 keys:
   - name: churner_key
@@ -357,6 +386,8 @@ keys:
   - name: operator1_bls
     type: bls
   - name: disperser_key
+    type: ecdsa
+  - name: proxy_signer
     type: ecdsa
 
 artifacts:
@@ -397,4 +428,6 @@ ethereum_package:
   additional_services:
     - blockscout
   network_params:
+    # NOTE: we do this to avoid errors due to services being
+    # started too few blocks after contracts are deployed
     seconds_per_slot: 1
