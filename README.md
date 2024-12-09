@@ -344,6 +344,45 @@ The ECDSA private key used to deploy contracts.
 #### `.addresses.<deployment-name>.<contract-name>`
 
 The address of the contract `<contract-name>` from deployment `<deployment-name>`.
+Note that this requires the address to be declared before the template expansion.
+
+Example value: `0x123412`
+
+#### `.services.<service-name>.ip_address`
+
+The IP address of the service `<service-name>`.
+Note that this requires the service to be started before the template expansion.
+
+Example value: `192.0.5.52`
+
+#### `.keys.<key-name>.address`
+
+The Ethereum address associated to the key named `<key-name>`.
+Only ECDSA keys have this property.
+
+Example value:
+
+- ECDSA: `0x1241251351212512512215125125212521251252`
+- BLS: `0x1241251351212512512215125125212521251252`
+
+#### `.keys.<key-name>.private_key`
+
+The private key of the key named `<key-name>`.
+
+Example value:
+
+- ECDSA: `0x1241251351212512512215125125212521251252`
+- BLS: `0x1241251351212512512215125125212521251252`
+
+#### `.keys.<key-name>.password`
+
+The password to the keystore for the key named `<key-name>`.
+Only dynamically generated keys have this property.
+
+Example value:
+
+- ECDSA: `0x1241251351212512512215125125212521251252`
+- BLS: `0x1241251351212512512215125125212521251252`
 
 ## Kurtosis package
 
