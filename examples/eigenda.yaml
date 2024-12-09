@@ -61,7 +61,6 @@ services:
       NODE_DB_PATH: "/var/nodedb"
       NODE_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
       NODE_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
-      # TODO: find a way to provide correct IP address, or if it's even needed
       NODE_PUBLIC_IP_PROVIDER: mockip
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
@@ -70,7 +69,6 @@ services:
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
       NODE_CHAIN_RPC: "{{.http_rpc_url}}"
-      # TODO: check if we need this, and provide provide a unique one
       NODE_PRIVATE_KEY: "{{slice .keys.operator1_ecdsa.private_key 2}}"
       NODE_ECDSA_KEY_FILE: /keys/ecdsa/keys/1.ecdsa.key.json
       NODE_ECDSA_KEY_PASSWORD: "{{.keys.operator1_ecdsa.password}}"
