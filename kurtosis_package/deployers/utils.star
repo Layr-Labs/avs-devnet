@@ -5,21 +5,25 @@ shared_utils = import_module("../shared_utils.star")
 FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry",
     build_context_dir="../dockerfiles/",
-    build_file="foundry.Dockerfile",
+    build_file="contract_deployer.Dockerfile",
+    target_stage="foundry",
 )
 
 
 def deploy_generic_contract(plan, context, deployment):
-    deployment_name = deployment["name"]
+    name = deployment["name"]
     repo = deployment["repo"]
     is_remote_repo = repo.startswith("https://") or repo.startswith("http://")
     contracts_path = deployment.get("contracts_path", ".")
-    script_path = deployment["script"]
+    script = deployment["script"]
     extra_args = deployment.get("extra_args", "")
-    env_vars = shared_utils.generate_env_vars(context, deployment.get("env", {}))
+    env_vars = shared_utils.generate_env_vars(plan, context, deployment.get("env", {}))
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
     output = deployment.get("output", {})
+    addresses = deployment.get("addresses", {})
+
+    contract_name = None
 
     root = "/app/" + contracts_path + "/"
 
@@ -29,13 +33,23 @@ def deploy_generic_contract(plan, context, deployment):
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
         deployer_img = FOUNDRY_IMAGE
-        input_artifacts.append(("/app/", repo))
+        split_path = script.split(".sol:")
+        script_path = script
+        # In case the contract name is not provided, we assume the contract name is in the script name
+        # Examples: "MyContract.sol" -> "MyContract", "MyContract.sol:MyContract2" -> "MyContract2"
+        if len(split_path) == 1:
+            contract_name = script.split("/")[-1].rstrip(".sol").rstrip(".s")
+        else:
+            contract_name = split_path[1]
+            script_path = split_path[0] + ".sol"
+
+        input_artifacts.append(("/app/", name + "-script"))
 
     store_specs, output_renames = generate_store_specs(root, output)
 
     pre_cmd, input_files = rename_input_files(input_artifacts)
     move_to_dir_cmd = "cd " + root
-    deploy_cmd = generate_deploy_cmd(context, script_path, extra_args, verify)
+    deploy_cmd = generate_deploy_cmd(context, script, contract_name, extra_args, verify)
     post_cmd = generate_post_cmd(output_renames)
 
     cmd = generate_cmd([pre_cmd, move_to_dir_cmd, deploy_cmd, post_cmd])
@@ -46,9 +60,10 @@ def deploy_generic_contract(plan, context, deployment):
         files=input_files,
         store=store_specs,
         env_vars=env_vars,
-        description="Deploying '{}'".format(deployment_name),
+        description="Deploying '{}'".format(name),
         wait="600s",
     )
+    context.data["addresses"][name] = extract_addresses(plan, context, addresses)
     return result
 
 
@@ -73,7 +88,7 @@ def gen_deployer_img(repo, ref, path):
 
 def generate_input_artifacts(plan, context, input, root):
     artifacts, files = parse_input_files(input, root)
-    shared_utils.generate_artifacts(plan, context, artifacts)
+    shared_utils.ensure_all_generated(plan, context, artifacts)
     return files
 
 
@@ -133,14 +148,15 @@ def rename_input_files(input_files):
     return " && ".join(cmds), renamed_input_files
 
 
-def generate_deploy_cmd(context, script_path, extra_args, verify):
+def generate_deploy_cmd(context, script, contract_name, user_extra_args, verify):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     private_key = context.ethereum.pre_funded_accounts[0].private_key
     verify_args = get_verify_args(context) if verify else ""
-    cmd = (
-        "forge script --rpc-url {} --private-key 0x{} {} --broadcast -vvv {} {}".format(
-            http_rpc_url, private_key, verify_args, script_path, extra_args
-        )
+    target_contract_arg = ("--tc " + contract_name) if contract_name != None else ""
+    extra_args = " ".join([verify_args, target_contract_arg])
+
+    cmd = "forge script --rpc-url {} --private-key 0x{} {} --broadcast --non-interactive -vvv {} {}".format(
+        http_rpc_url, private_key, extra_args, script, user_extra_args
     )
     return cmd
 
@@ -158,3 +174,18 @@ def get_verify_args(context):
     if verify_url == "":
         return ""
     return "--verify --verifier blockscout --verifier-url {}/api?".format(verify_url)
+
+
+def extract_addresses(plan, context, addresses):
+    extracted_addresses = {}
+    for name, locator in addresses.items():
+        split_locator = locator.split(":")
+
+        if len(split_locator) != 2:
+            fail("Locator '{}' must have exactly one ':' character".format(locator))
+
+        artifact, path = split_locator
+        address = shared_utils.read_json_artifact(plan, artifact, path)
+        extracted_addresses[name] = address
+
+    return extracted_addresses

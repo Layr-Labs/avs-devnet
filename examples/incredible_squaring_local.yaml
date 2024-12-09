@@ -1,30 +1,32 @@
-# Example devnet config file for the incredible-squaring-avs example
+# Local devnet config file for the incredible-squaring-avs example
+# This file can be used inside the incredible-squaring-avs repo to
+# start a devnet with any local changes
+# TODO: move this to the incredible-squaring-avs repo
+
+# To run this example:
+# 1. Clone the https://github.com/Layr-Labs/incredible-squaring-avs repo
+# 2. Copy this file inside that repo (on the root)
+# 3. While inside that repo, run `devnet start incredible_squaring_local.yaml`
+
 deployments:
   - type: EigenLayer
     # This commit corresponds to the incredible-squaring commit below
     ref: "v0.3.3-mainnet-rewards"
     # NOTE: operator registration is done at operator startup
 
-  - name: incredible_squaring
-    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
-    ref: "1d8d5915d01169bd18f3f242ecc17f5884fca824"
+  - name: incredible-squaring
+    repo: "."
     contracts_path: "contracts"
     script: script/IncredibleSquaringDeployer.s.sol
     input:
       script/output/3151908: eigenlayer_addresses
     output:
       avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
-    # Specify addresses to fetch from avs_addresses artifact
-    addresses:
-      serviceManager: avs_addresses:.addresses.credibleSquaringServiceManager
-      taskManager: avs_addresses:.addresses.credibleSquaringTaskManager
-      erc20MockStrategy: avs_addresses:.addresses.erc20MockStrategy
-      operatorStateRetriever: avs_addresses:.addresses.operatorStateRetriever
-      registryCoordinator: avs_addresses:.addresses.registryCoordinator
 
 services:
   - name: aggregator
-    image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    image: "ko.local/aggregator/cmd/main.go:latest"
+    build_cmd: KO_DOCKER_REPO=ko.local ko build aggregator/cmd/main.go --preserve-import-paths --local
     ports:
       rpc:
         number: 8090
@@ -38,12 +40,14 @@ services:
       - "--config"
       - "/usr/src/app/config-files/aggregator-config.yaml"
       - "--ecdsa-private-key"
-      - "{{.keys.aggregator_key.private_key}}"
+      # NOTE: aggregator key-pair is hardcoded in the deployment scripts
+      - "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
       - "--credible-squaring-deployment"
       - "/usr/src/app/config-files/credible_squaring_avs_deployment_output.json"
 
   - name: operator
-    image: "ghcr.io/layr-labs/incredible-squaring/operator/cmd/main.go:latest"
+    image: "ko.local/operator/cmd/main.go:latest"
+    build_cmd: KO_DOCKER_REPO=ko.local ko build operator/cmd/main.go --preserve-import-paths --local
     ports:
       node:
         number: 8080
@@ -67,19 +71,10 @@ keys:
   - name: operator_ecdsa_keys
     type: ecdsa
   # This ensures the aggregator has funds
-  # NOTE: aggregator key-pair is hardcoded in the deployment scripts
-  # TODO: specify private key only
-  - name: aggregator_key
-    address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+  - address: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
     private_key: "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 
 artifacts:
-  # TODO: remove once we have another example
-  static_file_example:
-    files:
-      somefile.txt:
-        static_file: "./incredible_squaring.yaml"
-
   aggregator-config:
     files:
       aggregator-config.yaml:

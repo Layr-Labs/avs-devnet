@@ -24,7 +24,7 @@ func main() {
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    cmds.Init,
+		Action:    cmds.InitCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
@@ -33,7 +33,7 @@ func main() {
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    cmds.Start,
+		Action:    cmds.StartCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
@@ -42,7 +42,7 @@ func main() {
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
 		Flags:     []cli.Flag{},
-		Action:    cmds.Stop,
+		Action:    cmds.StopCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
@@ -52,6 +52,15 @@ func main() {
 		ArgsUsage: "<contract-name>...",
 		Flags:     []cli.Flag{&flags.ConfigFilePathFlag},
 		Action:    cmds.GetAddress,
+	})
+
+	app.Commands = append(app.Commands, &cli.Command{
+		Name:      "get-ports",
+		Usage:     "Get the published ports on the devnet",
+		Args:      true,
+		ArgsUsage: "[<config-file>]",
+		Flags:     []cli.Flag{},
+		Action:    cmds.GetPorts,
 	})
 
 	if err := app.Run(os.Args); err != nil {

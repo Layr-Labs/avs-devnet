@@ -15,7 +15,7 @@ import (
 func GetAddress(ctx *cli.Context) error {
 	args := ctx.Args()
 	configFileName := ctx.String(flags.ConfigFilePathFlag.Name)
-	devnetName, err := nameFromConfigFile(configFileName)
+	devnetName, err := EnclaveNameFromFileName(configFileName)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}

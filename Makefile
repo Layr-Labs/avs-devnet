@@ -5,8 +5,12 @@
 
 ##### Variables #####
 
-KURTOSIS_DIR:=kurtosis_package/
-KURTOSIS_VERSION:=$(shell kurtosis version 2> /dev/null)
+KURTOSIS_DIR:=$(shell cd kurtosis_package/ && pwd -P)
+
+CURRENT_COMMIT:=$(shell git describe --always --abbrev=8 --dirty)
+INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
+# These flags set some global constants in the build
+GO_LDFLAGS:='-X main.version=dev-$(CURRENT_COMMIT) -X github.com/Layr-Labs/avs-devnet/src/cmds/flags.DefaultKurtosisPackage=$(KURTOSIS_DIR)'
 
 
 ##### General #####
@@ -16,20 +20,23 @@ help: ## 📚 Show help for each of the Makefile recipes
 
 deps: kurtosis_deps cli_deps ## 📥 Install dependencies
 
-install: generate_envscript ## 📦 Install the CLI
+install: ## 📦 Install the CLI
 	@echo "Installing package..."
-	go install ./...
-	@-asdf reshim 2> /dev/null
-	@echo "Package installed successfully!"
+	CGO_ENABLED=0 go install -ldflags $(GO_LDFLAGS) -v ./...
+	@asdf reshim 2> /dev/null || true
 	@echo
-	@echo "Remember to run 'source env.sh' to set the environment variables"
+	@echo "Installation successfull!"
+	@echo "Package was installed to $(INSTALLATION_DIR)"
+	@echo $(PATH) | grep -q $(INSTALLATION_DIR) || echo "\nWARNING: $(INSTALLATION_DIR) doesn't seem to be in your PATH.\
+		\nIf the command can't be found, try adding to your ~/.bashrc the following line and restarting your shell:\
+		\nexport PATH=\"\$$PATH:$(INSTALLATION_DIR)\""
 
 fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
 test: ## 🧪 Run tests
-	go test -v ./...
+	go test -v -timeout 30m ./...
 
 
 ##### CLI #####
@@ -38,18 +45,14 @@ cli_deps:
 	@echo "Installing Go dependencies..."
 	go mod tidy
 
-generate_envscript:
-	echo "export AVS_DEVNET__KURTOSIS_PACKAGE=$(shell cd $(KURTOSIS_DIR) && pwd -P)" > env.sh
-	chmod u+x env.sh
-
 devnet.yaml:
-	go run cmd/devnet/main.go init
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go init
 
 cli_start: devnet.yaml ## 🚀 Start the devnet (CLI)
-	go run cmd/devnet/main.go start
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go start
 
 cli_stop: devnet.yaml ## 🛑 Stop the devnet (CLI)
-	go run cmd/devnet/main.go stop
+	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go stop
 
 cli_fmt:
 	go fmt ./...
@@ -86,9 +89,16 @@ kurtosis_incredible_squaring: ## 🚀 Start the devnet with the Incredible Squar
 	@echo "Starting devnet with incredible_squaring example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/incredible_squaring.yaml
 
+# TODO: remove this once we have better testing
+check_devnet:
+	sleep 60
+	# Check that all services are marked as "RUNNING", otherwise fail and print the status
+	kurtosis enclave inspect devnet | tee output.txt
+	grep -q "STOPPED" output.txt && exit 1 || true
+
 # hello-world-avs example
 
-HELLO_WORLD_REF:=9b8231b16c8bacd4a5eb67e8faa389cd8b1e9600
+HELLO_WORLD_REF:=001dc6e944280559dfb44f75faf5102349a61d8e
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."

@@ -14,7 +14,18 @@ Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be
 For how to install it, you can check [here](https://docs.kurtosis.com/install/).
 As part of that, you'll also need to install Docker.
 
-For local development, we require the `go` toolchain to be installed.
+For deploying local contracts, [foundry needs to be installed](https://book.getfoundry.sh/getting-started/installation).
+Also, only contracts inside foundry projects are supported as of now.
+
+For development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
+
+> [!IMPORTANT]  
+> To be able to [install the CLI via `go`](#installation), you'll need to add `$HOME/go/bin` to your `PATH`.
+> You can do so by adding to your `~/.bashrc` (or the equivalent for your shell) the following line:
+>
+> ```bash
+> export PATH="$PATH:$HOME/go/bin"
+> ```
 
 ## Installation
 
@@ -23,9 +34,6 @@ To build and install the CLI locally, run:
 ```sh
 make deps      # installs dependencies
 make install   # installs the project
-
-# this command should be run once per shell
-source env.sh  # set env-vars
 ```
 
 ## How to Use
@@ -124,9 +132,19 @@ If the build file is named something other than `Dockerfile`, or isn't located i
 ```yaml
 services:
   - name: my-service
-    image: some-local-image-name
+    image: name-for-the-image
     build_context: path/to/context
     build_file: path/to/context/Dockerfile
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-service
+    image: name-for-the-image
+    build_cmd: "docker build . -t name-for-the-image && touch .finished"
 ```
 
 ### More Help
@@ -149,6 +167,7 @@ COMMANDS:
    start        Start devnet from configuration file
    stop         Stop devnet from configuration file
    get-address  Get a devnet contract or EOA address
+   get-ports    Get the published ports on the devnet
    help, h      Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -177,13 +196,15 @@ deployments:
     script: script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2
     # Extra args passed on to `forge script`
     extra_args: --sig 'run(string memory configFile)' -- deploy_from_scratch.config.json
+    # Verify with local blockscout explorer (default: false)
+    verify: true
     # Environment variables to set for deployment
     env:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Variables starting with `$` are magic variables and change to the real value at runtime
-      PRIVATE_KEY: "$deployer_private_key"
+      # Values inside double brackets '{{ }}' are expanded at runtime according to Go template syntax
+      PRIVATE_KEY: "{{.deployer_private_key}}"
     # Input files to embed into the repo
     input:
       # Key: destination to insert the files in
@@ -205,6 +226,11 @@ deployments:
         path: "script/output/devnet/M2_from_scratch_deployment_data.json"
         # The new name to give to the file
         rename: "eigenlayer_deployment_output.json"
+    # Specifies addresses to extract from output artifacts
+    addresses:
+      # Key: name of the address
+      # Value: `<artifact-name>:<jq-filter-to-apply>`, same syntax as `devnet get-address`
+      my_contract: "eigenlayer_addresses:.addresses.avsDirectoryImplementation"
 
     # Available types: eigenlayer
     # This autofills some of the other options, and allows access
@@ -230,14 +256,17 @@ deployments:
 # Lists the services to start after the contracts are deployed
 services:
     # Name for the service
-  - name: "aggregator"
+  - name: my-service
     # The docker image to use
-    image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    image: image-name
     # Local images are built automatically when specifying `build_context`
     # Specifies the context for the image's dockerfile
     build_context: path/to/context
     # Optional. Used to override the default of "build_context/Dockerfile".
     build_file: path/to/context/Dockerfile
+    # Specifies a custom command for building the image.
+    # This overrides the `build_context` and `build_file` options.
+    build_cmd: "docker build . -t image-name && touch somefile.txt"
     # The ports to expose on the container
     ports:
       # The key is a name for the port
@@ -260,11 +289,13 @@ services:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Values starting with `$` can be used to retrieve context information
+      # Values inside double brackets '{{ }}' (templates) are expanded
+      # at runtime according to Go template syntax.
       # This example expands to the `ecdsa_keys` keystore's password
-      ECDSA_KEY_PASSWORD: $keys.ecdsa_keys.password
+      ECDSA_KEY_PASSWORD: "{{.keys.ecdsa_keys.password}}"
     # Command to use when running the docker image
-    cmd: ["some", "option", "here"]
+    # Options may contain templates
+    cmd: ["some", "option", "here", "{{.keys.ecdsa_keys.address}}"]
 
 # Lists the keys to be generated at startup
 keys:
@@ -287,7 +318,7 @@ artifacts:
       # Artifact name to fetch data from
       artifact_name:
         # Key: name of the variable to populate
-        # Value: JSONPath to the data
+        # Value: jq filter to extract the data
         # NOTE: this assumes that the data inside the artifact is a single JSON file
         some_variable: ".field1.foo[0]"
 
@@ -302,88 +333,27 @@ artifacts:
         {
           "a": 5,
           "someVariable": {{.some_variable}},
-          "deployerAddress": {{.deployer_address}}
+          "deployerAddress": {{.deployer_address}},
+          "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
+          "contractAddress": {{(index .addresses "deployment-name").my_contract}}
         }
 
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
 ethereum_package:
-  participants:
-    - el_type: erigon
   additional_services:
     - blockscout
 ```
 
 ## Kurtosis package
 
-> [!WARNING]
-> Some features won't be available when starting the devnet via Kurtosis CLI.
-> This is because the CLI pre-processes some parts of the args-file before invoking Kurtosis.
-
-### How to run
-
-> [!WARNING]
-> Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
-
-[After Kurtosis is installed](#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [blockscout](https://github.com/blockscout/blockscout) explorer.
-
-```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file github.com/kurtosis_package/devnet_params.yaml
-```
-
-What follows is a brief tutorial on Kurtosis CLI.
-For more information, you can check [the documentation](https://docs.kurtosis.com/).
-
-#### Run a custom configuration
-
-To run a different configuration, you can write your own config file and pass it to the package like so:
-
-```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file devnet_params.yaml
-```
-
-For example configurations, check [`examples`](examples/). For more information on the config file format, check [Configuration](#configuration).
-
-#### Stopping and deleting the devnet
-
-In the past commands, we specified the name of the enclave with the `--enclave` flag.
-If no name was specified, Kurtosis will generate a random one.
-You can check existing enclaves with:
-
-```sh
-kurtosis enclave ls
-```
-
-Since we named our enclave `my_devnet`, you can stop it with:
-
-```sh
-kurtosis enclave stop my_devnet
-```
-
-For destroying a stopped enclave, you can use:
-
-```sh
-kurtosis enclave rm my_devnet
-```
-
-#### Download file artifacts
-
-The devnet can generate various file artifacts (e.g. with contract addresses).
-You can see a list by running:
-
-```sh
-kurtosis enclave inspect my_devnet
-```
-
-To download this data from the Kurtosis engine, use:
-
-```sh
-kurtosis files download my_devnet <artifact name>
-```
-
-This produces a folder named like the artifact containing its files.
+For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
 
 ## Contributing
 
 We have a Makefile for some of the usual tasks.
 Run `make help` for more info.
+
+## Disclaimer
+
+🚧 AvsDevnet is under active development and has not been audited. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧

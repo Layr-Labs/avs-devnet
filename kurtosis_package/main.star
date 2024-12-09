@@ -7,7 +7,7 @@ keys = import_module("./keys.star")
 
 
 def run(plan, args={}):
-    ethereum_args = args.get("ethereum_package", {})
+    ethereum_args = parse_ethereum_package_args(plan, args)
     args = parse_args(plan, args)
 
     # Run the Ethereum package first
@@ -47,6 +47,8 @@ def run(plan, args={}):
     for service in args.services:
         service_utils.add_service(plan, service, context)
 
+    shared_utils.ensure_all_generated(plan, context, context.artifacts)
+
     return context
 
 
@@ -56,9 +58,40 @@ def parse_args(plan, args):
     deployments = args.get("deployments", [])
     services = args.get("services", [])
 
+    # Mark artifacts that have static files as generated
+    # TODO: support mixed artifacts
+    for artifact_name, artifact in artifacts.items():
+        files = artifact.get("files", {})
+        if any(["static_file" in file for file in files.values()]):
+            artifacts[artifact_name]["generated"] = True
+
     return struct(
         artifacts=artifacts,
         keys=keys,
         deployments=deployments,
         services=services,
     )
+
+
+# We pin the images to a specific digest to ensure the package is not broken by upstream changes
+DEFAULT_PARTICIPANT = {
+    "el_type": "besu",
+    # hyperledger/besu:latest from 2024-11-25
+    "el_image": "hyperledger/besu@sha256:644f31577d06f0076375fb4a92805e30038b8dee2b25dda4dd3a843f79ccca65",
+    "cl_type": "lighthouse",
+    # ethpandaops/lighthouse:stable from 2024-11-25
+    "cl_image": "ethpandaops/lighthouse@sha256:924fe8fb9505595b5689d86c18ced5ebfc43817d5d96811977e5d37dbab07dba",
+}
+
+
+def parse_ethereum_package_args(plan, args):
+    ethereum_args = dict(args.get("ethereum_package", {}))
+    participants = ethereum_args.get("participants", [{"el_type": "besu"}])
+
+    # If there are no supported clients in first participant, add one
+    if len(participants) == 0 or participants[0].get("el_type") != "besu":
+        plan.print("WARNING: no 'besu' client as first participant. Adding one...")
+        participants = [DEFAULT_PARTICIPANT] + participants
+
+    ethereum_args["participants"] = participants
+    return ethereum_args

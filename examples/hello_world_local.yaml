@@ -1,10 +1,18 @@
-# Example devnet config file for the hello-world-avs example
+# Local devnet config file for the hello-world-avs example
+# This file can be used inside the hello-world-avs repo to start
+# a devnet with any local changes
+# TODO: move this to the hello-world-avs repo
+
+# To run this example:
+# 1. Clone the https://github.com/Layr-Labs/hello-world-avs repo
+# 2. Copy this file inside that repo (on the root)
+# 3. While inside that repo, run `devnet start hello_world_local.yaml`
+
 deployments:
   - name: EigenLayer
-    repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
+    repo: "."
     contracts_path: "contracts"
-    script: script/DeployEigenLayerCore.s.sol
+    script: script/DeployEigenLayerCore.s.sol:DeployEigenlayerCore
     env:
       # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "{{.deployer_private_key}}"
@@ -16,8 +24,7 @@ deployments:
       eigenlayer_addresses: "deployments/core/31337.json"
 
   - name: hello-world-avs
-    repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
+    repo: "."
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:
@@ -34,8 +41,8 @@ deployments:
 
 services:
   - name: operator
-    # NOTE: this image is build locally by the Makefile
     image: hello_world
+    build_context: "."
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
@@ -46,8 +53,8 @@ services:
     cmd: ["npm", "run", "start:operator"]
 
   - name: traffic-generator
-    # NOTE: this image is build locally by the Makefile
     image: hello_world
+    build_context: "."
     input:
       /app/contracts/deployments/core/: eigenlayer_addresses
       /app/contracts/deployments/hello-world/: avs_addresses
@@ -69,3 +76,4 @@ ethereum_package:
   network_params:
     # We use the chain ID hardcoded in the hello-world-avs example
     network_id: "31337"
+    seconds_per_slot: 3

@@ -28,5 +28,4 @@ examples/hello-world-avs
 examples/aligned_layer
 
 devnet.yaml
-env.sh
 dist/
