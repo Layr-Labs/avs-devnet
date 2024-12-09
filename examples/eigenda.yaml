@@ -333,7 +333,17 @@ services:
 
   - name: traffic-generator
     image: traffic-generator
-    build_cmd: docker build . -t traffic-generator -f trafficgenerator.Dockerfile
+    build_context: "."
+    build_file: trafficgenerator.Dockerfile
+    # env:
+    #   # This sets the hostname and port of the disperser
+    #   TRAFFIC_GENERATOR_HOSTNAME: "{{.services.disperser.ip_address}}"
+    #   TRAFFIC_GENERATOR_GRPC_PORT: "8080"
+
+    #   TRAFFIC_GENERATOR_NUM_INSTANCES: "0"
+    #   TRAFFIC_GENERATOR_REQUEST_INTERVAL: 5s
+    #   TRAFFIC_GENERATOR_DATA_SIZE: "1024"
+    #   TRAFFIC_GENERATOR_SIGNER_PRIVATE_KEY_HEX: "{{slice .keys.proxy_signer.private_key 2}}"
     cmd:
       - "--traffic-generator.disperser-hostname"
       - "{{.services.disperser.ip_address}}"
@@ -411,6 +421,13 @@ artifacts:
             "initialSupply": "0x3635c9adc5dea00000",
             "tokenOwner": "{{.deployer_address}}",
             "maxOperatorCount": 3
+          }
+  context:
+    files:
+      context.json:
+        template: |
+          {
+            ".": "{{.}}"
           }
 
   kzg_config:
