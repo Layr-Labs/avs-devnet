@@ -1,8 +1,9 @@
 # Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
 deployments:
+  # TODO: use devnet EigenLayer deployer
   - name: EigenLayer
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose-test-concurrency"
+    ref: "staging"
     contracts_path: "contracts"
     script: script/deploy/EigenLayerDeployer.s.sol
     extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
@@ -13,7 +14,7 @@ deployments:
 
   - name: Aligned
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose-test-concurrency"
+    ref: "staging"
     contracts_path: "contracts"
     script: script/deploy/AlignedLayerDeployer.s.sol
     extra_args: >-
