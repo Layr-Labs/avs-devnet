@@ -1,4 +1,5 @@
 deployments:
+  # NOTE: this script also deploys EigenLayer contracts
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
     ref: master
