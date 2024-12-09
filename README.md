@@ -381,10 +381,7 @@ Example value: `192.0.5.52`
 The Ethereum address associated to the key named `<key-name>`.
 Only ECDSA keys have this property.
 
-Example value:
-
-- ECDSA: `0x1241251351212512512215125125212521251252`
-- BLS: `0x1241251351212512512215125125212521251252`
+Example value: `0x1241251351212512512215125125212521251252`
 
 #### `.keys.<key-name>.private_key`
 
