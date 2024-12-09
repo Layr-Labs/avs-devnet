@@ -1,10 +1,3 @@
-# TODOs:
-# - check if contracts are deployed correctly
-# - register operators
-# - set up S3 bucket
-# - verify AWS params
-# - check if we need to provide unique private keys to each service
-# - # https://github.com/Layr-Labs/eigenda/blob/4ec69dc0cb88182bb6e6fb8054e8db4d6086200d/inabox/deploy/localstack.go#L47-L50
 deployments:
   - name: EigenDA
     repo: https://github.com/Layr-Labs/eigenda.git
