@@ -81,6 +81,15 @@ jobs:
       - name: Kurtosis Lint
         run: make kurtosis_lint
 
+  schema_checker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all example config files using their own $schema properties
+        uses: cardinalby/schema-validator-action@v3
+        with:
+          file: 'examples/*.yaml'
+
   # Golang CI
   go_fmt:
     runs-on: ubuntu-latest
