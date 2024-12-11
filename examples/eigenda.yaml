@@ -3,6 +3,7 @@
 # TODO: move this to the EigenDA repo
 
 # To run this example:
+# 0. Ensure you have the latest version of the devnet (see the README for how to install)
 # 1. Clone the https://github.com/Layr-Labs/eigenda repo
 # 2. Copy this file inside that repo (on the root)
 # 3. While inside that repo, run `devnet start eigenda.yaml`
