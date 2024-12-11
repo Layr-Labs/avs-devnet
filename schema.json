@@ -34,12 +34,6 @@
             "required": [],
             "title": "DevnetConfig"
         },
-        "Artifacts": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": [],
-            "title": "Artifacts"
-        },
         "Deployment": {
             "type": "object",
             "additionalProperties": false,
@@ -105,33 +99,6 @@
             ],
             "title": "Deployment"
         },
-        "EthereumPackage": {
-            "type": "object",
-            "additionalProperties": true,
-            "title": "ethereum-package args"
-        },
-        "Key": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "address": {
-                    "type": "string"
-                },
-                "private_key": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "name"
-            ],
-            "title": "Key"
-        },
         "Service": {
             "type": "object",
             "additionalProperties": false,
@@ -172,6 +139,39 @@
                 "name"
             ],
             "title": "Service"
+        },
+        "Key": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "private_key": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "title": "Key"
+        },
+        "Artifacts": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [],
+            "title": "Artifacts"
+        },
+        "EthereumPackage": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "ethereum-package args"
         }
     }
 }
