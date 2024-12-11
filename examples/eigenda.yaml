@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../schema.json
+
 # Example devnet config file for the EigenDA AVS (https://github.com/Layr-Labs/eigenda)
 # This file can be used inside the EigenDA repo to start a devnet with any local changes
 # TODO: move this to the EigenDA repo
