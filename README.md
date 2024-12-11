@@ -347,8 +347,11 @@ ethereum_package:
 
 ### Context object
 
-The *Context* is used when expanding templates.
-What follows is a list of its contents.
+The *Context object* can be accessed via [Go template syntax](https://pkg.go.dev/text/template) (e.g: `{{.}}`).
+Thinking of it as a nested map, items can be accessed by specifying the keys to be accessed, in order: `{{.first_key.second_key.third_key}}`
+Some additional functions are also available, like `{{slice ...}}` and `{{index ...}}` (more info [here](https://pkg.go.dev/text/template#hdr-Functions)).
+
+What follows is a list of the values available in the *Context object*.
 
 #### `.http_rpc_url`
 
