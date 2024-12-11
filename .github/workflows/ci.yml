@@ -89,6 +89,7 @@ jobs:
         uses: cardinalby/schema-validator-action@v3
         with:
           file: 'examples/*.yaml'
+          schema: 'schema.json'
 
   # Golang CI
   go_fmt:
