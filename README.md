@@ -345,6 +345,16 @@ ethereum_package:
     - blockscout
 ```
 
+## Troubleshooting
+
+Sometimes the Kurtosis CLI and engine have mismatching versions.
+When that happens you'll get a message saying "An API version mismatch was detected".
+To fix that, update the Kurtosis CLI with your chosen method, and restart the engine with:
+
+```bash
+kurtosis engine restart
+```
+
 ## Kurtosis package
 
 For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
