@@ -347,9 +347,10 @@ ethereum_package:
 
 ## Troubleshooting
 
+### "An API version mismatch was detected"
+
 Sometimes the Kurtosis CLI and engine have mismatching versions.
-When that happens you'll get a message saying "An API version mismatch was detected".
-To fix that, update the Kurtosis CLI with your chosen method, and restart the engine with:
+When that happens you can fix it by updating the Kurtosis CLI via your chosen method, and restarting the engine with:
 
 ```bash
 kurtosis engine restart
