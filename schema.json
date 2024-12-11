@@ -94,9 +94,7 @@
                     }
                 }
             },
-            "required": [
-                "ref"
-            ],
+            "required": [],
             "title": "Deployment"
         },
         "Service": {
@@ -157,9 +155,7 @@
                     "type": "string"
                 }
             },
-            "required": [
-                "name"
-            ],
+            "required": [],
             "title": "Key"
         },
         "Artifacts": {
