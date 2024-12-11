@@ -128,3 +128,41 @@ jobs:
 
       - name: Run go test
         run: make test
+
+  eigenda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli=${{ env.KURTOSIS_VERSION }}
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install devnet
+        run: make install
+      
+      - name: Checkout EigenDA repo
+        uses: actions/checkout@v4
+        with:
+          repository: Layr-Labs/eigenda
+          path: eigenda/
+
+      - name: Run EigenDA example
+        run: |
+          cp examples/eigenda.yaml eigenda/devnet.yaml
+          cd eigenda/
+          devnet start
