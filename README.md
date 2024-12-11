@@ -354,34 +354,46 @@ What follows is a list of its contents.
 
 The URL of the HTTP-RPC exposed on the first node of the underlying devnet.
 
+Example value: `http://172.16.0.9:8545`
+
 #### `.ws_rpc_url`
 
 The URL of the WebSocket-RPC exposed on the first node of the underlying devnet.
 
+Example value: `ws://172.16.0.9:8546`
+
 #### `.deployer_private_key`
 
-The ECDSA private key used to deploy contracts.
+The ECDSA private key used when deploying contracts.
+
+Example value: `0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31`
+
+#### `.deployer_address`
+
+The address used to deploy contracts.
+
+Example value: `0x8943545177806ED17B9F23F0a21ee5948eCaa776`
 
 #### `.addresses.<deployment-name>.<contract-name>`
 
 The address of the contract `<contract-name>` from deployment `<deployment-name>`.
 Note that this requires the address to be declared before the template expansion.
 
-Example value: `0x123412`
+Example value: `{{.addresses.MyAvs.serviceManager}}` expands to `0x89a37F5cd42162B56DE8A48bDe38A6E97C965675`
 
 #### `.services.<service-name>.ip_address`
 
 The IP address of the service `<service-name>`.
 Note that this requires the service to be started before the template expansion.
 
-Example value: `192.0.5.52`
+Example value: `{{.services.aggregator.ip_address}}` expands to `172.16.0.70`
 
 #### `.keys.<key-name>.address`
 
 The Ethereum address associated to the key named `<key-name>`.
 Only ECDSA keys have this property.
 
-Example value: `0x1241251351212512512215125125212521251252`
+Example value: `0x0d7597aedfa6b73f3aac93ecfcf5abcfbcc5cd40`
 
 #### `.keys.<key-name>.private_key`
 
@@ -389,18 +401,15 @@ The private key of the key named `<key-name>`.
 
 Example value:
 
-- ECDSA: `0x1241251351212512512215125125212521251252`
-- BLS: `0x1241251351212512512215125125212521251252`
+- ECDSA: `0xe314a391f6e0128c35573c9157baedd8381350e4efdc7e73509849a8e0b73f32`
+- BLS: `11311926940818870267862834934784331525396505743635597567466859068964031983193`
 
 #### `.keys.<key-name>.password`
 
 The password to the keystore for the key named `<key-name>`.
 Only dynamically generated keys have this property.
 
-Example value:
-
-- ECDSA: `0x1241251351212512512215125125212521251252`
-- BLS: `0x1241251351212512512215125125212521251252`
+Example value: `jR07sE6zmoIElmwjsf7m`
 
 ## Kurtosis package
 
