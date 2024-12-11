@@ -40,18 +40,22 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       retrieval:
         number: 8081
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       nodeapi:
         number: 9091
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     input:
       /kzg/: kzg_config
       /keys/ecdsa: node1_ecdsa
@@ -75,6 +79,7 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
+      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -95,18 +100,22 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       retrieval:
         number: 8081
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       nodeapi:
         number: 9091
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     input:
       /kzg/: kzg_config
       /keys/ecdsa: node2_ecdsa
@@ -130,6 +139,7 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
+      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -150,18 +160,22 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       retrieval:
         number: 8081
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       nodeapi:
         number: 9091
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     input:
       /kzg/: kzg_config
       /keys/ecdsa: node3_ecdsa
@@ -185,6 +199,7 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
+      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -206,6 +221,7 @@ services:
         number: 4566
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     cmd: []
 
   - name: create-s3-bucket
@@ -281,10 +297,12 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     env:
       CHURNER_LOG_LEVEL: debug
       CHURNER_VERBOSE: true
@@ -309,10 +327,12 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     env:
       DISPERSER_SERVER_LOG_LEVEL: debug
       DISPERSER_SERVER_VERBOSE: true
@@ -353,10 +373,12 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     input:
       /kzg/: kzg_config
     env:
@@ -380,10 +402,12 @@ services:
         number: 8080
         transport_protocol: TCP
         application_protocol: "grpc"
+        wait: 1m
       metrics:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
+        wait: 1m
     input:
       /kzg/: kzg_config
     env:
@@ -413,7 +437,7 @@ services:
         number: 9100
         transport_protocol: TCP
         application_protocol: "http"
-        wait: null
+        wait: 1m
     env:
       BATCHER_LOG_LEVEL: debug
       BATCHER_VERBOSE: true
