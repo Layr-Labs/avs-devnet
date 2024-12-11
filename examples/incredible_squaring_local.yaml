@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../schema.json
+
 # Local devnet config file for the incredible-squaring-avs example
 # This file can be used inside the incredible-squaring-avs repo to
 # start a devnet with any local changes
