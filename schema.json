@@ -1,0 +1,166 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$ref": "#/definitions/DevnetConfig",
+    "definitions": {
+        "DevnetConfig": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deployments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Deployment"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Service"
+                    }
+                },
+                "keys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Key"
+                    }
+                },
+                "artifacts": {
+                    "$ref": "#/definitions/Artifacts"
+                },
+                "ethereum_package": {
+                    "$ref": "#/definitions/EthereumPackage"
+                }
+            },
+            "required": [],
+            "title": "DevnetConfig"
+        },
+        "Deployment": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "contracts_path": {
+                    "type": "string"
+                },
+                "script": {
+                    "type": "string"
+                },
+                "extra_args": {
+                    "type": "string"
+                },
+                "verify": {
+                    "type": "boolean"
+                },
+                "env": {
+                    "type": "object"
+                },
+                "input": {
+                    "type": "object"
+                },
+                "output": {
+                    "type": "object"
+                },
+                "addresses": {
+                    "type": "object"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "strategies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "operators": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Deployment"
+        },
+        "Service": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "build_context": {
+                    "type": "string"
+                },
+                "build_file": {
+                    "type": "string"
+                },
+                "build_cmd": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "object"
+                },
+                "input": {
+                    "type": "object"
+                },
+                "env": {
+                    "type": "object"
+                },
+                "cmd": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "image",
+                "name"
+            ],
+            "title": "Service"
+        },
+        "Key": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "private_key": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Key"
+        },
+        "Artifacts": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [],
+            "title": "Artifacts"
+        },
+        "EthereumPackage": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "ethereum-package args"
+        }
+    }
+}
