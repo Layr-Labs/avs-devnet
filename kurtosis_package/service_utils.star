@@ -6,10 +6,15 @@ def add_service(plan, service_args, context):
     files = generate_input_files(plan, context, service_args.get("input", {}))
 
     ports = generate_port_specs(service_args.get("ports", {}))
+    prefix = "service_{}_expanded_env_var_".format(name)
     env_vars = shared_utils.generate_env_vars(
-        plan, context, service_args.get("env", {})
+        plan, context, service_args.get("env", {}), prefix
     )
-    cmd = [shared_utils.expand(plan, context, v) for v in service_args.get("cmd", [])]
+    prefix = "service_{}_expanded_cmd_".format(name)
+    cmd = [
+        shared_utils.expand(plan, context, v, prefix + str(i))
+        for i, v in enumerate(service_args.get("cmd", []))
+    ]
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,

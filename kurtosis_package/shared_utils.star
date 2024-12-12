@@ -76,14 +76,16 @@ def send_funds(plan, context, to, amount="10ether"):
     )
 
 
-def generate_env_vars(plan, context, env_vars):
+def generate_env_vars(plan, context, env_vars, artifact_prefix):
     return {
-        env_var_name: expand(plan, context, env_var_value)
+        env_var_name: expand(
+            plan, context, env_var_value, artifact_prefix + env_var_name
+        )
         for env_var_name, env_var_value in env_vars.items()
     }
 
 
-def expand(plan, context, var):
+def expand(plan, context, var, artifact_name):
     """
     Replaces templates containing double brackets ("{{") to their dynamically evaluated counterpart.
 
@@ -105,6 +107,7 @@ def expand(plan, context, var):
 
     artifact = plan.render_templates(
         config={file_name: struct(template=var, data=context.data)},
+        name=artifact_name,
         description="Expanding envvar '{}'".format(var),
     )
     result = plan.run_sh(

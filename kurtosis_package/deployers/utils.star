@@ -17,7 +17,10 @@ def deploy_generic_contract(plan, context, deployment):
     contracts_path = deployment.get("contracts_path", ".")
     script = deployment["script"]
     extra_args = deployment.get("extra_args", "")
-    env_vars = shared_utils.generate_env_vars(plan, context, deployment.get("env", {}))
+    prefix = "contract_{}_expanded_env_var_".format(name)
+    env_vars = shared_utils.generate_env_vars(
+        plan, context, deployment.get("env", {}), prefix
+    )
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
     output = deployment.get("output", {})
