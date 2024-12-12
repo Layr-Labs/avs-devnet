@@ -414,6 +414,17 @@ Only dynamically generated keys have this property.
 
 Example value: `jR07sE6zmoIElmwjsf7m`
 
+## Troubleshooting
+
+### "An API version mismatch was detected"
+
+Sometimes the Kurtosis CLI and engine have mismatching versions.
+When that happens you can fix it by updating the Kurtosis CLI via your chosen method, and restarting the engine with:
+
+```bash
+kurtosis engine restart
+```
+
 ## Kurtosis package
 
 For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
