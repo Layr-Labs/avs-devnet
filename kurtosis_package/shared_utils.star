@@ -77,6 +77,8 @@ def send_funds(plan, context, to, amount="10ether"):
 
 
 def generate_env_vars(plan, context, env_vars, artifact_prefix):
+    # `artifact_prefix` is prepended to the env-var's name to generate
+    # the artifact name to use during variable expansion
     return {
         env_var_name: expand(
             plan, context, env_var_value, artifact_prefix + env_var_name
@@ -90,6 +92,8 @@ def expand(plan, context, var, artifact_name):
     Replaces templates containing double brackets ("{{") to their dynamically evaluated counterpart.
 
     Example: "{{.service.some_service_name.ip_address}}" -> <some_service_name's ip address>
+
+    `artifact_name` is used as the name for the artifact generated during expansion.
     """
     # Make sure we only expand strings
     if type(var) == type(42) or type(var) == type(42.0) or type(var) == type(True):

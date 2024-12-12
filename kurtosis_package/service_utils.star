@@ -6,6 +6,7 @@ def add_service(plan, service_args, context):
     files = generate_input_files(plan, context, service_args.get("input", {}))
 
     ports = generate_port_specs(service_args.get("ports", {}))
+    # Prefix for the artifact generated during variable expansion
     prefix = "service_{}_expanded_env_var_".format(name)
     env_vars = shared_utils.generate_env_vars(
         plan, context, service_args.get("env", {}), prefix
