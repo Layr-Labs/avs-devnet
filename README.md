@@ -345,6 +345,75 @@ ethereum_package:
     - blockscout
 ```
 
+### Context object
+
+The *Context object* can be accessed via [Go template syntax](https://pkg.go.dev/text/template) (e.g: `{{.}}`).
+Thinking of it as a nested map, items can be accessed by specifying the keys to be accessed, in order: `{{.first_key.second_key.third_key}}`
+Some additional functions are also available, like `{{slice ...}}` and `{{index ...}}` (more info [here](https://pkg.go.dev/text/template#hdr-Functions)).
+
+What follows is a list of the values available in the *Context object*.
+
+#### `.http_rpc_url`
+
+The URL of the HTTP-RPC exposed on the first node of the underlying devnet.
+
+Example value: `http://172.16.0.9:8545`
+
+#### `.ws_rpc_url`
+
+The URL of the WebSocket-RPC exposed on the first node of the underlying devnet.
+
+Example value: `ws://172.16.0.9:8546`
+
+#### `.deployer_private_key`
+
+The ECDSA private key used when deploying contracts.
+
+Example value: `0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31`
+
+#### `.deployer_address`
+
+The address used to deploy contracts.
+
+Example value: `0x8943545177806ED17B9F23F0a21ee5948eCaa776`
+
+#### `.addresses.<deployment-name>.<contract-name>`
+
+The address of the contract `<contract-name>` from deployment `<deployment-name>`.
+Note that this requires the address to be declared before the template expansion.
+
+Example value: `{{.addresses.MyAvs.serviceManager}}` expands to `0x89a37F5cd42162B56DE8A48bDe38A6E97C965675`
+
+#### `.services.<service-name>.ip_address`
+
+The IP address of the service `<service-name>`.
+Note that this requires the service to be started before the template expansion.
+
+Example value: `{{.services.aggregator.ip_address}}` expands to `172.16.0.70`
+
+#### `.keys.<key-name>.address`
+
+The Ethereum address associated to the key named `<key-name>`.
+Only ECDSA keys have this property.
+
+Example value: `0x0d7597aedfa6b73f3aac93ecfcf5abcfbcc5cd40`
+
+#### `.keys.<key-name>.private_key`
+
+The private key of the key named `<key-name>`.
+
+Example value:
+
+- ECDSA: `0xe314a391f6e0128c35573c9157baedd8381350e4efdc7e73509849a8e0b73f32`
+- BLS: `11311926940818870267862834934784331525396505743635597567466859068964031983193`
+
+#### `.keys.<key-name>.password`
+
+The password to the keystore for the key named `<key-name>`.
+Only dynamically generated keys have this property.
+
+Example value: `jR07sE6zmoIElmwjsf7m`
+
 ## Kurtosis package
 
 For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
