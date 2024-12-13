@@ -81,7 +81,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -141,7 +140,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -201,7 +199,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
