@@ -13,8 +13,7 @@
 deployments:
   # NOTE: this script also deploys EigenLayer contracts
   - name: EigenDA
-    repo: https://github.com/Layr-Labs/eigenda.git
-    ref: master
+    repo: "."
     contracts_path: contracts
     script: script/SetUpEigenDA.s.sol:SetupEigenDA
     input:
@@ -26,8 +25,7 @@ deployments:
       operatorStateRetriever: "eigenda_addresses:.operatorStateRetriever"
 
   - name: MockRollup
-    repo: https://github.com/Layr-Labs/eigenda.git
-    ref: master
+    repo: "."
     contracts_path: contracts
     script: script/MockRollupDeployer.s.sol:MockRollupDeployer
     extra_args: "--sig 'run(address)' -- $EIGENDA_SERVICE_MANAGER"
