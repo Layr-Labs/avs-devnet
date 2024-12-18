@@ -6,6 +6,7 @@
 # TODO: move this to the incredible-squaring-avs repo
 
 # To run this example:
+# 0. Ensure you have the latest version of the devnet (see the README for how to install)
 # 1. Clone the https://github.com/Layr-Labs/incredible-squaring-avs repo
 # 2. Copy this file inside that repo (on the root)
 # 3. While inside that repo, run `devnet start incredible_squaring_local.yaml`
