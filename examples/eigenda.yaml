@@ -8,7 +8,7 @@
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
 # 1. Clone the https://github.com/Layr-Labs/eigenda repo
 # 2. Copy this file inside that repo (on the root), and move inside it
-# 3. Download the SRS files by running: `mkdir -p resources && \curl -L https://github.com/Layr-Labs/rust-kzg-bn254/raw/refs/heads/master/tests/test-files/\{g1.point,g2.point,g2.point.powerOf2\} -o "resources/#1"`
+# 3. Download the SRS files by running: `mkdir -p resources && curl -L https://github.com/Layr-Labs/rust-kzg-bn254/raw/refs/heads/master/tests/test-files/\{g1.point,g2.point,g2.point.powerOf2\} -o "resources/#1"`
 # 4. Run `devnet start eigenda.yaml`
 
 deployments:
