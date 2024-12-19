@@ -462,7 +462,7 @@ services:
       BATCHER_AWS_ACCESS_KEY_ID: "localstack"
       BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
       BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
-      BATCHER_FINALIZATION_BLOCK_DELAY: 0
+      BATCHER_FINALIZATION_BLOCK_DELAY: 1
 
   - name: traffic-generator
     image: traffic-generator
