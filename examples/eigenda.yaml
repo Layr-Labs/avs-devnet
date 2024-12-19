@@ -567,6 +567,6 @@ ethereum_package:
   additional_services:
     - blockscout
   network_params:
-    # NOTE: we do this to avoid errors due to services being
-    # started too few blocks after contracts are deployed
-    seconds_per_slot: 1
+    # NOTE: turning this to 12s causes "referenceBlockNumber is too far in past" errors
+    # NOTE: turning this to 1s causes "referenceBlockNumber is in future" errors
+    seconds_per_slot: 3
