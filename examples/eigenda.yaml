@@ -7,8 +7,9 @@
 # To run this example:
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
 # 1. Clone the https://github.com/Layr-Labs/eigenda repo
-# 2. Copy this file inside that repo (on the root)
-# 3. While inside that repo, run `devnet start eigenda.yaml`
+# 2. Copy this file inside that repo (on the root), and move inside it
+# 3. Download the SRS files by running: `mkdir -p resources && curl -L https://github.com/Layr-Labs/rust-kzg-bn254/raw/refs/heads/master/tests/test-files/\{g1.point,g2.point,g2.point.powerOf2\} -o "resources/#1"`
+# 4. Run `devnet start eigenda.yaml`
 
 deployments:
   # NOTE: this script also deploys EigenLayer contracts
@@ -80,7 +81,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -140,7 +140,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -200,7 +199,6 @@ services:
       NODE_CHURNER_URL: "{{.services.churner.ip_address}}"
       NODE_G1_PATH: /kzg/g1.point
       NODE_G2_PATH: /kzg/g2.point
-      NODE_G2_POWER_OF_2_PATH: /kzg/g2.point.powerOf2
       NODE_CACHE_PATH: /kzg/cache
       NODE_SRS_ORDER: 3000
       NODE_SRS_LOAD: 2900
@@ -479,6 +477,35 @@ services:
       TRAFFIC_GENERATOR_REQUEST_INTERVAL: 5s
       TRAFFIC_GENERATOR_DATA_SIZE: "1024"
 
+  - name: eigenda-proxy
+    image: ghcr.io/layr-labs/eigenda-proxy
+    ports:
+      rpc:
+        number: 4242
+        transport_protocol: TCP
+        application_protocol: "http"
+      metrics:
+        number: 7300
+        transport_protocol: TCP
+        application_protocol: "http"
+    input:
+      /app/resources: kzg_config
+    env:
+      EIGENDA_PROXY_ADDR: "0.0.0.0"
+      EIGENDA_PROXY_PORT: 4242
+      EIGENDA_PROXY_MEMSTORE_ENABLED: false
+      EIGENDA_PROXY_MEMSTORE_EXPIRATION: 45m
+      EIGENDA_PROXY_EIGENDA_SIGNER_PRIVATE_KEY_HEX: "{{slice .keys.proxy_signer.private_key 2}}"
+      EIGENDA_PROXY_EIGENDA_DISPERSER_RPC: "{{.services.disperser.ip_address}}:8080"
+      EIGENDA_PROXY_EIGENDA_SERVICE_MANAGER_ADDR: "{{.addresses.EigenDA.serviceManager}}"
+      EIGENDA_PROXY_EIGENDA_ETH_RPC: "{{.http_rpc_url}}"
+      EIGENDA_PROXY_EIGENDA_ETH_CONFIRMATION_DEPTH: 0
+      EIGENDA_PROXY_METRICS_ADDR: "0.0.0.0"
+      EIGENDA_PROXY_METRICS_ENABLED: true
+      EIGENDA_PROXY_METRICS_PORT: 7300
+      EIGENDA_PROXY_EIGENDA_GRPC_DISABLE_TLS: true
+      EIGENDA_PROXY_EIGENDA_MAX_BLOB_LENGTH: 92800 # 2900 points * 32 bytes per point
+
 # Specify keys to generate
 keys:
   - name: churner_key
@@ -529,17 +556,17 @@ artifacts:
   kzg_config:
     files:
       g1.point:
-        static_file: "inabox/resources/kzg/g1.point"
+        static_file: "resources/g1.point"
       g2.point:
-        static_file: "inabox/resources/kzg/g2.point"
+        static_file: "resources/g2.point"
       g2.point.powerOf2:
-        static_file: "inabox/resources/kzg/g2.point.powerOf2"
+        static_file: "resources/g2.point.powerOf2"
 
 # ethereum-package configuration
 ethereum_package:
   additional_services:
     - blockscout
   network_params:
-    # NOTE: we do this to avoid errors due to services being
-    # started too few blocks after contracts are deployed
-    seconds_per_slot: 1
+    # NOTE: turning this to 12s causes "referenceBlockNumber is too far in past" errors
+    # NOTE: turning this to 1s causes "referenceBlockNumber is in future" errors
+    seconds_per_slot: 3

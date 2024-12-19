@@ -170,6 +170,12 @@ jobs:
         with:
           repository: Layr-Labs/eigenda
           path: eigenda/
+      
+      - name: Download SRS points
+        run: |
+          cd eigenda/
+          mkdir -p resources
+          curl -L -o "resources/#1" https://github.com/Layr-Labs/rust-kzg-bn254/raw/refs/heads/master/tests/test-files/\{g1.point,g2.point,g2.point.powerOf2\}
 
       - name: Run EigenDA example
         run: |
