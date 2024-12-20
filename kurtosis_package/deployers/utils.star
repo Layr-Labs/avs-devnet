@@ -65,7 +65,7 @@ def deploy_generic_contract(plan, context, deployment):
         store=store_specs,
         env_vars=env_vars,
         description="Deploying '{}'".format(name),
-        wait="600s",
+        wait=None,
     )
     context.data["addresses"][name] = extract_addresses(plan, context, addresses)
     return result
