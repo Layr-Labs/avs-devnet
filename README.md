@@ -425,6 +425,11 @@ When that happens you can fix it by updating the Kurtosis CLI via your chosen me
 kurtosis engine restart
 ```
 
+### `failed to read downloaded context: failed to load cache key: invalid response status 403` ([#145](https://github.com/Layr-Labs/avs-devnet/issues/145))
+
+This errors happens due to [a bug in moby/moby](https://github.com/moby/moby/issues/47717).
+It can be fixed by disabling the "Use containerd for pulling and storing images" option in Docker Desktop.
+
 ## Kurtosis package
 
 For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI, see the documentation available in [`docs/kurtosis_package.md`](./docs/kurtosis_package.md).
