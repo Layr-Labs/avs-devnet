@@ -512,6 +512,31 @@ services:
       EIGENDA_PROXY_EIGENDA_GRPC_DISABLE_TLS: true
       EIGENDA_PROXY_EIGENDA_MAX_BLOB_LENGTH: 2097152 # 65536 points * 32 bytes per point
 
+  - name: prometheus
+    image: prom/prometheus
+    ports:
+      http:
+        number: 9090
+        transport_protocol: TCP
+        application_protocol: "http"
+    input:
+      /etc/prometheus: prometheus_config
+    cmd: ["--config.file=/etc/prometheus/prometheus.yml"]
+
+  - name: grafana
+    image: grafana/grafana
+    ports:
+      http:
+        number: 3000
+        transport_protocol: TCP
+        application_protocol: "http"
+    input:
+      /etc/prometheus: prometheus_config
+    env:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    cmd: ["--config.file=/etc/prometheus/prometheus.yml"]
+
 # Specify keys to generate
 keys:
   - name: churner_key
@@ -567,6 +592,57 @@ artifacts:
         static_file: "resources/g2.point"
       g2.point.powerOf2:
         static_file: "resources/g2.point.powerOf2"
+  
+  prometheus_config:
+    files:
+      prometheus.yml:
+        template: |
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+
+          scrape_configs:
+            - job_name: "node1"
+              static_configs:
+                - targets: ["{{.services.node1.ip_address}}:9100"]
+            - job_name: "node2"
+              static_configs:
+                - targets: ["{{.services.node2.ip_address}}:9100"]
+            - job_name: "node3"
+              static_configs:
+                - targets: ["{{.services.node3.ip_address}}:9100"]
+            - job_name: "churner"
+              static_configs:
+                - targets: ["{{.services.churner.ip_address}}:9100"]
+            - job_name: "disperser"
+              static_configs:
+                - targets: ["{{.services.disperser.ip_address}}:9100"]
+            - job_name: "encoder"
+              static_configs:
+                - targets: ["{{.services.encoder.ip_address}}:9100"]
+            - job_name: "retriever"
+              static_configs:
+                - targets: ["{{.services.retriever.ip_address}}:9100"]
+            - job_name: "batcher"
+              static_configs:
+                - targets: ["{{.services.batcher.ip_address}}:9100"]
+            - job_name: "proxy"
+              static_configs:
+                - targets: ["{{.services.proxy.ip_address}}:9100"]
+  
+  grafana_config:
+    files:
+      datasource.yml:
+        template: |
+          apiVersion: 1
+
+          datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://{{.services.prometheus.ip_address}}:9090 
+            isDefault: true
+            access: proxy
+            editable: true
 
 # ethereum-package configuration
 ethereum_package:
