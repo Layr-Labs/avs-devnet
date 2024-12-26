@@ -115,7 +115,7 @@ Contract not found: eigenlayer_addresses:.MockETH
 ### Local development
 
 Some fields in the config can be used to ease deployment of local projects.
-You can check under `examples/` for some examples with both local and remotely downloaded versions.
+Under `examples/` we have some devnet configurations that follow this approach.
 
 #### Deployment from local source
 
@@ -171,6 +171,8 @@ In that case, running it is as easy as:
 1. Install AvsDevnet
 2. Download the devnet configuration to use as `devnet.yaml`
 3. Run `devnet start` in the same folder
+
+Under `examples/` we have some devnet configurations that follow this approach.
 
 #### Deployment from remote source
 
