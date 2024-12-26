@@ -131,7 +131,7 @@ func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx 
 		if err != nil {
 			return fmt.Errorf("repo '%s' is invalid: %w", deployment.Repo, err)
 		}
-		if isLocalUrl(repoUrl.Scheme) {
+		if !isLocalUrl(repoUrl.Scheme) {
 			continue
 		}
 		absPath := ensureAbs(dirContext, repoUrl.Path)
