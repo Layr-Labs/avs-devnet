@@ -175,7 +175,9 @@ jobs:
         run: |
           cd eigenda/
           mkdir -p resources
-          curl -L -o "resources/#1" https://github.com/Layr-Labs/rust-kzg-bn254/raw/refs/heads/master/tests/test-files/\{g1.point,g2.point,g2.point.powerOf2\}
+          curl --range 0-2097151 -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
+          curl --range 0-4194303 -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
+          curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point.powerOf2 -o resources/g2.point.powerOf2
 
       - name: Run EigenDA example
         run: |
