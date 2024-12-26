@@ -115,15 +115,20 @@ Contract not found: eigenlayer_addresses:.MockETH
 ### Local development
 
 Some fields in the config can be used to ease deployment of local projects.
+You can check under `examples/` for some examples with both local and remote versions.
+
+#### Deployment from local source
 
 The `repo` field in `deployments` accepts local paths.
-This can be used when deployments should be done from locally available versions.
+This should be used when deployments should be done from locally available versions.
 
 ```yaml
 deployments:
-  - name: some-deployment
-    repo: "foo/bar/baz"
+  - name: incredible-squaring
+    repo: "." # the directory where the devnet config file is in
 ```
+
+#### Services with locally-built images
 
 The `build_context` field in `services`, if specified, allows the Devnet to automatically build docker images via `docker build`.
 Images are built in the specified context, and tagged with the name specified in the `image` field.
@@ -131,10 +136,10 @@ If the build file is named something other than `Dockerfile`, or isn't located i
 
 ```yaml
 services:
-  - name: my-service
-    image: name-for-the-image
-    build_context: path/to/context
-    build_file: path/to/context/Dockerfile
+  - name: my-aggregator
+    image: aggregator
+    build_context: "dockerfiles/"
+    build_file: "aggregator.Dockerfile"
 ```
 
 For image builds requiring a custom command, you can use `build_cmd` to specify it.
@@ -142,9 +147,20 @@ This overrides the `build_context` and `build_file`.
 
 ```yaml
 services:
-  - name: my-service
-    image: name-for-the-image
-    build_cmd: "docker build . -t name-for-the-image && touch .finished"
+  - name: my-aggregator
+    image: aggregator
+    build_cmd: "docker build . -t aggregator && touch .finished"
+```
+
+#### Static files
+
+Static files can be made into a file artifact by using `static_file` in the `artifacts.<artifact-name>.files.<file-name>` section.
+
+```yaml
+artifacts:
+  my_artifact:
+    files:
+      somefile.txt: "path/to/myfile.log"
 ```
 
 ### More Help
@@ -325,18 +341,26 @@ artifacts:
     # List of files to store inside the artifact
     files:
       # Key: file name
-      # Value: a string to be the file's contents.
-      # The string is assumed to be a Go template
-      # (see https://pkg.go.dev/text/template for more information).
-      # There are also some dynamically populated fields like 'deployer_address'
-      someconfig.config.json: |
-        {
-          "a": 5,
-          "someVariable": {{.some_variable}},
-          "deployerAddress": {{.deployer_address}},
-          "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
-          "contractAddress": {{(index .addresses "deployment-name").my_contract}}
-        }
+      # Value: a description on how to construct the file.
+      someconfig.config.json:
+        # For templates, the value is a string, assumed to be a Go template
+        # (see https://pkg.go.dev/text/template for more information).
+        # There are also some dynamically populated fields like 'deployer_address'
+        # See the "Context object" section for more info
+        template: |
+          {
+            "a": 5,
+            "someVariable": {{.some_variable}},
+            "deployerAddress": {{.deployer_address}},
+            "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
+            "contractAddress": {{(index .addresses "deployment-name").my_contract}}
+          }
+
+  some_other_artifact:
+    files:
+      foobar.log:
+        # For static_file, the value is the file to be included inside the artifact.
+        static_file: foobar.txt
 
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
