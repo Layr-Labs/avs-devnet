@@ -531,11 +531,10 @@ services:
         transport_protocol: TCP
         application_protocol: "http"
     input:
-      /etc/prometheus: prometheus_config
+      /etc/grafana/provisioning/datasources: grafana_config
     env:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
-    cmd: ["--config.file=/etc/prometheus/prometheus.yml"]
 
 # Specify keys to generate
 keys:
