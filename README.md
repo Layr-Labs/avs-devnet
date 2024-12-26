@@ -417,6 +417,10 @@ artifacts:
         # For static_file, the value is a URL to the file to include inside the artifact.
         static_file: docs/foobar.txt
 
+      remote_foobar.json:
+        # The URL can be for a remote file too (see "Remote static files")
+        static_file: https://example.com/
+
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
 ethereum_package:
