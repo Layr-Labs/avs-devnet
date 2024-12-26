@@ -120,7 +120,7 @@ Under `examples/` we have some devnet configurations that follow this approach.
 #### Deployment from local source
 
 The `repo` field in `deployments` accepts local paths.
-This should be used when deployments should be done from locally available versions.
+Use this to deploy from locally available versions.
 
 ```yaml
 deployments:
