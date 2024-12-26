@@ -251,7 +251,7 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 				}
 				defer resp.Body.Close()
 				// 2. check status code
-				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				if resp.StatusCode < 200 && resp.StatusCode >= 300 {
 					return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
 				}
 
