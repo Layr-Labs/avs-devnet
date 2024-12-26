@@ -115,7 +115,7 @@ Contract not found: eigenlayer_addresses:.MockETH
 ### Local development
 
 Some fields in the config can be used to ease deployment of local projects.
-You can check under `examples/` for some examples with both local and remote versions.
+You can check under `examples/` for some examples with both local and remotely downloaded versions.
 
 #### Deployment from local source
 
@@ -161,6 +161,59 @@ artifacts:
   my_artifact:
     files:
       somefile.txt: "path/to/myfile.log"
+```
+
+### Plug and play examples
+
+Devnet configurations can be made to run without any local dependencies.
+In that case, running it is as easy as:
+
+1. Install AvsDevnet
+2. Download the devnet configuration to use as `devnet.yaml`
+3. Run `devnet start` in the same folder
+
+#### Deployment from remote source
+
+The `repo` field in `deployments` accepts any remote git repo URL.
+This should be used for deployment of contracts not locally available.
+
+```yaml
+deployments:
+  - name: incredible-squaring
+    # URL taken from the clone option on GitHub
+    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+```
+
+#### Services with remote images
+
+If no other option is specified (see [Services with locally-built images](#services-with-locally-built-images)), images will be.
+
+```yaml
+services:
+  - name: my-aggregator
+    image: aggregator
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-aggregator
+    image: aggregator
+    build_cmd: "docker build . -t aggregator && touch .finished"
+```
+
+#### Remote static files
+
+Static files can be specified by an arbitrary URL.
+The devnet will then send a GET HTTP request to fetch the file.
+
+```yaml
+artifacts:
+  my_artifact:
+    files:
+      somefile.txt: "https://raw.githubusercontent.com/Layr-Labs/incredible-squaring-avs/refs/heads/master/README.md"
 ```
 
 ### More Help
@@ -359,8 +412,8 @@ artifacts:
   some_other_artifact:
     files:
       foobar.log:
-        # For static_file, the value is the file to be included inside the artifact.
-        static_file: foobar.txt
+        # For static_file, the value is a URL to the file to include inside the artifact.
+        static_file: docs/foobar.txt
 
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
