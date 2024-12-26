@@ -10,8 +10,8 @@
 # 2. Copy this file inside that repo (on the root), and move inside it
 # 3. Download the SRS files by running:
 #    mkdir -p resources
-#    curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
-#    curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
+#    curl --range 0-2097151 -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
+#    curl --range 0-4194303 -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
 #    curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point.powerOf2 -o resources/g2.point.powerOf2
 # 4. Run `devnet start eigenda.yaml`
 
