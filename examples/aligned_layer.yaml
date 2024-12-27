@@ -356,12 +356,12 @@ artifacts:
           ## ECDSA Configurations
           ecdsa:
             private_key_store_path: "keystores/keys/1.ecdsa.key.json"
-            private_key_store_password: "{{.keystores.aggregator_ecdsa.password}}"
+            private_key_store_password: "{{.keys.aggregator_ecdsa.password}}"
 
           ## BLS Configurations
           bls:
             private_key_store_path: "keystores/keys/1.bls.key.json"
-            private_key_store_password: "{{.keystores.aggregator_bls.password}}"
+            private_key_store_password: "{{.keys.aggregator_bls.password}}"
 
           ## Aggregator Configurations
           aggregator:
@@ -393,19 +393,19 @@ artifacts:
           ## ECDSA Configurations
           ecdsa:
             private_key_store_path: "keystores/keys/1.ecdsa.key.json"
-            private_key_store_password: "{{.keystores.operator1_ecdsa.password}}"
+            private_key_store_password: "{{.keys.operator1_ecdsa.password}}"
 
           ## BLS Configurations
           bls:
             private_key_store_path: "keystores/keys/1.bls.key.json"
-            private_key_store_password: "{{.keystores.operator1_bls.password}}"
+            private_key_store_password: "{{.keys.operator1_bls.password}}"
 
           ## Operator Configurations
           operator:
             aggregator_rpc_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
             operator_tracker_ip_port_address: http://localhost:3030
-            address: {{.keystores.operator1_ecdsa.address}}
-            earnings_receiver_address: {{.keystores.operator1_ecdsa.address}}
+            address: {{.keys.operator1_ecdsa.address}}
+            earnings_receiver_address: {{.keys.operator1_ecdsa.address}}
             delegation_approver_address: "0x0000000000000000000000000000000000000000"
             staker_opt_out_window_blocks: 0
             metadata_url: "https://yetanotherco.github.io/operator_metadata/metadata.json"
