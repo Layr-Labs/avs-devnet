@@ -190,6 +190,7 @@
     "DefaultDeployment": {
       "type": "object",
       "additionalProperties": false,
+      "$comment": "TODO: includes some properties from EigenLayerDeployment",
       "properties": {
         "name": {
           "type": "string",
@@ -248,6 +249,7 @@
     "EigenLayerDeployment": {
       "type": "object",
       "additionalProperties": false,
+      "$comment": "TODO: includes some properties from DefaultDeployment",
       "properties": {
         "name": {
           "type": "string",
