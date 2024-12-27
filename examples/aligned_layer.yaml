@@ -45,7 +45,7 @@ deployments:
       --sig "run(string batcherConfigPath)"
       ./script/deploy/config/devnet/batcher.devnet.config.json
     input:
-      script/deploy/config/devnet/: batcher_config
+      script/deploy/config/devnet/: batcher_deployment_config
 
 services:
   - name: localstack
@@ -79,6 +79,7 @@ services:
       /aggregator/config-files/: aggregator_config
       /aggregator/contracts/script/output/devnet/:
         - eigenlayer_addresses
+        # TODO: we have to merge this with the address for the batcher service
         - avs_addresses
       /aggregator/keystores/:
         - aggregator_bls
@@ -190,6 +191,18 @@ services:
 
   - name: batcher
     image: ghcr.io/yetanotherco/aligned_layer/batcher:latest
+    ports:
+      metrics:
+        number: 9093
+        transport_protocol: "TCP"
+        application_protocol: "http"
+    input:
+      /config-files/:
+        - batcher_config
+        - batcher_ecdsa
+      /deployment_output/:
+        - eigenlayer_addresses
+        - avs_addresses
     env:
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: us-east-2
@@ -291,6 +304,7 @@ artifacts:
             },
             "permissions": {
               "owner": "{{.deployer_address}}",
+              "pauser": "{{.deployer_address}}",
               "aggregator": "{{.keys.aggregator_ecdsa.address}}",
               "upgrader": "{{.deployer_address}}",
               "churner": "{{.deployer_address}}",
@@ -319,7 +333,7 @@ artifacts:
             "uri": ""
           }
 
-  batcher_config:
+  batcher_deployment_config:
     files:
       batcher.devnet.config.json:
         template: |
@@ -366,8 +380,8 @@ artifacts:
           ## Aggregator Configurations
           aggregator:
             server_ip_port_address: 0.0.0.0:8090
-            bls_public_key_compendium_address: 0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44
-            avs_service_manager_address: {{.addresses.Aligned.alignedLayerServiceManager}}
+            bls_public_key_compendium_address: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44"
+            avs_service_manager_address: "{{.addresses.Aligned.alignedLayerServiceManager}}"
             enable_metrics: true
             metrics_ip_port_address: 0.0.0.0:9091
             telemetry_ip_port_address: localhost:4001
@@ -420,6 +434,39 @@ artifacts:
           bls_private_key_store_path: keystores/keys/1.bls.key.json
           signer_type: local
           chain_id: 31337
+
+  batcher_config:
+    files:
+      config-batcher-docker.yaml:
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "/deployment_output/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "/deployment_output/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
+
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "config-files/keys/1.ecdsa.key.json"
+            private_key_store_password: "{{.keys.batcher_ecdsa.password}}"
+
+          ## Batcher configurations
+          batcher:
+            block_interval: 3
+            batch_size_interval: 10
+            transaction_wait_timeout: 96000 # 8 blocks
+            max_proof_size: 67108864 # 64 MiB
+            max_batch_byte_size: 268435456 # 256 MiB
+            max_batch_proof_qty: 3000 # 3000 proofs in a batch
+            eth_ws_reconnects: 99999999999999
+            pre_verification_is_enabled: true
+            metrics_port: 9093
+            telemetry_ip_port_address: localhost:4001
 
 ethereum_package:
   additional_services:
