@@ -83,6 +83,16 @@ jobs:
       - name: Kurtosis Lint
         run: make kurtosis_lint
 
+  schema_checker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all example config files using their own $schema properties
+        uses: cardinalby/schema-validator-action@v3
+        with:
+          file: 'examples/*.yaml'
+          schema: 'schema.json'
+
   # Golang CI
   go_fmt:
     runs-on: ubuntu-latest
@@ -130,3 +140,49 @@ jobs:
 
       - name: Run go test
         run: make test
+
+  eigenda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli=${{ env.KURTOSIS_VERSION }}
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install devnet
+        run: make install
+      
+      - name: Checkout EigenDA repo
+        uses: actions/checkout@v4
+        with:
+          repository: Layr-Labs/eigenda
+          path: eigenda/
+      
+      - name: Download SRS points
+        run: |
+          cd eigenda/
+          mkdir -p resources
+          curl --range 0-2097151 -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
+          curl --range 0-4194303 -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
+          curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point.powerOf2 -o resources/g2.point.powerOf2
+
+      - name: Run EigenDA example
+        run: |
+          cp examples/eigenda.yaml eigenda/devnet.yaml
+          cd eigenda/
+          devnet start

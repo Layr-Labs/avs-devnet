@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../schema.json
+
 # Example devnet config file for the incredible-squaring-avs example
 deployments:
   - type: EigenLayer
@@ -74,11 +76,11 @@ keys:
     private_key: "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 
 artifacts:
-  # TODO: remove once we have another example
-  static_file_example:
+  # This downloads the incredible-squaring-avs's README into the "readme" artifact
+  readme:
     files:
       somefile.txt:
-        static_file: "./incredible_squaring.yaml"
+        static_file: "https://raw.githubusercontent.com/Layr-Labs/incredible-squaring-avs/refs/heads/master/README.md"
 
   aggregator-config:
     files:

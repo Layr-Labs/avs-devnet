@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -130,8 +131,7 @@ func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx 
 		if err != nil {
 			return fmt.Errorf("repo '%s' is invalid: %w", deployment.Repo, err)
 		}
-		// If 'repo' starts with file:// or is without a scheme, it's a local repo
-		if repoUrl.Scheme != "file" && repoUrl.Scheme != "" {
+		if !isLocalUrl(repoUrl.Scheme) {
 			continue
 		}
 		absPath := ensureAbs(dirContext, repoUrl.Path)
@@ -228,13 +228,44 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 			return fmt.Errorf("tempdir creation failed: %w", err)
 		}
 		defer os.RemoveAll(outputDir)
-		for fileName, fileAttrs := range artifactDetails.Files {
-			// Copy the file to the temp dir
-			originFilePath := ensureAbs(dirContext, *fileAttrs.StaticFile)
-			destinationFilePath := filepath.Join(outputDir, fileName)
-			err := fileCopy(originFilePath, destinationFilePath)
+		for outFileName, fileAttrs := range artifactDetails.Files {
+			rawUrl := *fileAttrs.StaticFile
+			destinationFilePath := filepath.Join(outputDir, outFileName)
+			srcUrl, err := url.Parse(*fileAttrs.StaticFile)
 			if err != nil {
-				return fmt.Errorf("failed when copying file: %w", err)
+				return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
+			}
+			if isLocalUrl(srcUrl.Scheme) {
+				// Copy the file to the temp dir
+				originFilePath := ensureAbs(dirContext, rawUrl)
+				err = fileCopy(originFilePath, destinationFilePath)
+				if err != nil {
+					return fmt.Errorf("failed when copying file: %w", err)
+				}
+			} else {
+				// The file is remote. Download the file
+				// 1. do GET request
+				resp, err := http.Get(rawUrl)
+				if err != nil {
+					return fmt.Errorf("failed HTTP GET request: %w", err)
+				}
+				defer resp.Body.Close()
+				// 2. check status code
+				if resp.StatusCode < 200 && resp.StatusCode >= 300 {
+					return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
+				}
+
+				// 3. dump response to file
+				dstFile, err := os.Create(destinationFilePath)
+				if err != nil {
+					return fmt.Errorf("failed to create file: %w", err)
+				}
+				defer dstFile.Close()
+
+				_, err = io.Copy(dstFile, resp.Body)
+				if err != nil {
+					return fmt.Errorf("failed when downloading file: %w", err)
+				}
 			}
 		}
 		// Upload temp dir to enclave
@@ -329,4 +360,9 @@ func fileCopy(src, dst string) error {
 		return fmt.Errorf("failed to copy file: %w", err)
 	}
 	return nil
+}
+
+func isLocalUrl(scheme string) bool {
+	// If 'repo' starts with file:// or is without a scheme, it's a local repo
+	return scheme == "file" || scheme == ""
 }

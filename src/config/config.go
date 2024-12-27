@@ -76,7 +76,7 @@ type Artifact struct {
 // The definition of an artifact file.
 // Must be either a static file or a template.
 type ArtifactFile struct {
-	// Path to a local file to upload to the enclave
+	// URL to a file to upload to the enclave
 	StaticFile *string `yaml:"static_file"`
 	// Content of the file, with optional templates
 	Template *string `yaml:"template"`

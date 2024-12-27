@@ -17,11 +17,15 @@ def deploy_generic_contract(plan, context, deployment):
     contracts_path = deployment.get("contracts_path", ".")
     script = deployment["script"]
     extra_args = deployment.get("extra_args", "")
-    env_vars = shared_utils.generate_env_vars(plan, context, deployment.get("env", {}))
+    env = deployment.get("env", {})
     verify = deployment.get("verify", False)
     input = deployment.get("input", {})
     output = deployment.get("output", {})
     addresses = deployment.get("addresses", {})
+
+    # Prefix for the artifact generated during variable expansion
+    prefix = "contract_{}_expanded_env_var_".format(name)
+    env_vars = shared_utils.generate_env_vars(plan, context, env, prefix)
 
     contract_name = None
 
@@ -61,7 +65,7 @@ def deploy_generic_contract(plan, context, deployment):
         store=store_specs,
         env_vars=env_vars,
         description="Deploying '{}'".format(name),
-        wait="600s",
+        wait=None,
     )
     context.data["addresses"][name] = extract_addresses(plan, context, addresses)
     return result
