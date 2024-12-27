@@ -97,34 +97,44 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the service"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "description": "Container image for the service"
         },
         "build_context": {
-          "type": "string"
+          "type": "string",
+          "description": "Context to use when building the image"
         },
         "build_file": {
-          "type": "string"
+          "type": "string",
+          "default": "Dockerfile",
+          "description": "Dockerfile to use when building the image"
         },
         "build_cmd": {
-          "type": "string"
+          "type": "string",
+          "description": "Command to build the image"
         },
         "ports": {
-          "type": "object"
+          "type": "object",
+          "description": "Ports to expose on the service"
         },
         "input": {
-          "type": "object"
+          "type": "object",
+          "description": "Artifacts to mount inside the service"
         },
         "env": {
-          "type": "object"
+          "type": "object",
+          "description": "Environment variables to set on the service"
         },
         "cmd": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Command to run inside the service"
         }
       },
       "oneOf": [
