@@ -591,7 +591,7 @@ artifacts:
         static_file: "resources/g2.point"
       g2.point.powerOf2:
         static_file: "resources/g2.point.powerOf2"
-  
+
   prometheus_config:
     files:
       prometheus.yml:
@@ -628,7 +628,7 @@ artifacts:
             - job_name: "proxy"
               static_configs:
                 - targets: ["{{.services.proxy.ip_address}}:9100"]
-  
+
   grafana_config:
     files:
       datasource.yml:
