@@ -11,6 +11,9 @@ deployments:
       script/deploy/config/devnet/: eigenlayer_deployment_config
     output:
       eigenlayer_addresses: "script/output/devnet/eigenlayer_deployment_output.json"
+    addresses:
+      delegationManager: "eigenlayer_addresses:.addresses.delegationManager"
+      mockStrategy: "eigenlayer_addresses:.addresses.strategies.MOCK"
 
   - name: Aligned
     repo: "https://github.com/yetanotherco/aligned_layer.git"
@@ -27,6 +30,8 @@ deployments:
       script/output/devnet/: eigenlayer_addresses
     output:
       avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
+    addresses:
+      alignedLayerServiceManager: "avs_addresses:.addresses.alignedLayerServiceManager"
 
   - name: Batcher Payment Service
     repo: "https://github.com/yetanotherco/aligned_layer.git"
@@ -73,8 +78,8 @@ services:
         - eigenlayer_addresses
         - avs_addresses
       /aggregator/keystores/:
-        - aggregator_bls_keystore
-        - aggregator_ecdsa_keystore
+        - aggregator_bls
+        - aggregator_ecdsa
     cmd:
       - "aligned-layer-aggregator"
       - "--config"
@@ -85,9 +90,9 @@ services:
     image: ghcr.io/yetanotherco/aligned_layer/eigenlayer-cli:latest
     input:
       /go/config-files/: operator_config
-      /go/keystores/: operator1_ecdsa_keystore
+      /go/keystores/: operator1_ecdsa
     env:
-      PASSWORD: "$keystores.operator1_ecdsa_keystore.password"
+      PASSWORD: "$keystores.operator1_ecdsa.password"
     cmd:
       - "sh"
       - "-c"
@@ -98,11 +103,11 @@ services:
     input:
       /config-files/: operator_config
       /addresses/: eigenlayer_addresses
-      /keystores/: operator1_ecdsa_keystore
+      /keystores/: operator1_ecdsa
     env:
       DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
       RPC_URL: "$http_rpc_url"
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
     cmd:
       - "sh"
       - "-c"
@@ -121,10 +126,10 @@ services:
         - eigenlayer_addresses
         - avs_addresses
       /aligned_layer/keystores/:
-        - operator1_bls_keystore
-        - operator1_ecdsa_keystore
+        - operator1_bls
+        - operator1_ecdsa
     env:
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
     cmd:
       - "sh"
       - "-c"
@@ -140,11 +145,11 @@ services:
     input:
       /config-files/: operator_config
       /addresses/: avs_addresses
-      /keystores/: operator1_ecdsa_keystore
+      /keystores/: operator1_ecdsa
     env:
       DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
       RPC_URL: "$http_rpc_url"
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa_keystore.address"
+      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
     cmd:
       - "sh"
       - "-c"
@@ -162,8 +167,8 @@ services:
         - eigenlayer_addresses
         - avs_addresses
       /aligned_layer/keystores/:
-        - operator1_bls_keystore
-        - operator1_ecdsa_keystore
+        - operator1_bls
+        - operator1_ecdsa
     cmd:
       - "sh"
       - "-c"
@@ -177,21 +182,21 @@ services:
         - eigenlayer_addresses
         - avs_addresses
       /aligned_layer/keystores/:
-        - operator1_bls_keystore
-        - operator1_ecdsa_keystore
+        - operator1_bls
+        - operator1_ecdsa
     cmd:
       - "sh"
       - "-c"
       - "sleep 60 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
 
 keystores:
-  - name: "aggregator_bls_keystore"
+  - name: "aggregator_bls"
     type: "bls"
-  - name: "aggregator_ecdsa_keystore"
+  - name: "aggregator_ecdsa"
     type: "ecdsa"
-  - name: "operator1_bls_keystore"
+  - name: "operator1_bls"
     type: "bls"
-  - name: "operator1_ecdsa_keystore"
+  - name: "operator1_ecdsa"
     type: "ecdsa"
 
 artifacts:
@@ -202,216 +207,205 @@ artifacts:
 
   eigenlayer_deployment_config:
     files:
-      eigen.devnet.config.json: |
-        {
-          "chainInfo": {
-            "chainId": 31337
-          },
-          "multisig_addresses": {
-            "pauserMultisig": "{{.deployer_address}}",
-            "communityMultisig": "{{.deployer_address}}",
-            "operationsMultisig": "{{.deployer_address}}",
-            "executorMultisig": "{{.deployer_address}}",
-            "timelock": "{{.deployer_address}}"
-          },
-          "strategies": {
-            "numStrategies": 0,
-            "MAX_PER_DEPOSIT": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
-            "MAX_TOTAL_DEPOSITS": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
-            "strategiesToDeploy": []
-          },
-          "strategyManager": {
-            "init_strategy_whitelister": "{{.deployer_address}}",
-            "init_paused_status": 0
-          },
-          "delegationManager": {
-            "init_paused_status": 0,
-            "init_minWithdrawalDelayBlocks": 10
-          },
-          "rewardsCoordinator": {
-            "init_paused_status": 0,
-            "CALCULATION_INTERVAL_SECONDS": 604800,
-            "MAX_REWARDS_DURATION": 6048000,
-            "MAX_RETROACTIVE_LENGTH": 7776000,
-            "MAX_FUTURE_LENGTH": 2592000,
-            "GENESIS_REWARDS_TIMESTAMP": 1710979200,
-            "rewards_updater_address": "{{.deployer_address}}",
-            "activation_delay": 7200,
-            "calculation_interval_seconds": 604800,
-            "global_operator_commission_bips": 1000
-          },
-          "avsDirectory": {
-            "init_paused_status": 0
-          },
-          "slasher": {
-            "init_paused_status": 0
-          },
-          "eigenPod": {
-            "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": 32000000000,
-            "GENESIS_TIME": 1695902400
-          },
-          "eigenPodManager": {
-            "init_paused_status": 0,
-            "deneb_fork_timestamp": "1707305664"
-          },
-          "delayedWithdrawalRouter": {
-            "init_paused_status": 0,
-            "init_withdrawalDelayBlocks": 10
-          },
-          "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
-          "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
-        }
+      eigen.devnet.config.json: 
+        template: |
+          {
+            "chainInfo": {
+              "chainId": 31337
+            },
+            "multisig_addresses": {
+              "pauserMultisig": "{{.deployer_address}}",
+              "communityMultisig": "{{.deployer_address}}",
+              "operationsMultisig": "{{.deployer_address}}",
+              "executorMultisig": "{{.deployer_address}}",
+              "timelock": "{{.deployer_address}}"
+            },
+            "strategies": {
+              "numStrategies": 0,
+              "MAX_PER_DEPOSIT": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+              "MAX_TOTAL_DEPOSITS": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+              "strategiesToDeploy": []
+            },
+            "strategyManager": {
+              "init_strategy_whitelister": "{{.deployer_address}}",
+              "init_paused_status": 0
+            },
+            "delegationManager": {
+              "init_paused_status": 0,
+              "init_minWithdrawalDelayBlocks": 10
+            },
+            "rewardsCoordinator": {
+              "init_paused_status": 0,
+              "CALCULATION_INTERVAL_SECONDS": 604800,
+              "MAX_REWARDS_DURATION": 6048000,
+              "MAX_RETROACTIVE_LENGTH": 7776000,
+              "MAX_FUTURE_LENGTH": 2592000,
+              "GENESIS_REWARDS_TIMESTAMP": 1710979200,
+              "rewards_updater_address": "{{.deployer_address}}",
+              "activation_delay": 7200,
+              "calculation_interval_seconds": 604800,
+              "global_operator_commission_bips": 1000
+            },
+            "avsDirectory": {
+              "init_paused_status": 0
+            },
+            "slasher": {
+              "init_paused_status": 0
+            },
+            "eigenPod": {
+              "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": 32000000000,
+              "GENESIS_TIME": 1695902400
+            },
+            "eigenPodManager": {
+              "init_paused_status": 0,
+              "deneb_fork_timestamp": "1707305664"
+            },
+            "delayedWithdrawalRouter": {
+              "init_paused_status": 0,
+              "init_withdrawalDelayBlocks": 10
+            },
+            "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
+            "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
+          }
   aligned_deployment_config:
-    additional_data:
-      aggregator_ecdsa_keystore:
-        AggregatorAddress: ".address"
-      eigenlayer_addresses:
-        mock_strategy_address: ".addresses.strategies.MOCK"
     files:
-      aligned.devnet.config.json: |
-        {
-          "chainInfo": {
-            "chainId": 31337
-          },
-          "permissions": {
-            "owner": "{{.deployer_address}}",
-            "aggregator": "{{.AggregatorAddress}}",
-            "upgrader": "{{.deployer_address}}",
-            "churner": "{{.deployer_address}}",
-            "ejector": "{{.deployer_address}}",
-            "deployer": "{{.deployer_address}}",
-            "initalPausedStatus": 0
-          },
-          "minimumStakes": [
-            1
-          ],
-          "strategyWeights": [
-            [
+      aligned.devnet.config.json:
+        template: |
+          {
+            "chainInfo": {
+              "chainId": 31337
+            },
+            "permissions": {
+              "owner": "{{.deployer_address}}",
+              "aggregator": "{{.keys.aggregator_ecdsa.address}}",
+              "upgrader": "{{.deployer_address}}",
+              "churner": "{{.deployer_address}}",
+              "ejector": "{{.deployer_address}}",
+              "deployer": "{{.deployer_address}}",
+              "initalPausedStatus": 0
+            },
+            "minimumStakes": [
+              1
+            ],
+            "strategyWeights": [
+              [
+                {
+                  "0_strategy": "{{.addresses.EigenLayer.mockStrategy}}",
+                  "1_multiplier": 1e+18
+                }
+              ]
+            ],
+            "operatorSetParams": [
               {
-                "0_strategy": "{{.mock_strategy_address}}",
-                "1_multiplier": 1e+18
+                "0_maxOperatorCount": 200,
+                "1_kickBIPsOfOperatorStake": 11000,
+                "2_kickBIPsOfTotalStake": 50
               }
-            ]
-          ],
-          "operatorSetParams": [
-            {
-              "0_maxOperatorCount": 200,
-              "1_kickBIPsOfOperatorStake": 11000,
-              "2_kickBIPsOfTotalStake": 50
-            }
-          ],
-          "uri": ""
-        }
+            ],
+            "uri": ""
+          }
 
   batcher_config:
-    additional_data:
-      avs_addresses:
-        service_manager_address: ".addresses.alignedLayerServiceManager"
     files:
-      batcher.devnet.config.json: |
-        {
-          "address": {
-            "batcherWallet": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
-            "batcherPrivateKey": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
-            "alignedLayerServiceManager": "{{.service_manager_address}}"
-          },
-          "amounts": {
-            "gasForAggregator": "300000",
-            "gasPerProof": "21000"
-          },
-          "permissions": {
-            "owner": "{{.deployer_address}}"
+      batcher.devnet.config.json:
+        template: |
+          {
+            "address": {
+              "batcherWallet": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+              "batcherPrivateKey": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
+              "alignedLayerServiceManager": "{{.addresses.Aligned.alignedLayerServiceManager}}"
+            },
+            "amounts": {
+              "gasForAggregator": "300000",
+              "gasPerProof": "21000"
+            },
+            "permissions": {
+              "owner": "{{.deployer_address}}"
+            }
           }
-        }
 
   aggregator_config:
-    additional_data:
-      avs_addresses:
-        AlignedLayerServiceManager: ".addresses.alignedLayerServiceManager"
     files:
-      config-aggregator.yaml: |
-        # Common variables for all the services
-        # 'production' only prints info and above. 'development' also prints debug
-        environment: "production"
-        aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
-        eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
-        eth_rpc_url: "{{.http_rpc_url}}"
-        eth_rpc_url_fallback: "{{.http_rpc_url}}"
-        eth_ws_url: "{{.ws_rpc_url}}"
-        eth_ws_url_fallback: "{{.ws_rpc_url}}"
-        eigen_metrics_ip_port_address: "localhost:9090"
+      config-aggregator.yaml: 
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
 
-        ## ECDSA Configurations
-        ecdsa:
-          private_key_store_path: "keystores/1.ecdsa.key.json"
-          private_key_store_password: "{{.keystores.aggregator_ecdsa_keystore.password}}"
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "keystores/1.ecdsa.key.json"
+            private_key_store_password: "{{.keystores.aggregator_ecdsa.password}}"
 
-        ## BLS Configurations
-        bls:
-          private_key_store_path: "keystores/1.bls.key.json"
-          private_key_store_password: "{{.keystores.aggregator_bls_keystore.password}}"
+          ## BLS Configurations
+          bls:
+            private_key_store_path: "keystores/1.bls.key.json"
+            private_key_store_password: "{{.keystores.aggregator_bls.password}}"
 
-        ## Aggregator Configurations
-        aggregator:
-          server_ip_port_address: 0.0.0.0:8090
-          bls_public_key_compendium_address: 0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44
-          avs_service_manager_address: {{.AlignedLayerServiceManager}}
-          enable_metrics: true
-          metrics_ip_port_address: 0.0.0.0:9091
-          telemetry_ip_port_address: localhost:4001
-          garbage_collector_period: 2m #The period of the GC process. Suggested value for Prod: '168h' (7 days)
-          garbage_collector_tasks_age: 20 #The age of tasks that will be removed by the GC, in blocks. Suggested value for prod: '216000' (30 days)
-          garbage_collector_tasks_interval: 10 #The interval of queried blocks to get an old batch. Suggested value for prod: '900' (3 hours)
+          ## Aggregator Configurations
+          aggregator:
+            server_ip_port_address: 0.0.0.0:8090
+            bls_public_key_compendium_address: 0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44
+            avs_service_manager_address: {{.addresses.Aligned.alignedLayerServiceManager}}
+            enable_metrics: true
+            metrics_ip_port_address: 0.0.0.0:9091
+            telemetry_ip_port_address: localhost:4001
+            garbage_collector_period: 2m #The period of the GC process. Suggested value for Prod: '168h' (7 days)
+            garbage_collector_tasks_age: 20 #The age of tasks that will be removed by the GC, in blocks. Suggested value for prod: '216000' (30 days)
+            garbage_collector_tasks_interval: 10 #The interval of queried blocks to get an old batch. Suggested value for prod: '900' (3 hours)
 
   operator_config:
-    additional_data:
-      eigenlayer_addresses:
-        el_delegation_manager_address: ".addresses.delegationManager"
-      avs_addresses:
-        AlignedLayerServiceManager: ".addresses.alignedLayerServiceManager"
     files:
-      config-docker.yaml: |
-        # Common variables for all the services
-        # 'production' only prints info and above. 'development' also prints debug
-        environment: "production"
-        aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
-        eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
-        eth_rpc_url: "{{.http_rpc_url}}"
-        eth_rpc_url_fallback: "{{.http_rpc_url}}"
-        eth_ws_url: "{{.ws_rpc_url}}"
-        eth_ws_url_fallback: "{{.ws_rpc_url}}"
-        eigen_metrics_ip_port_address: "localhost:9090"
+      config-docker.yaml: 
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
 
-        ## ECDSA Configurations
-        ecdsa:
-          private_key_store_path: "keystores/1.ecdsa.key.json"
-          private_key_store_password: "{{.keystores.operator1_ecdsa_keystore.password}}"
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "keystores/1.ecdsa.key.json"
+            private_key_store_password: "{{.keystores.operator1_ecdsa.password}}"
 
-        ## BLS Configurations
-        bls:
-          private_key_store_path: "keystores/1.bls.key.json"
-          private_key_store_password: "{{.keystores.operator1_bls_keystore.password}}"
+          ## BLS Configurations
+          bls:
+            private_key_store_path: "keystores/1.bls.key.json"
+            private_key_store_password: "{{.keystores.operator1_bls.password}}"
 
-        ## Operator Configurations
-        operator:
-          aggregator_rpc_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
-          operator_tracker_ip_port_address: http://localhost:3030
-          address: {{.keystores.operator1_ecdsa_keystore.address}}
-          earnings_receiver_address: {{.keystores.operator1_ecdsa_keystore.address}}
-          delegation_approver_address: "0x0000000000000000000000000000000000000000"
-          staker_opt_out_window_blocks: 0
-          metadata_url: "https://yetanotherco.github.io/operator_metadata/metadata.json"
-          enable_metrics: true
-          metrics_ip_port_address: localhost:9092
-          max_batch_size: 268435456 # 256 MiB
-          last_processed_batch_filepath: config-files/operator.last_processed_batch.json
+          ## Operator Configurations
+          operator:
+            aggregator_rpc_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
+            operator_tracker_ip_port_address: http://localhost:3030
+            address: {{.keystores.operator1_ecdsa.address}}
+            earnings_receiver_address: {{.keystores.operator1_ecdsa.address}}
+            delegation_approver_address: "0x0000000000000000000000000000000000000000"
+            staker_opt_out_window_blocks: 0
+            metadata_url: "https://yetanotherco.github.io/operator_metadata/metadata.json"
+            enable_metrics: true
+            metrics_ip_port_address: localhost:9092
+            max_batch_size: 268435456 # 256 MiB
+            last_processed_batch_filepath: config-files/operator.last_processed_batch.json
 
-        # Operators variables needed for register it in EigenLayer
-        el_delegation_manager_address: "{{.el_delegation_manager_address}}"
-        private_key_store_path: keystores/1.ecdsa.key.json
-        bls_private_key_store_path: keystores/1.bls.key.json
-        signer_type: local_keystore
-        chain_id: 31337
+          # Operators variables needed for register it in EigenLayer
+          el_delegation_manager_address: "{{.addresses.EigenLayer.delegationManager}}"
+          private_key_store_path: keystores/1.ecdsa.key.json
+          bls_private_key_store_path: keystores/1.bls.key.json
+          signer_type: local
+          chain_id: 31337
 
 ethereum_package:
   additional_services:
