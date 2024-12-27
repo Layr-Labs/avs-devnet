@@ -34,6 +34,7 @@ deployments:
       avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
     addresses:
       alignedLayerServiceManager: "avs_addresses:.addresses.alignedLayerServiceManager"
+      registryCoordinator: "avs_addresses:.addresses.registryCoordinator"
 
   - name: Batcher Payment Service
     repo: "https://github.com/yetanotherco/aligned_layer.git"
@@ -94,7 +95,7 @@ services:
       /go/config-files/: operator_config
       /go/keystores/: operator1_ecdsa
     env:
-      PASSWORD: "$keystores.operator1_ecdsa.password"
+      PASSWORD: "{{.keys.operator1_ecdsa.password}}"
     cmd:
       - "sh"
       - "-c"
@@ -106,9 +107,9 @@ services:
       /config-files/: operator_config
       /keystores/: operator1_ecdsa
     env:
-      DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
-      RPC_URL: "$http_rpc_url"
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
+      DEPLOYER_PRIVATE_KEY: "{{.deployer_private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
     cmd:
       - "sh"
       - "-c"
@@ -129,7 +130,7 @@ services:
         - operator1_bls
         - operator1_ecdsa
     env:
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
     cmd:
       - "sh"
       - "-c"
@@ -145,14 +146,14 @@ services:
       /addresses/: avs_addresses
       /keystores/: operator1_ecdsa
     env:
-      DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
-      RPC_URL: "$http_rpc_url"
-      OPERATOR_ADDRESS: "$keystores.operator1_ecdsa.address"
+      DEPLOYER_PRIVATE_KEY: "{{.deployer_private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
+      REGISTRY_ADDR: "{{.addresses.Aligned.registryCoordinator}}"
     cmd:
       - "sh"
       - "-c"
       - >-
-        REGISTRY_ADDR=$(awk '/"registryCoordinator": "(.*)"/{ print $2 }' addresses/alignedlayer_deployment_output.json | tr -d '"\n,') &&
         echo "Registry address: $REGISTRY_ADDR" &&
         sleep 36 &&
         cast send  $REGISTRY_ADDR 'add(address)' $OPERATOR_ADDRESS --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY
@@ -219,7 +220,7 @@ artifacts:
 
   eigenlayer_deployment_config:
     files:
-      eigen.devnet.config.json: 
+      eigen.devnet.config.json:
         template: |
           {
             "chainInfo": {
@@ -339,7 +340,7 @@ artifacts:
 
   aggregator_config:
     files:
-      config-aggregator.yaml: 
+      config-aggregator.yaml:
         template: |
           # Common variables for all the services
           # 'production' only prints info and above. 'development' also prints debug
@@ -354,12 +355,12 @@ artifacts:
 
           ## ECDSA Configurations
           ecdsa:
-            private_key_store_path: "keystores/1.ecdsa.key.json"
+            private_key_store_path: "keystores/keys/1.ecdsa.key.json"
             private_key_store_password: "{{.keystores.aggregator_ecdsa.password}}"
 
           ## BLS Configurations
           bls:
-            private_key_store_path: "keystores/1.bls.key.json"
+            private_key_store_path: "keystores/keys/1.bls.key.json"
             private_key_store_password: "{{.keystores.aggregator_bls.password}}"
 
           ## Aggregator Configurations
@@ -376,7 +377,7 @@ artifacts:
 
   operator_config:
     files:
-      config-docker.yaml: 
+      config-docker.yaml:
         template: |
           # Common variables for all the services
           # 'production' only prints info and above. 'development' also prints debug
@@ -391,12 +392,12 @@ artifacts:
 
           ## ECDSA Configurations
           ecdsa:
-            private_key_store_path: "keystores/1.ecdsa.key.json"
+            private_key_store_path: "keystores/keys/1.ecdsa.key.json"
             private_key_store_password: "{{.keystores.operator1_ecdsa.password}}"
 
           ## BLS Configurations
           bls:
-            private_key_store_path: "keystores/1.bls.key.json"
+            private_key_store_path: "keystores/keys/1.bls.key.json"
             private_key_store_password: "{{.keystores.operator1_bls.password}}"
 
           ## Operator Configurations
@@ -415,8 +416,8 @@ artifacts:
 
           # Operators variables needed for register it in EigenLayer
           el_delegation_manager_address: "{{.addresses.EigenLayer.delegationManager}}"
-          private_key_store_path: keystores/1.ecdsa.key.json
-          bls_private_key_store_path: keystores/1.bls.key.json
+          private_key_store_path: keystores/keys/1.ecdsa.key.json
+          bls_private_key_store_path: keystores/keys/1.bls.key.json
           signer_type: local
           chain_id: 31337
 
