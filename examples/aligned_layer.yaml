@@ -189,7 +189,7 @@ services:
       - "-c"
       - "sleep 60 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
 
-keystores:
+keys:
   - name: "aggregator_bls"
     type: "bls"
   - name: "aggregator_ecdsa"
@@ -267,6 +267,7 @@ artifacts:
             "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
             "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
           }
+
   aligned_deployment_config:
     files:
       aligned.devnet.config.json:
