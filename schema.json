@@ -120,6 +120,29 @@
       },
       "oneOf": [
         {
+          "$comment": "Default deployment type",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "type"
+                ]
+              },
+              {
+                "required": [
+                  "strategies"
+                ]
+              },
+              {
+                "required": [
+                  "operators"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$comment": "EigenLayer deployment type",
           "required": [
             "type"
           ],
@@ -127,13 +150,6 @@
             "type": {
               "const": "EigenLayer"
             }
-          }
-        },
-        {
-          "not": {
-            "required": [
-              "type"
-            ]
           }
         }
       ],
