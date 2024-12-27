@@ -9,27 +9,36 @@
       "properties": {
         "deployments": {
           "type": "array",
+          "title": "Deployments",
+          "description": "Deployments to deploy",
           "items": {
             "$ref": "#/definitions/Deployment"
           }
         },
         "services": {
           "type": "array",
+          "title": "Services",
+          "description": "Services to start",
           "items": {
             "$ref": "#/definitions/Service"
           }
         },
         "keys": {
           "type": "array",
+          "title": "Keys",
           "description": "Keys to generate",
           "items": {
             "$ref": "#/definitions/Key"
           }
         },
         "artifacts": {
+          "title": "Artifacts",
+          "description": "Artifact specifications",
           "$ref": "#/definitions/Artifacts"
         },
         "ethereum_package": {
+          "title": "ethereum-package args",
+          "description": "Arguments to pass to ethereum-package",
           "$ref": "#/definitions/EthereumPackage"
         }
       },
@@ -37,59 +46,14 @@
       "title": "DevnetConfig"
     },
     "Deployment": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
+      "oneOf": [
+        {
+          "$ref": "#/definitions/EigenLayerDeployment"
         },
-        "repo": {
-          "type": "string"
-        },
-        "ref": {
-          "type": "string"
-        },
-        "contracts_path": {
-          "type": "string"
-        },
-        "script": {
-          "type": "string"
-        },
-        "extra_args": {
-          "type": "string"
-        },
-        "verify": {
-          "type": "boolean"
-        },
-        "env": {
-          "type": "object"
-        },
-        "input": {
-          "type": "object"
-        },
-        "output": {
-          "type": "object"
-        },
-        "addresses": {
-          "type": "object"
-        },
-        "type": {
-          "type": "string"
-        },
-        "strategies": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "operators": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
+        {
+          "$ref": "#/definitions/DefaultDeployment"
         }
-      },
-      "required": [],
+      ],
       "title": "Deployment"
     },
     "Service": {
@@ -222,6 +186,134 @@
       "description": "ethereum-package args",
       "additionalProperties": true,
       "title": "ethereum-package args"
+    },
+    "DefaultDeployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the deployment"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Git repository with the source to deploy"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Git ref to checkout for deployment"
+        },
+        "contracts_path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the contracts folder"
+        },
+        "script": {
+          "type": "string",
+          "description": "Path to the Solidity deployment script to run"
+        },
+        "extra_args": {
+          "type": "string",
+          "default": "",
+          "description": "Extra args to pass to `foundry script`"
+        },
+        "verify": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to automatically verify the contracts with Blockscan"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables to set for the deployment"
+        },
+        "input": {
+          "type": "object",
+          "description": "Artifacts to include inside the deployment environment"
+        },
+        "output": {
+          "type": "object",
+          "description": "Artifacts to generate from files inside the deployment environment"
+        },
+        "addresses": {
+          "type": "object",
+          "description": "Addresses to extract from the deployment environment"
+        }
+      },
+      "not": {
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "EigenLayerDeployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the deployment"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Git repository with the source to deploy"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Git ref to checkout for deployment"
+        },
+        "contracts_path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the contracts folder"
+        },
+        "script": {
+          "type": "string",
+          "description": "Path to the Solidity deployment script to run"
+        },
+        "extra_args": {
+          "type": "string",
+          "default": "",
+          "description": "Extra args to pass to `foundry script`"
+        },
+        "verify": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to automatically verify the contracts with Blockscan"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables to set for the deployment"
+        },
+        "input": {
+          "type": "object",
+          "description": "Artifacts to include inside the deployment environment"
+        },
+        "output": {
+          "type": "object",
+          "description": "Artifacts to generate from files inside the deployment environment"
+        },
+        "addresses": {
+          "type": "object",
+          "description": "Addresses to extract from the deployment environment"
+        },
+        "type": {
+          "type": "string",
+          "const": "EigenLayer",
+          "description": "Type of deployment"
+        },
+        "strategies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
     }
   }
 }
