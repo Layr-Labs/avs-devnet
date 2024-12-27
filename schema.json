@@ -1,5 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft-07/schema",
+    "title": "AvsDevnet configuration",
     "$ref": "#/definitions/DevnetConfig",
     "definitions": {
         "DevnetConfig": {
@@ -20,6 +21,7 @@
                 },
                 "keys": {
                     "type": "array",
+                    "description": "Keys to generate",
                     "items": {
                         "$ref": "#/definitions/Key"
                     }
@@ -125,26 +127,73 @@
                     }
                 }
             },
+            "oneOf": [
+                {
+                    "required": [
+                        "build_context"
+                    ]
+                },
+                {
+                    "required": [
+                        "build_cmd"
+                    ],
+                    "not": {
+                        "required": [
+                            "build_file"
+                        ]
+                    }
+                },
+                {
+                    "not": {
+                        "anyOf": [
+                            {
+                                "required": [
+                                    "build_context"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "build_file"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "build_cmd"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
             "required": [
                 "image",
                 "name"
             ],
-            "title": "Service"
+            "title": "Service",
+            "description": "A service to start"
         },
         "Key": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "name": {
+                    "description": "Name for the key",
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
+                    "description": "Type of key",
+                    "default": "ecdsa",
+                    "enum": [
+                        "ecdsa",
+                        "bls"
+                    ]
                 },
                 "address": {
+                    "description": "Address of the key",
                     "type": "string"
                 },
                 "private_key": {
+                    "description": "Private key",
                     "type": "string"
                 }
             },
@@ -153,12 +202,14 @@
         },
         "Artifacts": {
             "type": "object",
+            "description": "Artifacts to generate",
             "additionalProperties": true,
             "required": [],
             "title": "Artifacts"
         },
         "EthereumPackage": {
             "type": "object",
+            "description": "ethereum-package args",
             "additionalProperties": true,
             "title": "ethereum-package args"
         }
