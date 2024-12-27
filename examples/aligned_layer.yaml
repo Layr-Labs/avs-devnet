@@ -40,6 +40,22 @@ deployments:
       script/deploy/config/devnet/: batcher_config
 
 services:
+  - name: localstack
+    image: localstack/localstack
+    ports:
+      gateway:
+        number: 4566
+        transport_protocol: TCP
+        application_protocol: "http"
+        wait: 1m
+    env:
+      DEBUG: 1
+      DEFAULT_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    input:
+      /etc/localstack/init/ready.d: localstack_init_script
+
   - name: "aggregator"
     image: "ghcr.io/yetanotherco/aligned_layer/aggregator:latest"
     ports:
@@ -179,6 +195,11 @@ keystores:
     type: "ecdsa"
 
 artifacts:
+  localstack_init_script:
+    files:
+      init-s3.py:
+        static_file: https://raw.githubusercontent.com/yetanotherco/aligned_layer/refs/heads/testnet/scripts/init-s3.py
+
   eigenlayer_deployment_config:
     files:
       eigen.devnet.config.json: |
