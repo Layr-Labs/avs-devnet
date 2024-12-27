@@ -3,7 +3,7 @@ deployments:
   # TODO: use devnet EigenLayer deployer
   - name: EigenLayer
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "staging"
+    ref: "testnet"
     contracts_path: "contracts"
     script: script/deploy/EigenLayerDeployer.s.sol
     extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
@@ -14,7 +14,7 @@ deployments:
 
   - name: Aligned
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "staging"
+    ref: "testnet"
     contracts_path: "contracts"
     script: script/deploy/AlignedLayerDeployer.s.sol
     extra_args: >-
@@ -393,12 +393,8 @@ artifacts:
         chain_id: 31337
 
 ethereum_package:
-  participants:
-    - el_type: reth
-      cl_type: teku
   additional_services:
     - blockscout
-    - dora
   network_params:
     # We use anvil's chain ID because 3151908 is not supported by eigenlayer-cli
     network_id: "31337"
