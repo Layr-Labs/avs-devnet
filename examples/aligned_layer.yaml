@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../schema.json
+
 # Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
 deployments:
   # TODO: use devnet EigenLayer deployer
@@ -102,7 +104,6 @@ services:
     image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
     input:
       /config-files/: operator_config
-      /addresses/: eigenlayer_addresses
       /keystores/: operator1_ecdsa
     env:
       DEPLOYER_PRIVATE_KEY: "$deployer_private_key"
@@ -112,9 +113,8 @@ services:
       - "sh"
       - "-c"
       - >-
-        STRATEGY_ADDR=$(awk '/"MOCK": "(.*)"/{ print $2 }' addresses/eigenlayer_deployment_output.json | tr -d '"\n,') &&
         sleep 12 &&
-        TOKEN_ADDR=$(cast call --rpc-url $RPC_URL $STRATEGY_ADDR 'underlyingToken()(address)') &&
+        TOKEN_ADDR=$(cast call --rpc-url $RPC_URL {{.addresses.EigenLayer.mockStrategy}} 'underlyingToken()(address)') &&
         cast send $TOKEN_ADDR 'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
         --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL
 
@@ -134,11 +134,9 @@ services:
       - "sh"
       - "-c"
       - >-
-        EL_ADDRESSES_FILE=contracts/script/output/devnet/eigenlayer_deployment_output.json &&
-        STRATEGY_ADDR=$(awk '/"MOCK": "(.*)"/{ print $2 }' $EL_ADDRESSES_FILE | tr -d '"\n,') &&
         sleep 24 &&
         aligned-layer-operator deposit-into-strategy --config ./config-files/config-docker.yaml
-        --strategy-address $STRATEGY_ADDR --amount 100000000000000000
+        --strategy-address {{.addresses.EigenLayer.mockStrategy}} --amount 100000000000000000
 
   - name: "operator1-whitelist-devnet"
     image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
@@ -187,7 +185,19 @@ services:
     cmd:
       - "sh"
       - "-c"
-      - "sleep 60 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
+      - "sleep 30 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
+
+  - name: batcher
+    image: ghcr.io/yetanotherco/aligned_layer/batcher:latest
+    env:
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_BUCKET_NAME: aligned.storage
+      UPLOAD_ENDPOINT: http://{{.services.localstack.ip_address}}:4566
+      DOWNLOAD_ENDPOINT: http://{{.services.localstack.ip_address}}:4566/aligned.storage
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
 
 keys:
   - name: "aggregator_bls"
@@ -197,6 +207,8 @@ keys:
   - name: "operator1_bls"
     type: "bls"
   - name: "operator1_ecdsa"
+    type: "ecdsa"
+  - name: "batcher_ecdsa"
     type: "ecdsa"
 
 artifacts:
