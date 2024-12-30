@@ -7,13 +7,13 @@
 # To run this example:
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
 # 1. Clone the https://github.com/Layr-Labs/eigenda repo
-# 2. Copy this file inside that repo (on the root), and move inside it
+# 2. Copy this file inside that repo as `devnet.yaml` (on the root), and move inside it
 # 3. Download the SRS files by running:
 #    mkdir -p resources
 #    curl --range 0-2097151 -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
 #    curl --range 0-4194303 -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
 #    curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point.powerOf2 -o resources/g2.point.powerOf2
-# 4. Run `devnet start eigenda.yaml`
+# 4. Run `devnet start`
 
 deployments:
   # NOTE: this script also deploys EigenLayer contracts
