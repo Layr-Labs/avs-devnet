@@ -5,7 +5,7 @@ deployments:
   # TODO: use devnet EigenLayer deployer
   - name: EigenLayer
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "testnet"
+    ref: "output-batcher-addresses-as-json"
     contracts_path: "contracts"
     script: script/deploy/EigenLayerDeployer.s.sol
     extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
@@ -19,7 +19,7 @@ deployments:
 
   - name: Aligned
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "testnet"
+    ref: "output-batcher-addresses-as-json"
     contracts_path: "contracts"
     script: script/deploy/AlignedLayerDeployer.s.sol
     extra_args: >-
@@ -36,16 +36,21 @@ deployments:
       alignedLayerServiceManager: "avs_addresses:.addresses.alignedLayerServiceManager"
       registryCoordinator: "avs_addresses:.addresses.registryCoordinator"
 
-  - name: Batcher Payment Service
+  - name: BatcherPaymentService
     repo: "https://github.com/yetanotherco/aligned_layer.git"
-    ref: "docker-compose-test-concurrency"
+    ref: "output-batcher-addresses-as-json"
     contracts_path: "contracts"
     script: script/deploy/BatcherPaymentServiceDeployer.s.sol
     extra_args: >-
-      --sig "run(string batcherConfigPath)"
+      --sig "run(string batcherConfigPath, string outputPath)"
       ./script/deploy/config/devnet/batcher.devnet.config.json
+      ./script/output/devnet/batcher_deployment_output.json
     input:
       script/deploy/config/devnet/: batcher_deployment_config
+    output:
+      batcher_addresses: script/output/devnet/batcher_deployment_output.json
+    addresses:
+      batcherPaymentService: "batcher_addresses:.addresses.batcherPaymentService"
 
 services:
   - name: localstack
@@ -79,7 +84,6 @@ services:
       /aggregator/config-files/: aggregator_config
       /aggregator/contracts/script/output/devnet/:
         - eigenlayer_addresses
-        # TODO: we have to merge this with the address for the batcher service
         - avs_addresses
       /aggregator/keystores/:
         - aggregator_bls
@@ -202,7 +206,7 @@ services:
         - batcher_ecdsa
       /deployment_output/:
         - eigenlayer_addresses
-        - avs_addresses
+        - avs_addresses_merged
     env:
       AWS_SECRET_ACCESS_KEY: test
       AWS_REGION: us-east-2
@@ -434,6 +438,17 @@ artifacts:
           bls_private_key_store_path: keystores/keys/1.bls.key.json
           signer_type: local
           chain_id: 31337
+
+  avs_addresses_merged:
+    files:
+      alignedlayer_deployment_output.json:
+        template: |
+          {
+            "addresses": {
+              "alignedLayerServiceManager": "{{.addresses.Aligned.alignedLayerServiceManager}}",
+              "batcherPaymentService": "{{.addresses.BatcherPaymentService.batcherPaymentService}}"
+            }
+          }
 
   batcher_config:
     files:
