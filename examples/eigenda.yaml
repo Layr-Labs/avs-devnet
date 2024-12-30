@@ -448,13 +448,17 @@ services:
       BATCHER_VERBOSE: true
       BATCHER_S3_BUCKET_NAME: "test-eigenda-blobstore"
       BATCHER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
-      BATCHER_PULL_INTERVAL: "1s"
       BATCHER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
       BATCHER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
       BATCHER_ENCODER_ADDRESS: "{{.services.encoder.ip_address}}:8080"
       BATCHER_ENABLE_METRICS: true
       BATCHER_METRICS_HTTP_PORT: 9100
-      BATCHER_BATCH_SIZE_LIMIT: 10240
+      BATCHER_BATCH_SIZE_LIMIT: 65536
+      BATCHER_NUM_CONNECTIONS: "512"
+      BATCHER_PULL_INTERVAL: 120s
+      BATCHER_ENCODING_TIMEOUT: 64s
+      BATCHER_ATTESTATION_TIMEOUT: 100s
+      BATCHER_ENCODING_REQUEST_QUEUE_SIZE: 1000
       BATCHER_USE_GRAPH: false
       BATCHER_GRAPH_URL: ""
       BATCHER_SRS_ORDER: 65536
@@ -591,7 +595,7 @@ artifacts:
         static_file: "resources/g2.point"
       g2.point.powerOf2:
         static_file: "resources/g2.point.powerOf2"
-  
+
   prometheus_config:
     files:
       prometheus.yml:
@@ -628,7 +632,7 @@ artifacts:
             - job_name: "proxy"
               static_configs:
                 - targets: ["{{.services.proxy.ip_address}}:9100"]
-  
+
   grafana_config:
     files:
       datasource.yml:
