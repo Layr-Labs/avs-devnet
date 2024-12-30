@@ -191,7 +191,7 @@ services:
     cmd:
       - "sh"
       - "-c"
-      - "sleep 30 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
+      - "sleep 60 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
 
   - name: batcher
     image: ghcr.io/yetanotherco/aligned_layer/batcher:latest
