@@ -1,6 +1,15 @@
 # yaml-language-server: $schema=../schema.json
 
 # Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
+
+# Things to note:
+# - the batcher's port is exposed on localhost, and it has to be manually changed to 0.0.0.0 (just look for `let addr = format!("localhost:{}", port);`)
+# - images need to be built manually, by running `make docker_build` in the Aigned Layer repo
+# - proof sending doesn't work yet
+# - to try sending proofs, you need to:
+#   - replace 0x7bc06c482DEAd17c0e297aFbC32f6e63d3846650 with the correct contract address in sdk
+#   - specify the correct RPC URL when sending proofs (look at the makefile for that)
+#   - pass batcher URL and proof sender PK with the `--batcher_url` and `--private_key` flags
 deployments:
   # TODO: use devnet EigenLayer deployer
   - name: EigenLayer
@@ -231,6 +240,9 @@ keys:
   - name: "operator1_ecdsa"
     type: "ecdsa"
   - name: "batcher_ecdsa"
+    type: "ecdsa"
+    # Account to be used when sending proofs
+  - name: "proof_sender"
     type: "ecdsa"
 
 artifacts:
