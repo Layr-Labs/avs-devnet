@@ -200,6 +200,10 @@ services:
         number: 9093
         transport_protocol: "TCP"
         application_protocol: "http"
+      rpc:
+        number: 8080
+        transport_protocol: "TCP"
+        application_protocol: "http"
     input:
       /config-files/:
         - batcher_config
