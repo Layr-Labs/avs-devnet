@@ -120,7 +120,7 @@ kurtosis_hello_world: build_hello_world_image ## 🚀 Start the devnet with the 
 
 # Aligned Layer example
 
-ALIGNED_REF:=75297ce11815a0272d4c9641e545cc60703e7306
+ALIGNED_REF:=3a0e280a74566ce42769c4e91ba53ce6ad11ebad
 
 examples/aligned_layer:
 	@echo "Cloning aligned_layer repo..."
@@ -132,11 +132,11 @@ examples/aligned_layer:
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
 
-build_aligned_layer_image: examples/aligned_layer
+build_aligned_layer_images: examples/aligned_layer
 	@echo "Building aligned_layer docker image..."
 	# This might fail
 	cd $< && make docker_build
 
-kurtosis_aligned_layer: build_aligned_layer_image
+kurtosis_aligned_layer: build_aligned_layer_images
 	@echo "Starting devnet with Aligned Layer example..."
 	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=examples/aligned_layer.yaml
