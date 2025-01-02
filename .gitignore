@@ -25,7 +25,6 @@ go.work.sum
 .env
 
 examples/hello-world-avs
-examples/aligned_layer
 
 devnet.yaml
 dist/
