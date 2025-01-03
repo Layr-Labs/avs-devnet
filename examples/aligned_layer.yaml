@@ -3,8 +3,8 @@
 # Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
 
 # Things to note:
-# - the batcher's port is exposed on localhost, and it has to be manually changed to 0.0.0.0 (just look for `let addr = format!("localhost:{}", port);`)
 # - images need to be built manually, by running `make docker_build` in the Aigned Layer repo
+#   - the branch required is: https://github.com/yetanotherco/aligned_layer/pull/1708
 # - proof sending doesn't work yet
 # - to try sending proofs, you need to:
 #   - replace 0x7bc06c482DEAd17c0e297aFbC32f6e63d3846650 with the correct contract address in sdk
@@ -229,6 +229,16 @@ services:
       DOWNLOAD_ENDPOINT: http://{{.services.localstack.ip_address}}:4566/aligned.storage
       RUST_LOG: info
       RUST_BACKTRACE: 1
+    cmd:
+      [
+        "aligned-batcher",
+        "--config",
+        "./config-files/config-batcher-docker.yaml",
+        "--addr",
+        "0.0.0.0",
+        "--port",
+        "8080",
+      ]
 
 keys:
   - name: "aggregator_bls"
@@ -359,8 +369,8 @@ artifacts:
         template: |
           {
             "address": {
-              "batcherWallet": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
-              "batcherPrivateKey": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
+              "batcherWallet": "{{.keys.batcher_ecdsa.address}}",
+              "batcherPrivateKey": "{{.keys.batcher_ecdsa.private_key}}",
               "alignedLayerServiceManager": "{{.addresses.Aligned.alignedLayerServiceManager}}"
             },
             "amounts": {
