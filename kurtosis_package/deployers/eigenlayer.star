@@ -240,7 +240,7 @@ EL_CONTRACT_NAMES = [
 EL_DEFAULT = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
-    "ref": "mainnet",
+    "ref": "dev",
     "contracts_path": ".",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
@@ -248,7 +248,7 @@ EL_DEFAULT = {
     "input": {},
     "output": {
         "eigenlayer_addresses": {
-            "path": "script/output/local/local_from_scratch_deployment_data.json",
+            "path": "script/output/devnet/local_from_scratch_deployment_data.json",
             "rename": "eigenlayer_deployment_output.json",
         }
     },
@@ -301,6 +301,7 @@ EL_CONFIG_TEMPLATE = """
     "activation_delay": 7200,
     "calculation_interval_seconds": 604800,
     "global_operator_commission_bips": 1000,
+    "default_operator_split_bips": 1000,
     "OPERATOR_SET_GENESIS_REWARDS_TIMESTAMP": 1720656000,
     "OPERATOR_SET_MAX_RETROACTIVE_LENGTH": 2592000
   },
