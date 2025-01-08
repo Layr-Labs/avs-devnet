@@ -252,6 +252,16 @@ EL_CONTRACT_NAMES = [
     "strategyManagerImplementation",
 ]
 
+EL_DEFAULT_ARGS = {
+    "name": "EigenLayer",
+    "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
+    "verify": False,
+    "contracts_path": ".",
+    "addresses": {},
+    "strategies": [],
+    "operators": [],
+}
+
 EL_DEPLOY_ARGS_v0_4_2 = {
     "ref": "v0.4.2-mainnet-pepe",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
@@ -277,16 +287,6 @@ EL_DEPLOY_ARGS_LATEST = {
         }
     },
 } | EL_DEFAULT_ARGS
-
-EL_DEFAULT_ARGS = {
-    "name": "EigenLayer",
-    "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
-    "verify": False,
-    "contracts_path": ".",
-    "addresses": {},
-    "strategies": [],
-    "operators": [],
-}
 
 EL_CONFIG_TEMPLATE = """
 {
