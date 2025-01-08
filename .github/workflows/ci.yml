@@ -170,6 +170,7 @@ jobs:
         with:
           repository: Layr-Labs/eigenda
           path: eigenda/
+          ref: a294978e346fe9d7ede0f1a57012c36f64f1212a
       
       - name: Download SRS points
         run: |
