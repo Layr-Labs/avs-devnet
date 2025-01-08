@@ -60,8 +60,14 @@ def generate_addresses_arg(el_output, strategies):
 def get_version_args(deployment):
     ref = el_args.get("ref", "dev")
     deployment_version = el_args.get("version", ref)
-    if deployment_version == "dev":
-        return EL_DEPLOY_ARGS_LATEST
+    if deployment_version.startswith("v"):
+        version = deployment_version[1:].split("-")[0].split(".")
+        major = int(version[0])
+        minor = int(version[1])
+        patch = int(version[2])
+        # EigenLayer contracts v0.4.2-mainnet-pepe and below
+        if major == 0 and (minor < 4 or (minor == 4 and patch <= 2)):
+            return EL_DEPLOY_ARGS_v0_4_2
 
     return EL_DEPLOY_ARGS_LATEST
 
@@ -246,14 +252,23 @@ EL_CONTRACT_NAMES = [
     "strategyManagerImplementation",
 ]
 
+EL_DEPLOY_ARGS_v0_4_2 = {
+    "ref": "v0.4.2-mainnet-pepe",
+    "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
+    "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
+    "input": {},
+    "output": {
+        "eigenlayer_addresses": {
+            "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
+            "rename": "eigenlayer_deployment_output.json",
+        }
+    },
+} | EL_DEFAULT_ARGS
+
 EL_DEPLOY_ARGS_LATEST = {
-    "name": "EigenLayer",
-    "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
     "ref": "dev",
-    "contracts_path": ".",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "verify": False,
     "input": {},
     "output": {
         "eigenlayer_addresses": {
@@ -261,6 +276,13 @@ EL_DEPLOY_ARGS_LATEST = {
             "rename": "eigenlayer_deployment_output.json",
         }
     },
+} | EL_DEFAULT_ARGS
+
+EL_DEFAULT_ARGS = {
+    "name": "EigenLayer",
+    "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
+    "verify": False,
+    "contracts_path": ".",
     "addresses": {},
     "strategies": [],
     "operators": [],
