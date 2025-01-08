@@ -17,7 +17,7 @@ def deploy(plan, context, deployment):
 
     config_name = generate_el_config(plan, context, token_address, strategies)
     # TODO: insert as list if user specifies same path
-    el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
+    el_args["input"] = el_args["input"] | {"script/configs/": config_name}
 
     el_args["addresses"] = el_args["addresses"] | generate_addresses_arg(
         "eigenlayer_addresses", strategies
@@ -240,15 +240,15 @@ EL_CONTRACT_NAMES = [
 EL_DEFAULT = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
-    "ref": "dev",
+    "ref": "mainnet",
     "contracts_path": ".",
-    "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
+    "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
     "verify": False,
     "input": {},
     "output": {
         "eigenlayer_addresses": {
-            "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
+            "path": "script/output/local/local_from_scratch_deployment_data.json",
             "rename": "eigenlayer_deployment_output.json",
         }
     },
@@ -262,8 +262,10 @@ EL_CONFIG_TEMPLATE = """
   "maintainer": "example@example.org",
   "multisig_addresses": {
     "operationsMultisig": "{{.deployer_address}}",
+    "communityMultisig": "{{.deployer_address}}",
     "pauserMultisig": "{{.deployer_address}}",
-    "executorMultisig": "{{.deployer_address}}"
+    "executorMultisig": "{{.deployer_address}}",
+    "timelock": "{{.deployer_address}}"
   },
   "strategies": [{{.strategies}}],
   "strategyManager": {
@@ -298,8 +300,10 @@ EL_CONFIG_TEMPLATE = """
     "rewards_updater_address": "{{.deployer_address}}",
     "activation_delay": 7200,
     "calculation_interval_seconds": 604800,
-    "global_operator_commission_bips": 1000
+    "global_operator_commission_bips": 1000,
+    "OPERATOR_SET_GENESIS_REWARDS_TIMESTAMP": 1720656000,
+    "OPERATOR_SET_MAX_RETROACTIVE_LENGTH": 2592000
   },
-  "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
+  "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242"
 }
 """
