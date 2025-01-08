@@ -133,6 +133,21 @@ services:
         cast send $TOKEN_ADDR 'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
         --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL
 
+  - name: "batcher-payment-service-deposit-initial-funds"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    env:
+      PRIVATE_KEY: "{{.keys.batcher_ecdsa.private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      BATCHER_PAYMENT_SERVICE_ADDRESS: "{{.addresses.BatcherPaymentService.batcherPaymentService}}"
+      ALIGNED_SERVICE_MANAGER_ADDRESS: "{{.addresses.Aligned.alignedLayerServiceManager}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        cast send --value "1ether"
+        --private-key $PRIVATE_KEY --rpc-url $RPC_URL
+        $ALIGNED_SERVICE_MANAGER_ADDRESS 'depositToBatcher(address)' $BATCHER_PAYMENT_SERVICE_ADDRESS
+
   - name: "operator1-deposit-into-mock-strategy"
     image: ghcr.io/yetanotherco/aligned_layer/operator:latest
     input:
