@@ -2,7 +2,7 @@
 deployments:
   # Deploy EigenLayer
   - type: EigenLayer
-    ref: v0.4.2-mainnet-pepe
+    ref: v1.0.3
     # Whitelist a single strategy named MockETH, backed by a mock-token
     strategies: [MockETH]
     operators:
