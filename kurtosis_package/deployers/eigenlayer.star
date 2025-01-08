@@ -58,8 +58,8 @@ def generate_addresses_arg(el_output, strategies):
 
 
 def get_version_args(deployment):
-    ref = el_args.get("ref", "dev")
-    deployment_version = el_args.get("version", ref)
+    ref = deployment.get("ref", "dev")
+    deployment_version = deployment.get("version", ref)
     if deployment_version.startswith("v"):
         version = deployment_version[1:].split("-")[0].split(".")
         major = int(version[0])
