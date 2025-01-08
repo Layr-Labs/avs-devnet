@@ -3,7 +3,7 @@ utils = import_module("./utils.star")
 
 
 def deploy(plan, context, deployment):
-    el_args = EL_DEFAULT | deployment
+    el_args = get_version_args(deployment) | deployment
     el_name = el_args["name"]
     plan.print("Initiating {} deployment".format(el_name))
 
@@ -55,6 +55,15 @@ def generate_addresses_arg(el_output, strategies):
         addresses[name] = path
 
     return addresses
+
+
+def get_version_args(deployment):
+    ref = el_args.get("ref", "dev")
+    deployment_version = el_args.get("version", ref)
+    if deployment_version == "dev":
+        return EL_DEPLOY_ARGS_LATEST
+
+    return EL_DEPLOY_ARGS_LATEST
 
 
 def deploy_mocktoken(plan, context, deployment_name, verify):
@@ -237,7 +246,7 @@ EL_CONTRACT_NAMES = [
     "strategyManagerImplementation",
 ]
 
-EL_DEFAULT = {
+EL_DEPLOY_ARGS_LATEST = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
     "ref": "dev",
