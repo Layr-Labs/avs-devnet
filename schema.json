@@ -47,6 +47,9 @@
                 "ref": {
                     "type": "string"
                 },
+                "version": {
+                    "type": "string"
+                },
                 "contracts_path": {
                     "type": "string"
                 },

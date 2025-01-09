@@ -309,6 +309,9 @@ deployments:
   - type: eigenlayer
     # Same as before
     ref: v0.4.2-mainnet-pepe
+    # In case the ref doesn't start with the version (i.e. is a specific commit or branch)
+    # you can specify the nearest version, so the devnet knows how to deploy it
+    version: v0.4.2
     # The strategies to deploy, all of them backed by the same mocked token
     strategies:
       # The strategy name
