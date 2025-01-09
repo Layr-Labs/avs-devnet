@@ -16,6 +16,9 @@ def deploy(plan, context, deployment):
         token_address = deploy_mocktoken(plan, context, el_name, el_args["verify"])
 
     config_name = generate_el_config(plan, context, token_address, strategies)
+
+    el_args["input"] = dict(el_args["input"])
+
     for key, value in el_args["input"].items():
         if value == CONFIG_ARTIFACT_PLACEHOLDER:
             el_args["input"][key] = config_name
