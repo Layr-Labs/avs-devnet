@@ -273,9 +273,7 @@ EL_DEPLOY_ARGS_v0_4_2 = {
     "ref": "v0.4.2-mainnet-pepe",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "input": {
-        "script/configs/devnet/": CONFIG_ARTIFACT_PLACEHOLDER
-    },
+    "input": {"script/configs/devnet/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
@@ -288,9 +286,7 @@ EL_DEPLOY_ARGS_LATEST = {
     "ref": "dev",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "input": {
-        "script/configs/": CONFIG_ARTIFACT_PLACEHOLDER
-    },
+    "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/local_from_scratch_deployment_data.json",
