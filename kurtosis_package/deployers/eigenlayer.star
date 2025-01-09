@@ -289,7 +289,7 @@ EL_DEPLOY_ARGS_LATEST = {
     "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
-            "path": "script/output/devnet/local_from_scratch_deployment_data.json",
+            "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
             "rename": "eigenlayer_deployment_output.json",
         }
     },
@@ -323,6 +323,11 @@ EL_CONFIG_TEMPLATE = """
   },
   "slasher": {
     "init_paused_status": 0
+  },
+  "allocationManager": {
+    "init_paused_status": 0,
+    "DEALLOCATION_DELAY": 900,
+    "ALLOCATION_CONFIGURATION_DELAY": 1200
   },
   "delegation": {
     "init_paused_status": 0,
