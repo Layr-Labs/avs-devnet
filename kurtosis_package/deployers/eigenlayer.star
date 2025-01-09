@@ -16,8 +16,9 @@ def deploy(plan, context, deployment):
         token_address = deploy_mocktoken(plan, context, el_name, el_args["verify"])
 
     config_name = generate_el_config(plan, context, token_address, strategies)
-    # TODO: insert as list if user specifies same path
-    el_args["input"] = el_args["input"] | {"script/configs/": config_name}
+    for key, value in el_args["input"].items():
+        if value == CONFIG_ARTIFACT_PLACEHOLDER:
+            el_args["input"][key] = config_name
 
     el_args["addresses"] = el_args["addresses"] | generate_addresses_arg(
         "eigenlayer_addresses", strategies
@@ -262,11 +263,16 @@ EL_DEFAULT_ARGS = {
     "operators": [],
 }
 
+# Placeholder for the dynamically generated artifact name
+CONFIG_ARTIFACT_PLACEHOLDER = "+$+CONFIG_ARTIFACT+$+"
+
 EL_DEPLOY_ARGS_v0_4_2 = {
     "ref": "v0.4.2-mainnet-pepe",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "input": {},
+    "input": {
+        "script/configs/devnet/": CONFIG_ARTIFACT_PLACEHOLDER
+    },
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
@@ -279,7 +285,9 @@ EL_DEPLOY_ARGS_LATEST = {
     "ref": "dev",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "input": {},
+    "input": {
+        "script/configs/": CONFIG_ARTIFACT_PLACEHOLDER
+    },
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/local_from_scratch_deployment_data.json",
