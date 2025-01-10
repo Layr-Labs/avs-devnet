@@ -17,7 +17,7 @@ deployments:
     ref: "v0.3.3-mainnet-rewards"
     # NOTE: operator registration is done at operator startup
 
-  - name: incredible-squaring
+  - name: incredible_squaring
     repo: "."
     contracts_path: "contracts"
     script: script/IncredibleSquaringDeployer.s.sol
