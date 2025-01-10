@@ -25,6 +25,10 @@ deployments:
       script/output/3151908: eigenlayer_addresses
     output:
       avs_addresses: "script/output/3151908/credible_squaring_avs_deployment_output.json"
+    addresses:
+      erc20MockStrategy: "avs_addresses:.addresses.erc20MockStrategy"
+      registryCoordinator: "avs_addresses:.addresses.registryCoordinator"
+      operatorStateRetriever: "avs_addresses:.addresses.operatorStateRetriever"
 
 services:
   - name: aggregator
