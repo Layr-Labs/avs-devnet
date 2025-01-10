@@ -64,8 +64,13 @@ def generate_addresses_arg(el_output, strategies):
 def get_version_args(deployment):
     ref = deployment.get("ref", "dev")
     deployment_version = deployment.get("version", ref)
-    if deployment_version.startswith("v"):
-        version = deployment_version[1:].split("-")[0].split(".")
+    if deployment_version == "":
+        return EL_DEPLOY_ARGS_LATEST
+
+    version_unprefixed = deployment_version.lstrip("v")
+
+    if version_unprefixed[0].isdigit():
+        version = version_unprefixed.split("-")[0].split(".")
         major = int(version[0])
         minor = int(version[1])
         patch = int(version[2])
