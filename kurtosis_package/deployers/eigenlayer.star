@@ -19,6 +19,8 @@ def deploy(plan, context, deployment):
 
     el_args["input"] = dict(el_args["input"])
 
+    # Allow any number of replacements, so users can change the config path
+    # when using an unsupported version
     for key, value in el_args["input"].items():
         if value == CONFIG_ARTIFACT_PLACEHOLDER:
             el_args["input"][key] = config_name
