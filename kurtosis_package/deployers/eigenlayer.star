@@ -95,7 +95,7 @@ def deploy_mocktoken(plan, context, deployment_name, verify):
 
     verify_args = utils.get_verify_args(context) if verify else ""
 
-    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key 0x{} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
+    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key {} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
     | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
         http_rpc_url,
         private_key,
@@ -154,6 +154,9 @@ def format_strategies(context, token_address, strategies):
 
 
 def whitelist_strategies(plan, context, deployment_name, strategies):
+    if len(strategies) == 0:
+        return
+
     data = context.data
     addresses = data["addresses"][deployment_name]
     strategy_params = ",".join([addresses[strategy["name"]] for strategy in strategies])
