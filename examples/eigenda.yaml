@@ -3,6 +3,8 @@
 # Example devnet config file for the EigenDA AVS (https://github.com/Layr-Labs/eigenda)
 # This file can be used inside the EigenDA repo to start a devnet with any local changes
 # TODO: move this to the EigenDA repo
+# TODO: update to work with latest version
+# TODO: update to work with v2
 
 # To run this example:
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
