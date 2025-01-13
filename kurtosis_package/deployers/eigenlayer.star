@@ -184,8 +184,10 @@ def register_operators(plan, context, deployment_name, operators):
         operator_keys = data["keys"][keys_name]
         addresses = data["addresses"][deployment_name]
 
-        send_cmd = "cast send --confirmations 0 --rpc-url {rpc} --private-key {pk}".format(
-            rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+        send_cmd = (
+            "cast send --confirmations 0 --rpc-url {rpc} --private-key {pk}".format(
+                rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+            )
         )
         cmds = ["set -e"]
         cmds.append(
