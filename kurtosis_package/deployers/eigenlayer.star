@@ -95,7 +95,7 @@ def deploy_mocktoken(plan, context, deployment_name, verify):
 
     verify_args = utils.get_verify_args(context) if verify else ""
 
-    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key 0x{} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
+    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key {} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
     | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
         http_rpc_url,
         private_key,
@@ -154,11 +154,14 @@ def format_strategies(context, token_address, strategies):
 
 
 def whitelist_strategies(plan, context, deployment_name, strategies):
+    if len(strategies) == 0:
+        return
+
     data = context.data
     addresses = data["addresses"][deployment_name]
     strategy_params = ",".join([addresses[strategy["name"]] for strategy in strategies])
     flag_params = ",".join(["true" for _ in strategies])
-    cmd = "set -e ; cast send --rpc-url {rpc} --private-key 0x{pk} \
+    cmd = "set -e ; cast send --rpc-url {rpc} --private-key {pk} \
     {addr} 'addStrategiesToDepositWhitelist(address[],bool[])' '[{strategy_params}]' '[{flag_params}]'".format(
         rpc=data["http_rpc_url"],
         pk=data["deployer_private_key"],
@@ -181,8 +184,10 @@ def register_operators(plan, context, deployment_name, operators):
         operator_keys = data["keys"][keys_name]
         addresses = data["addresses"][deployment_name]
 
-        send_cmd = "cast send --rpc-url {rpc} --private-key {pk}".format(
-            rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+        send_cmd = (
+            "cast send --confirmations 0 --rpc-url {rpc} --private-key {pk}".format(
+                rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+            )
         )
         cmds = ["set -e"]
         cmds.append(

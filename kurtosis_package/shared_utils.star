@@ -66,7 +66,7 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
 def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-    cmd = "cast send --value {} --private-key {} --rpc-url {} {}".format(
+    cmd = "cast send --confirmations 0 --value {} --private-key {} --rpc-url {} {}".format(
         amount, funded_private_key, http_rpc_url, to
     )
     plan.run_sh(
