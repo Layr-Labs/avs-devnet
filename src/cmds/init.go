@@ -18,7 +18,7 @@ func InitCmd(ctx *cli.Context) error {
 	opts := InitOptions{configFileName}
 	err = Init(opts)
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, 1)
 	}
 	fmt.Println("Initialized configuration file:", configFileName)
 	return nil

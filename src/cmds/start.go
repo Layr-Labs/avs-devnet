@@ -33,11 +33,11 @@ func StartCmd(ctx *cli.Context) error {
 		return cli.Exit(err, 1)
 	}
 	if !fileExists(configPath) {
-		return cli.Exit("Config file doesn't exist: "+configPath, 2)
+		return cli.Exit("Config file doesn't exist: "+configPath, 1)
 	}
 	devnetConfig, err := config.LoadFromPath(configPath)
 	if err != nil {
-		return cli.Exit(err, 3)
+		return cli.Exit(err, 1)
 	}
 	workingDir := filepath.Dir(configPath)
 	opts := StartOptions{
@@ -48,7 +48,7 @@ func StartCmd(ctx *cli.Context) error {
 	}
 	err = Start(ctx.Context, opts)
 	if err != nil {
-		return cli.Exit(err, 4)
+		return cli.Exit(err, 1)
 	}
 	return nil
 }

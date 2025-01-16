@@ -11,12 +11,14 @@ import (
 )
 
 // Returns the devnet name and the configuration file name.
-func parseArgs(ctx *cli.Context) (devnetName string, fileName string, err error) {
+func parseArgs(ctx *cli.Context) (string, string, error) {
 	args := ctx.Args()
 	if args.Len() > 1 {
 		return "", "", errors.New("expected exactly 1 argument: <config-file>")
 	}
-	fileName = args.First()
+	fileName := args.First()
+	var devnetName string
+
 	if fileName == "" {
 		fileName = "devnet.yaml"
 		devnetName = "devnet"
@@ -27,7 +29,7 @@ func parseArgs(ctx *cli.Context) (devnetName string, fileName string, err error)
 		}
 		devnetName = name
 	}
-	return devnetName, fileName, err
+	return devnetName, fileName, nil
 }
 
 // Checks if a file exists at the given path.

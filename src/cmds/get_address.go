@@ -22,17 +22,17 @@ func GetAddress(ctx *cli.Context) error {
 
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, 1)
 	}
 	enclaveCtx, err := kurtosisCtx.GetEnclaveCtx(ctx.Context, devnetName)
 	if err != nil {
-		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 3)
+		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 1)
 	}
 
 	err = printAddresses(ctx, args.Slice(), enclaveCtx)
 
 	if err != nil {
-		return cli.Exit(err, 3)
+		return cli.Exit(err, 1)
 	}
 	return nil
 }

@@ -16,19 +16,19 @@ func GetPorts(ctx *cli.Context) error {
 
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, 1)
 	}
 	enclaveCtx, err := kurtosisCtx.GetEnclaveCtx(ctx.Context, devnetName)
 	if err != nil {
-		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 3)
+		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 1)
 	}
 	ports, err := getServicePorts(enclaveCtx)
 	if err != nil {
-		return cli.Exit(err, 4)
+		return cli.Exit(err, 1)
 	}
 	err = printPorts(ports)
 	if err != nil {
-		return cli.Exit(err, 5)
+		return cli.Exit(err, 1)
 	}
 	return nil
 }
