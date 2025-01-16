@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Creates a new devnet configuration with the given context
+// Creates a new devnet configuration with the given context.
 func InitCmd(ctx *cli.Context) error {
 	_, configFileName, err := parseArgs(ctx)
 	if err != nil {
@@ -28,7 +28,7 @@ type InitOptions struct {
 	ConfigFileName string
 }
 
-// Creates a new devnet configuration according to the config
+// Creates a new devnet configuration according to the config.
 func Init(opts InitOptions) error {
 	if fileExists(opts.ConfigFileName) {
 		return errors.New("Config file already exists: " + opts.ConfigFileName)

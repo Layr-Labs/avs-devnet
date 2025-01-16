@@ -12,7 +12,7 @@ import (
 
 var _ Reporter = (*ProgressBarReporter)(nil)
 
-// A reporter that reports progress via a progress bar
+// A reporter that reports progress via a progress bar.
 type ProgressBarReporter struct {
 	pb *progressbar.ProgressBar
 }
@@ -145,7 +145,7 @@ func addDetail(pb *progressbar.ProgressBar, detail string) {
 	_ = pb.AddDetail(detail)
 }
 
-// Ends and clears the progress bar
+// Ends and clears the progress bar.
 func clearBar(pb *progressbar.ProgressBar) {
 	// Ignore any errors
 	_ = pb.Set(1)

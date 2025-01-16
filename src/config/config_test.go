@@ -1,12 +1,18 @@
-package config
+package config_test
 
 import (
+	_ "embed"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Layr-Labs/avs-devnet/src/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+//go:embed default_config.yaml
+var defaultConfig []byte
 
 // TODO: this is repeated in multiple tests
 func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string)) {
@@ -30,13 +36,13 @@ func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string
 }
 
 func TestLoadDefaultConfig(t *testing.T) {
-	_, err := Unmarshal([]byte(defaultConfig))
+	_, err := config.Unmarshal(defaultConfig)
 	assert.NoError(t, err, "Couldn't parse default config")
 }
 
 func TestLoadingExampleConfigs(t *testing.T) {
 	forEachExample(t, func(t *testing.T, examplePath string) {
-		_, err := LoadFromPath(examplePath)
+		_, err := config.LoadFromPath(examplePath)
 		assert.NoError(t, err, "Couldn't load config from path")
 	})
 }
@@ -44,11 +50,11 @@ func TestLoadingExampleConfigs(t *testing.T) {
 func TestUnmarshalAndMarshalReturnsSameString(t *testing.T) {
 	forEachExample(t, func(t *testing.T, examplePath string) {
 		rawCfg, err := os.ReadFile(examplePath)
-		assert.NoError(t, err, "Couldn't read config file")
+		require.NoError(t, err, "Couldn't read config file")
 
-		cfg, err := Unmarshal(rawCfg)
-		assert.NoError(t, err, "Failed to unmarshal config")
+		cfg, err := config.Unmarshal(rawCfg)
+		require.NoError(t, err, "Failed to unmarshal config")
 
-		assert.Equal(t, rawCfg, cfg.Marshal(), "Unmarshalled and marshalled config don't match")
+		require.Equal(t, rawCfg, cfg.Marshal(), "Unmarshalled and marshalled config don't match")
 	})
 }

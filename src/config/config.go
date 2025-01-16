@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// A devnet specification
+// A devnet specification.
 type DevnetConfig struct {
 	// Contains contract groups to deploy
 	Deployments []Deployment `yaml:"deployments"`
@@ -23,7 +23,7 @@ type DevnetConfig struct {
 	raw []byte
 }
 
-// A group of contracts to deploy
+// A group of contracts to deploy.
 type Deployment struct {
 	// Name for the deployment
 	Name string `yaml:"name"`
@@ -39,14 +39,14 @@ type Deployment struct {
 	// non-exhaustive
 }
 
-// Returns the path to the deployment script (i.e. `Script`) but without the trailing contract name
-// Example: "contracts/contracts.sol:Contract" -> "contracts/contracts.sol"
+// Example: "contracts/contracts.sol:Contract" -> "contracts/contracts.sol".
 func (d Deployment) GetScriptPath() string {
-	scriptPath := strings.SplitAfterN(d.Script, ".sol:", 2)[0]
+	const maxSplits = 2
+	scriptPath := strings.SplitAfterN(d.Script, ".sol:", maxSplits)[0]
 	return strings.TrimSuffix(scriptPath, ":")
 }
 
-// A service to start
+// A service to start.
 type Service struct {
 	// The service name
 	Name string `yaml:"name"`
@@ -82,7 +82,7 @@ type ArtifactFile struct {
 	Template *string `yaml:"template"`
 }
 
-// Loads a DevnetConfig from a file
+// Loads a DevnetConfig from a file.
 func LoadFromPath(filePath string) (DevnetConfig, error) {
 	var config DevnetConfig
 	file, err := os.ReadFile(filePath)
@@ -92,7 +92,7 @@ func LoadFromPath(filePath string) (DevnetConfig, error) {
 	return Unmarshal(file)
 }
 
-// Loads a DevnetConfig from a byte slice
+// Loads a DevnetConfig from a byte slice.
 func Unmarshal(file []byte) (DevnetConfig, error) {
 	var config DevnetConfig
 	config.raw = file

@@ -60,7 +60,7 @@ type Reporter interface {
 	ReportRunFinished(success bool, output string) error
 }
 
-// This function reads the Kurtosis response channel and reports the progress to the reporter
+// This function reads the Kurtosis response channel and reports the progress to the reporter.
 func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error {
 	state := Interpretation
 	var totalSteps uint32
@@ -69,7 +69,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 		if line.GetProgressInfo() != nil {
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
-			description := progressInfo.CurrentStepInfo[0]
+			description := progressInfo.GetCurrentStepInfo()[0]
 
 			// We first match against the message for state transitions
 			if description == "Interpreting plan - execution will begin shortly" {
@@ -85,7 +85,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 				continue
 			} else if description == "Starting execution" {
 				state = Execution
-				totalSteps = progressInfo.TotalSteps
+				totalSteps = progressInfo.GetTotalSteps()
 				err := reporter.ReportExecutionStart(int(totalSteps))
 				if err != nil {
 					return err
@@ -94,15 +94,15 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 			}
 
 			// We set the total steps here because the "Starting validation" message has the wrong step count.
-			if strings.HasPrefix(description, "Validating plan") && state == Interpretation && progressInfo.TotalSteps != 0 {
+			if strings.HasPrefix(description, "Validating plan") && state == Interpretation && progressInfo.GetTotalSteps() != 0 {
 				state = Validation
-				totalSteps = progressInfo.TotalSteps
+				totalSteps = progressInfo.GetTotalSteps()
 				err := reporter.ReportValidationStart(int(totalSteps))
 				if err != nil {
 					return err
 				}
 			}
-			currentStep := progressInfo.CurrentStepNumber
+			currentStep := progressInfo.GetCurrentStepNumber()
 			// Call the corresponding reporter method based on current state
 			switch state {
 			case Validation:
@@ -110,7 +110,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 					CurrentStep: int(currentStep),
 					TotalSteps:  int(totalSteps),
 					Description: description,
-					Details:     progressInfo.CurrentStepInfo[1:],
+					Details:     progressInfo.GetCurrentStepInfo()[1:],
 				}
 				err := reporter.ReportValidationStep(step)
 				if err != nil {
@@ -147,12 +147,12 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 				return err
 			}
 		} else if line.GetInfo() != nil {
-			err := reporter.ReportInfo(line.GetInfo().InfoMessage)
+			err := reporter.ReportInfo(line.GetInfo().GetInfoMessage())
 			if err != nil {
 				return err
 			}
 		} else if line.GetWarning() != nil {
-			err := reporter.ReportWarning(line.GetWarning().WarningMessage)
+			err := reporter.ReportWarning(line.GetWarning().GetWarningMessage())
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 		} else if line.GetRunFinishedEvent() != nil {
 			// It's a run finished event
 			event := line.GetRunFinishedEvent()
-			err := reporter.ReportRunFinished(event.IsRunSuccessful, event.GetSerializedOutput())
+			err := reporter.ReportRunFinished(event.GetIsRunSuccessful(), event.GetSerializedOutput())
 			if err != nil {
 				return err
 			}
@@ -183,13 +183,13 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 func getKurtosisError(starlarkError *kurtosis_core_rpc_api_bindings.StarlarkError) error {
 	var msg string
 	if err := starlarkError.GetValidationError(); err != nil {
-		msg = err.ErrorMessage
+		msg = err.GetErrorMessage()
 	}
 	if err := starlarkError.GetInterpretationError(); err != nil {
-		msg = err.ErrorMessage
+		msg = err.GetErrorMessage()
 	}
 	if err := starlarkError.GetExecutionError(); err != nil {
-		msg = err.ErrorMessage
+		msg = err.GetErrorMessage()
 	}
 	return errors.New("error occurred during execution: " + msg)
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Starts the devnet with the given context
+// Starts the devnet with the given context.
 func StartCmd(ctx *cli.Context) error {
 	pkgName := flags.KurtosisPackageFlag.Get(ctx)
 	devnetName, configPath, err := parseArgs(ctx)
@@ -53,7 +53,7 @@ func StartCmd(ctx *cli.Context) error {
 	return nil
 }
 
-// Options accepted by Start
+// Options accepted by Start.
 type StartOptions struct {
 	// URL of the kurtosis package to run
 	KurtosisPackageUrl string
@@ -66,7 +66,7 @@ type StartOptions struct {
 	DevnetConfig config.DevnetConfig
 }
 
-// Starts the devnet with the given context
+// Starts the devnet with the given context.
 func Start(ctx context.Context, opts StartOptions) error {
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
@@ -121,7 +121,7 @@ func Start(ctx context.Context, opts StartOptions) error {
 	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 
-// Uploads the local repositories to the enclave
+// Uploads the local repositories to the enclave.
 func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
 	for _, deployment := range config.Deployments {
 		if deployment.Repo == "" {
@@ -143,10 +143,7 @@ func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx 
 	return nil
 }
 
-// Uploads the script of a single deployment from the repo at the given path to an enclave.
-// The deployment script is flattened and uploaded with the deployment name suffixed with '-script'.
-// The resulting artifact's structure is similar to the repo's structure, but with only the script and foundry config.
-// TODO: to avoid having foundry as a dependency, we should use it via docker
+// TODO: to avoid having foundry as a dependency, we should use it via docker.
 func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext) error {
 	scriptPath := deployment.GetScriptPath()
 	scriptOrigin := filepath.Join(repoPath, deployment.ContractsPath, scriptPath)

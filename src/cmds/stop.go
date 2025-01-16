@@ -11,7 +11,7 @@ import (
 
 var ErrEnclaveNotExists = errors.New("enclave doesn't exist")
 
-// Stops the devnet with the given context
+// Stops the devnet with the given context.
 func StopCmd(ctx *cli.Context) error {
 	devnetName, _, err := parseArgs(ctx)
 	if err != nil {

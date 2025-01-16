@@ -35,7 +35,7 @@ func GetPorts(ctx *cli.Context) error {
 
 type ServicePorts map[string]string
 
-// Returns the
+// Returns the.
 func getServicePorts(enclaveCtx kurtosis.EnclaveCtx) (map[string]ServicePorts, error) {
 	servicePorts := make(map[string]ServicePorts)
 	services, err := enclaveCtx.GetServices()
