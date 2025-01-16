@@ -22,17 +22,17 @@ func GetAddress(ctx *cli.Context) error {
 
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
-		return cli.Exit(err, 2)
+		return cli.Exit(err, 1)
 	}
 	enclaveCtx, err := kurtosisCtx.GetEnclaveCtx(ctx.Context, devnetName)
 	if err != nil {
-		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 3)
+		return cli.Exit(err.Error()+"\n\nFailed to find devnet '"+devnetName+"'. Maybe it's not running?", 1)
 	}
 
 	err = printAddresses(ctx, args.Slice(), enclaveCtx)
 
 	if err != nil {
-		return cli.Exit(err, 3)
+		return cli.Exit(err, 1)
 	}
 	return nil
 }
@@ -60,7 +60,7 @@ func printAddresses(ctx *cli.Context, args []string, enclaveCtx kurtosis.Enclave
 				failed = true
 				readFile = ""
 			}
-			file = string(readFile)
+			file = readFile
 			cached[artifactName] = file
 		}
 		output, ok := readArtifact(file, contractName)
@@ -79,18 +79,19 @@ func printAddresses(ctx *cli.Context, args []string, enclaveCtx kurtosis.Enclave
 
 func readArtifact(file string, contractName string) (string, bool) {
 	var jsonPath string
-	if strings.HasPrefix(contractName, ".") {
+	switch {
+	case strings.HasPrefix(contractName, "."):
 		// This uses the absolute path
 		jsonPath = "addresses" + contractName + "|@pretty"
-	} else if contractName != "" {
+	case contractName != "":
 		// This searches for `contractName` inside the json
 		// Since there are multiple results, `|0` is used to get the first one
 		jsonPath = "@dig:" + contractName + "|0|@pretty"
-	} else {
+	default:
 		// This just prints the whole json
 		jsonPath = "@pretty"
 	}
-	res := gjson.Get(string(file), jsonPath)
+	res := gjson.Get(file, jsonPath)
 	if !res.Exists() {
 		return "", false
 	}

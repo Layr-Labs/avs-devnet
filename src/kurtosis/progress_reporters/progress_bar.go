@@ -12,7 +12,7 @@ import (
 
 var _ Reporter = (*ProgressBarReporter)(nil)
 
-// A reporter that reports progress via a progress bar
+// A reporter that reports progress via a progress bar.
 type ProgressBarReporter struct {
 	pb *progressbar.ProgressBar
 }
@@ -32,7 +32,7 @@ func (r *ProgressBarReporter) ReportValidationStart(totalSteps int) error {
 }
 
 func (r *ProgressBarReporter) ReportValidationStep(stepInfo ValidationStep) error {
-	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	_ = r.pb.Set(stepInfo.CurrentStep)
 	r.pb.Describe(stepInfo.Description)
 	details := strings.Join(stepInfo.Details, ", ")
 	addDetail(r.pb, details)
@@ -45,7 +45,7 @@ func (r *ProgressBarReporter) ReportExecutionStart(totalSteps int) error {
 }
 
 func (r *ProgressBarReporter) ReportExecutionStep(stepInfo ExecutionStep) error {
-	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	_ = r.pb.Set(stepInfo.CurrentStep)
 	r.pb.Describe(stepInfo.Description)
 	if stepInfo.InstructionDescription != nil {
 		addDetail(r.pb, *stepInfo.InstructionDescription)
@@ -82,22 +82,26 @@ func (r *ProgressBarReporter) ReportRunFinished(success bool, output string) err
 	return nil
 }
 
-func (r *ProgressBarReporter) changeProgressBar(max int, message string) {
+func (r *ProgressBarReporter) changeProgressBar(steps int, message string) {
 	if r.pb != nil {
 		clearBar(r.pb)
 	}
-	r.pb = newProgressBar(max)
+	r.pb = newProgressBar(steps)
 	_ = r.pb.RenderBlank()
 	r.pb.Describe(message)
 }
 
+const DEFAULT_TERM_WIDTH = 80
+
 func termWidth() int {
 	width, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		return 80
+		return DEFAULT_TERM_WIDTH
 	}
 	return width
 }
+
+const RECTANGLE_DOTS_SPINNER = 14
 
 func newProgressBar(steps int) *progressbar.ProgressBar {
 	pb := progressbar.NewOptions(
@@ -109,7 +113,7 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionShowCount(),
-		progressbar.OptionSpinnerType(14),
+		progressbar.OptionSpinnerType(RECTANGLE_DOTS_SPINNER),
 		progressbar.OptionFullWidth(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
@@ -145,7 +149,7 @@ func addDetail(pb *progressbar.ProgressBar, detail string) {
 	_ = pb.AddDetail(detail)
 }
 
-// Ends and clears the progress bar
+// Ends and clears the progress bar.
 func clearBar(pb *progressbar.ProgressBar) {
 	// Ignore any errors
 	_ = pb.Set(1)

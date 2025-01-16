@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-// Starts the devnet with the given context
+// Starts the devnet with the given context.
 func StartCmd(ctx *cli.Context) error {
 	pkgName := flags.KurtosisPackageFlag.Get(ctx)
 	devnetName, configPath, err := parseArgs(ctx)
@@ -33,11 +33,11 @@ func StartCmd(ctx *cli.Context) error {
 		return cli.Exit(err, 1)
 	}
 	if !fileExists(configPath) {
-		return cli.Exit("Config file doesn't exist: "+configPath, 2)
+		return cli.Exit("Config file doesn't exist: "+configPath, 1)
 	}
 	devnetConfig, err := config.LoadFromPath(configPath)
 	if err != nil {
-		return cli.Exit(err, 3)
+		return cli.Exit(err, 1)
 	}
 	workingDir := filepath.Dir(configPath)
 	opts := StartOptions{
@@ -48,12 +48,12 @@ func StartCmd(ctx *cli.Context) error {
 	}
 	err = Start(ctx.Context, opts)
 	if err != nil {
-		return cli.Exit(err, 4)
+		return cli.Exit(err, 1)
 	}
 	return nil
 }
 
-// Options accepted by Start
+// Options accepted by Start.
 type StartOptions struct {
 	// URL of the kurtosis package to run
 	KurtosisPackageUrl string
@@ -66,7 +66,7 @@ type StartOptions struct {
 	DevnetConfig config.DevnetConfig
 }
 
-// Starts the devnet with the given context
+// Starts the devnet with the given context.
 func Start(ctx context.Context, opts StartOptions) error {
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {
@@ -90,7 +90,7 @@ func Start(ctx context.Context, opts StartOptions) error {
 		return fmt.Errorf("failed when uploading local repos: %w", err)
 	}
 
-	err = uploadStaticFiles(opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
+	err = uploadStaticFiles(ctx, opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
 	if err != nil {
 		return fmt.Errorf("failed when uploading static files: %w", err)
 	}
@@ -121,7 +121,7 @@ func Start(ctx context.Context, opts StartOptions) error {
 	return progress_reporters.ReportProgress(reporter, responseChan)
 }
 
-// Uploads the local repositories to the enclave
+// Uploads the local repositories to the enclave.
 func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
 	for _, deployment := range config.Deployments {
 		if deployment.Repo == "" {
@@ -146,7 +146,7 @@ func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx 
 // Uploads the script of a single deployment from the repo at the given path to an enclave.
 // The deployment script is flattened and uploaded with the deployment name suffixed with '-script'.
 // The resulting artifact's structure is similar to the repo's structure, but with only the script and foundry config.
-// TODO: to avoid having foundry as a dependency, we should use it via docker
+// TODO: to avoid having foundry as a dependency, we should use it via docker.
 func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext) error {
 	scriptPath := deployment.GetScriptPath()
 	scriptOrigin := filepath.Join(repoPath, deployment.ContractsPath, scriptPath)
@@ -201,16 +201,22 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	return nil
 }
 
-func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
+func uploadStaticFiles(
+	ctx context.Context,
+	dirContext string,
+	config config.DevnetConfig,
+	enclaveCtx *enclaves.EnclaveContext,
+) error {
 	for artifactName, artifactDetails := range config.Artifacts {
 		numStaticFiles := 0
 		numTemplates := 0
 		for _, fileAttrs := range artifactDetails.Files {
-			if fileAttrs.StaticFile != nil {
+			switch {
+			case fileAttrs.StaticFile != nil:
 				numStaticFiles += 1
-			} else if fileAttrs.Template != nil {
+			case fileAttrs.Template != nil:
 				numTemplates += 1
-			} else {
+			default:
 				return errors.New("artifact must have either a static file or a template")
 			}
 		}
@@ -231,41 +237,9 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		for outFileName, fileAttrs := range artifactDetails.Files {
 			rawUrl := *fileAttrs.StaticFile
 			destinationFilePath := filepath.Join(outputDir, outFileName)
-			srcUrl, err := url.Parse(*fileAttrs.StaticFile)
+			err = uploadStaticFile(ctx, rawUrl, dirContext, destinationFilePath)
 			if err != nil {
-				return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
-			}
-			if isLocalUrl(srcUrl.Scheme) {
-				// Copy the file to the temp dir
-				originFilePath := ensureAbs(dirContext, rawUrl)
-				err = fileCopy(originFilePath, destinationFilePath)
-				if err != nil {
-					return fmt.Errorf("failed when copying file: %w", err)
-				}
-			} else {
-				// The file is remote. Download the file
-				// 1. do GET request
-				resp, err := http.Get(rawUrl)
-				if err != nil {
-					return fmt.Errorf("failed HTTP GET request: %w", err)
-				}
-				defer resp.Body.Close()
-				// 2. check status code
-				if resp.StatusCode < 200 && resp.StatusCode >= 300 {
-					return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
-				}
-
-				// 3. dump response to file
-				dstFile, err := os.Create(destinationFilePath)
-				if err != nil {
-					return fmt.Errorf("failed to create file: %w", err)
-				}
-				defer dstFile.Close()
-
-				_, err = io.Copy(dstFile, resp.Body)
-				if err != nil {
-					return fmt.Errorf("failed when downloading file: %w", err)
-				}
+				return err
 			}
 		}
 		// Upload temp dir to enclave
@@ -273,6 +247,50 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		if err != nil {
 			return fmt.Errorf("file uploading failed: %w", err)
 		}
+	}
+	return nil
+}
+
+func uploadStaticFile(ctx context.Context, rawUrl string, dirContext string, destinationFilePath string) error {
+	srcUrl, err := url.Parse(rawUrl)
+	if err != nil {
+		return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
+	}
+	if isLocalUrl(srcUrl.Scheme) {
+		// Copy the file to the temp dir
+		originFilePath := ensureAbs(dirContext, rawUrl)
+		err = fileCopy(originFilePath, destinationFilePath)
+		if err != nil {
+			return fmt.Errorf("failed when copying file: %w", err)
+		}
+		return nil
+	}
+	// The file is remote. Download the file
+	// 1. do GET request
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawUrl, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed HTTP GET request: %w", err)
+	}
+	defer resp.Body.Close()
+	// 2. check status code
+	if resp.StatusCode < 200 && resp.StatusCode >= 300 {
+		return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
+	}
+
+	// 3. dump response to file
+	dstFile, err := os.Create(destinationFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed when downloading file: %w", err)
 	}
 	return nil
 }
@@ -297,7 +315,7 @@ func buildDockerImages(baseDir string, config config.DevnetConfig) error {
 		}
 	}
 	// Check that all builds were successful and fail if not
-	errs := make([]error, numBuilds)
+	errs := make([]error, 0, numBuilds)
 	for range numBuilds {
 		errs = append(errs, <-errChan)
 	}
