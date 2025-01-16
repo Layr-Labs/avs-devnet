@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/avs-devnet/src/config"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +17,7 @@ var defaultConfig []byte
 func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string)) {
 	examplesDir := "../../examples"
 	dir, err := os.ReadDir(examplesDir)
-	assert.NoError(t, err, "Couldn't read examples directory")
+	require.NoError(t, err, "Couldn't read examples directory")
 
 	for _, file := range dir {
 		if file.IsDir() {
@@ -37,13 +36,13 @@ func forEachExample(t *testing.T, testFunc func(t *testing.T, examplePath string
 
 func TestLoadDefaultConfig(t *testing.T) {
 	_, err := config.Unmarshal(defaultConfig)
-	assert.NoError(t, err, "Couldn't parse default config")
+	require.NoError(t, err, "Couldn't parse default config")
 }
 
 func TestLoadingExampleConfigs(t *testing.T) {
 	forEachExample(t, func(t *testing.T, examplePath string) {
 		_, err := config.LoadFromPath(examplePath)
-		assert.NoError(t, err, "Couldn't load config from path")
+		require.NoError(t, err, "Couldn't load config from path")
 	})
 }
 

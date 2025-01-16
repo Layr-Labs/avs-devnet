@@ -32,7 +32,7 @@ func (r *ProgressBarReporter) ReportValidationStart(totalSteps int) error {
 }
 
 func (r *ProgressBarReporter) ReportValidationStep(stepInfo ValidationStep) error {
-	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	_ = r.pb.Set(stepInfo.CurrentStep)
 	r.pb.Describe(stepInfo.Description)
 	details := strings.Join(stepInfo.Details, ", ")
 	addDetail(r.pb, details)
@@ -45,7 +45,7 @@ func (r *ProgressBarReporter) ReportExecutionStart(totalSteps int) error {
 }
 
 func (r *ProgressBarReporter) ReportExecutionStep(stepInfo ExecutionStep) error {
-	_ = r.pb.Set(int(stepInfo.CurrentStep))
+	_ = r.pb.Set(stepInfo.CurrentStep)
 	r.pb.Describe(stepInfo.Description)
 	if stepInfo.InstructionDescription != nil {
 		addDetail(r.pb, *stepInfo.InstructionDescription)
@@ -82,11 +82,11 @@ func (r *ProgressBarReporter) ReportRunFinished(success bool, output string) err
 	return nil
 }
 
-func (r *ProgressBarReporter) changeProgressBar(max int, message string) {
+func (r *ProgressBarReporter) changeProgressBar(steps int, message string) {
 	if r.pb != nil {
 		clearBar(r.pb)
 	}
-	r.pb = newProgressBar(max)
+	r.pb = newProgressBar(steps)
 	_ = r.pb.RenderBlank()
 	r.pb.Describe(message)
 }
@@ -101,6 +101,8 @@ func termWidth() int {
 	return width
 }
 
+const RECTANGLE_DOTS_SPINNER = 14
+
 func newProgressBar(steps int) *progressbar.ProgressBar {
 	pb := progressbar.NewOptions(
 		steps,
@@ -111,7 +113,7 @@ func newProgressBar(steps int) *progressbar.ProgressBar {
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionShowCount(),
-		progressbar.OptionSpinnerType(14),
+		progressbar.OptionSpinnerType(RECTANGLE_DOTS_SPINNER),
 		progressbar.OptionFullWidth(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",

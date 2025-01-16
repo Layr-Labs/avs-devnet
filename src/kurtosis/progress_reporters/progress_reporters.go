@@ -66,24 +66,26 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 	var totalSteps uint32
 	var currentExecutionStep ExecutionStep
 	for line := range responseChan {
-		if line.GetProgressInfo() != nil {
+		switch {
+		case line.GetProgressInfo() != nil:
 			// It's a progress info
 			progressInfo := line.GetProgressInfo()
 			description := progressInfo.GetCurrentStepInfo()[0]
 
 			// We first match against the message for state transitions
-			if description == "Interpreting plan - execution will begin shortly" {
+			switch description {
+			case "Interpreting plan - execution will begin shortly":
 				state = Interpretation
 				err := reporter.ReportInterpretationStart()
 				if err != nil {
 					return err
 				}
 				continue
-			} else if description == "Starting validation" {
+			case "Starting validation":
 				// The total step number here is bugged, and shows the amount of execution steps instead.
 				// That's why we ignore it and call `ReportValidationStart` later.
 				continue
-			} else if description == "Starting execution" {
+			case "Starting execution":
 				state = Execution
 				totalSteps = progressInfo.GetTotalSteps()
 				err := reporter.ReportExecutionStart(int(totalSteps))
@@ -91,10 +93,12 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 					return err
 				}
 				continue
+			default:
 			}
 
 			// We set the total steps here because the "Starting validation" message has the wrong step count.
-			if strings.HasPrefix(description, "Validating plan") && state == Interpretation && progressInfo.GetTotalSteps() != 0 {
+			isValidating := strings.HasPrefix(description, "Validating plan")
+			if isValidating && state == Interpretation && progressInfo.GetTotalSteps() != 0 {
 				state = Validation
 				totalSteps = progressInfo.GetTotalSteps()
 				err := reporter.ReportValidationStart(int(totalSteps))
@@ -132,10 +136,10 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 				if err != nil {
 					return err
 				}
-			default:
+			case Interpretation:
 				// do nothing
 			}
-		} else if line.GetInstruction() != nil {
+		case line.GetInstruction() != nil:
 			// It's an instruction
 			instruction := line.GetInstruction()
 			if state != Execution { // This should never happen
@@ -146,17 +150,17 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 			if err != nil {
 				return err
 			}
-		} else if line.GetInfo() != nil {
+		case line.GetInfo() != nil:
 			err := reporter.ReportInfo(line.GetInfo().GetInfoMessage())
 			if err != nil {
 				return err
 			}
-		} else if line.GetWarning() != nil {
+		case line.GetWarning() != nil:
 			err := reporter.ReportWarning(line.GetWarning().GetWarningMessage())
 			if err != nil {
 				return err
 			}
-		} else if line.GetInstructionResult() != nil {
+		case line.GetInstructionResult() != nil:
 			// It's an instruction result
 			result := line.GetInstructionResult()
 			currentExecutionStep.InstructionResult = &result.SerializedInstructionResult
@@ -164,17 +168,17 @@ func ReportProgress(reporter Reporter, responseChan chan KurtosisResponse) error
 			if err != nil {
 				return err
 			}
-		} else if line.GetError() != nil {
+		case line.GetError() != nil:
 			// It's an error
 			return getKurtosisError(line.GetError())
-		} else if line.GetRunFinishedEvent() != nil {
+		case line.GetRunFinishedEvent() != nil:
 			// It's a run finished event
 			event := line.GetRunFinishedEvent()
 			err := reporter.ReportRunFinished(event.GetIsRunSuccessful(), event.GetSerializedOutput())
 			if err != nil {
 				return err
 			}
-			break
+			return nil
 		}
 	}
 	return nil
