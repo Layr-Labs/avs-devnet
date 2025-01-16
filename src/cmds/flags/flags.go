@@ -2,6 +2,7 @@ package flags
 
 import "github.com/urfave/cli/v2"
 
+// This is overwritten on release builds.
 // TODO: move to constants.
 const DefaultKurtosisPackage string = ""
 
