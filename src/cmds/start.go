@@ -90,7 +90,7 @@ func Start(ctx context.Context, opts StartOptions) error {
 		return fmt.Errorf("failed when uploading local repos: %w", err)
 	}
 
-	err = uploadStaticFiles(opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
+	err = uploadStaticFiles(ctx, opts.WorkingDir, opts.DevnetConfig, enclaveCtx)
 	if err != nil {
 		return fmt.Errorf("failed when uploading static files: %w", err)
 	}
@@ -198,7 +198,12 @@ func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *
 	return nil
 }
 
-func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx *enclaves.EnclaveContext) error {
+func uploadStaticFiles(
+	ctx context.Context,
+	dirContext string,
+	config config.DevnetConfig,
+	enclaveCtx *enclaves.EnclaveContext,
+) error {
 	for artifactName, artifactDetails := range config.Artifacts {
 		numStaticFiles := 0
 		numTemplates := 0
@@ -229,7 +234,7 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		for outFileName, fileAttrs := range artifactDetails.Files {
 			rawUrl := *fileAttrs.StaticFile
 			destinationFilePath := filepath.Join(outputDir, outFileName)
-			err = uploadStaticFile(rawUrl, dirContext, destinationFilePath)
+			err = uploadStaticFile(ctx, rawUrl, dirContext, destinationFilePath)
 			if err != nil {
 				return err
 			}
@@ -243,7 +248,7 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 	return nil
 }
 
-func uploadStaticFile(rawUrl string, dirContext string, destinationFilePath string) error {
+func uploadStaticFile(ctx context.Context, rawUrl string, dirContext string, destinationFilePath string) error {
 	srcUrl, err := url.Parse(rawUrl)
 	if err != nil {
 		return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
@@ -259,7 +264,11 @@ func uploadStaticFile(rawUrl string, dirContext string, destinationFilePath stri
 	}
 	// The file is remote. Download the file
 	// 1. do GET request
-	resp, err := http.Get(rawUrl)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawUrl, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed HTTP GET request: %w", err)
 	}
