@@ -228,41 +228,9 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		for outFileName, fileAttrs := range artifactDetails.Files {
 			rawUrl := *fileAttrs.StaticFile
 			destinationFilePath := filepath.Join(outputDir, outFileName)
-			srcUrl, err := url.Parse(*fileAttrs.StaticFile)
+			err = uploadStaticFile(rawUrl, dirContext, destinationFilePath)
 			if err != nil {
-				return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
-			}
-			if isLocalUrl(srcUrl.Scheme) {
-				// Copy the file to the temp dir
-				originFilePath := ensureAbs(dirContext, rawUrl)
-				err = fileCopy(originFilePath, destinationFilePath)
-				if err != nil {
-					return fmt.Errorf("failed when copying file: %w", err)
-				}
-			} else {
-				// The file is remote. Download the file
-				// 1. do GET request
-				resp, err := http.Get(rawUrl)
-				if err != nil {
-					return fmt.Errorf("failed HTTP GET request: %w", err)
-				}
-				defer resp.Body.Close()
-				// 2. check status code
-				if resp.StatusCode < 200 && resp.StatusCode >= 300 {
-					return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
-				}
-
-				// 3. dump response to file
-				dstFile, err := os.Create(destinationFilePath)
-				if err != nil {
-					return fmt.Errorf("failed to create file: %w", err)
-				}
-				defer dstFile.Close()
-
-				_, err = io.Copy(dstFile, resp.Body)
-				if err != nil {
-					return fmt.Errorf("failed when downloading file: %w", err)
-				}
+				return err
 			}
 		}
 		// Upload temp dir to enclave
@@ -270,6 +238,46 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		if err != nil {
 			return fmt.Errorf("file uploading failed: %w", err)
 		}
+	}
+	return nil
+}
+
+func uploadStaticFile(rawUrl string, dirContext string, destinationFilePath string) error {
+	srcUrl, err := url.Parse(rawUrl)
+	if err != nil {
+		return fmt.Errorf("url '%s' is invalid: %w", rawUrl, err)
+	}
+	if isLocalUrl(srcUrl.Scheme) {
+		// Copy the file to the temp dir
+		originFilePath := ensureAbs(dirContext, rawUrl)
+		err = fileCopy(originFilePath, destinationFilePath)
+		if err != nil {
+			return fmt.Errorf("failed when copying file: %w", err)
+		}
+		return nil
+	}
+	// The file is remote. Download the file
+	// 1. do GET request
+	resp, err := http.Get(rawUrl)
+	if err != nil {
+		return fmt.Errorf("failed HTTP GET request: %w", err)
+	}
+	defer resp.Body.Close()
+	// 2. check status code
+	if resp.StatusCode < 200 && resp.StatusCode >= 300 {
+		return fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
+	}
+
+	// 3. dump response to file
+	dstFile, err := os.Create(destinationFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed when downloading file: %w", err)
 	}
 	return nil
 }
@@ -294,7 +302,7 @@ func buildDockerImages(baseDir string, config config.DevnetConfig) error {
 		}
 	}
 	// Check that all builds were successful and fail if not
-	errs := make([]error, numBuilds)
+	errs := make([]error, 0, numBuilds)
 	for range numBuilds {
 		errs = append(errs, <-errChan)
 	}
