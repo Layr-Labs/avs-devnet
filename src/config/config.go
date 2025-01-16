@@ -39,6 +39,7 @@ type Deployment struct {
 	// non-exhaustive
 }
 
+// Returns the path to the deployment script (i.e. `Script`) but without the trailing contract name
 // Example: "contracts/contracts.sol:Contract" -> "contracts/contracts.sol".
 func (d Deployment) GetScriptPath() string {
 	const maxSplits = 2

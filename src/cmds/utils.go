@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Parses the main arguments from the given context.
 // Returns the devnet name and the configuration file name.
 func parseArgs(ctx *cli.Context) (string, string, error) {
 	args := ctx.Args()

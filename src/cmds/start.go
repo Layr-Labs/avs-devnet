@@ -143,6 +143,9 @@ func uploadLocalRepos(dirContext string, config config.DevnetConfig, enclaveCtx 
 	return nil
 }
 
+// Uploads the script of a single deployment from the repo at the given path to an enclave.
+// The deployment script is flattened and uploaded with the deployment name suffixed with '-script'.
+// The resulting artifact's structure is similar to the repo's structure, but with only the script and foundry config.
 // TODO: to avoid having foundry as a dependency, we should use it via docker.
 func uploadLocalRepo(deployment config.Deployment, repoPath string, enclaveCtx *enclaves.EnclaveContext) error {
 	scriptPath := deployment.GetScriptPath()
