@@ -3,8 +3,6 @@ package flags
 import "github.com/urfave/cli/v2"
 
 // TODO: move to constants.
-//
-
 const DefaultKurtosisPackage string = ""
 
 //nolint:gochecknoglobals // these are constants
