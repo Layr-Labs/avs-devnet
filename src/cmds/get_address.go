@@ -79,14 +79,15 @@ func printAddresses(ctx *cli.Context, args []string, enclaveCtx kurtosis.Enclave
 
 func readArtifact(file string, contractName string) (string, bool) {
 	var jsonPath string
-	if strings.HasPrefix(contractName, ".") {
+	switch {
+	case strings.HasPrefix(contractName, "."):
 		// This uses the absolute path
 		jsonPath = "addresses" + contractName + "|@pretty"
-	} else if contractName != "" {
+	case contractName != "":
 		// This searches for `contractName` inside the json
 		// Since there are multiple results, `|0` is used to get the first one
 		jsonPath = "@dig:" + contractName + "|0|@pretty"
-	} else {
+	default:
 		// This just prints the whole json
 		jsonPath = "@pretty"
 	}

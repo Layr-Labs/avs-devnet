@@ -203,11 +203,12 @@ func uploadStaticFiles(dirContext string, config config.DevnetConfig, enclaveCtx
 		numStaticFiles := 0
 		numTemplates := 0
 		for _, fileAttrs := range artifactDetails.Files {
-			if fileAttrs.StaticFile != nil {
+			switch {
+			case fileAttrs.StaticFile != nil:
 				numStaticFiles += 1
-			} else if fileAttrs.Template != nil {
+			case fileAttrs.Template != nil:
 				numTemplates += 1
-			} else {
+			default:
 				return errors.New("artifact must have either a static file or a template")
 			}
 		}
