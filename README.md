@@ -531,4 +531,4 @@ Please report security vulnerabilities to [security@eigenlabs.org](mailto:securi
 
 ## Disclaimer
 
-🚧 AvsDevnet is under active development and has not been audited. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧
+🚧 AvsDevnet is under active development. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧
