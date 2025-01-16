@@ -525,6 +525,10 @@ For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI
 We have a Makefile for some of the usual tasks.
 Run `make help` for more info.
 
+## Security Bugs
+
+Please report security vulnerabilities to [security@eigenlabs.org](mailto:security@eigenlabs.org). Do NOT report security bugs via Github Issues.
+
 ## Disclaimer
 
 🚧 AvsDevnet is under active development. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧
