@@ -60,7 +60,7 @@ func printAddresses(ctx *cli.Context, args []string, enclaveCtx kurtosis.Enclave
 				failed = true
 				readFile = ""
 			}
-			file = string(readFile)
+			file = readFile
 			cached[artifactName] = file
 		}
 		output, ok := readArtifact(file, contractName)
@@ -91,7 +91,7 @@ func readArtifact(file string, contractName string) (string, bool) {
 		// This just prints the whole json
 		jsonPath = "@pretty"
 	}
-	res := gjson.Get(string(file), jsonPath)
+	res := gjson.Get(file, jsonPath)
 	if !res.Exists() {
 		return "", false
 	}

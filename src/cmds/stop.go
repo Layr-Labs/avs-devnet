@@ -19,7 +19,7 @@ func StopCmd(ctx *cli.Context) error {
 	}
 	fmt.Println("Stopping devnet...")
 	err = Stop(ctx.Context, devnetName)
-	if err == ErrEnclaveNotExists {
+	if errors.Is(err, ErrEnclaveNotExists) {
 		return cli.Exit("Failed to find '"+devnetName+"'. Maybe it's not running?", 1)
 	} else if err != nil {
 		return cli.Exit(err, 1)

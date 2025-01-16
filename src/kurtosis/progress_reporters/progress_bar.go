@@ -91,10 +91,12 @@ func (r *ProgressBarReporter) changeProgressBar(max int, message string) {
 	r.pb.Describe(message)
 }
 
+const DEFAULT_TERM_WIDTH = 80
+
 func termWidth() int {
 	width, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		return 80
+		return DEFAULT_TERM_WIDTH
 	}
 	return width
 }
