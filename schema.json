@@ -204,6 +204,7 @@
           "description": "Command to run inside the service"
         }
       },
+      "$comment": "This requires either a build_context, or a build_cmd (without build_file), or none of them",
       "oneOf": [
         {
           "required": [
