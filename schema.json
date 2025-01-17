@@ -61,6 +61,10 @@
           "type": "string",
           "description": "Git ref to checkout for deployment"
         },
+        "version": {
+          "type": "string",
+          "description": "Version to use for the deployment scripts"
+        },
         "contracts_path": {
           "type": "string",
           "default": ".",

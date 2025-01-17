@@ -3,17 +3,19 @@
 # Example devnet config file for the EigenDA AVS (https://github.com/Layr-Labs/eigenda)
 # This file can be used inside the EigenDA repo to start a devnet with any local changes
 # TODO: move this to the EigenDA repo
+# TODO: update to work with latest version
+# TODO: update to work with v2
 
 # To run this example:
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
-# 1. Clone the https://github.com/Layr-Labs/eigenda repo
-# 2. Copy this file inside that repo (on the root), and move inside it
+# 1. Clone the https://github.com/Layr-Labs/eigenda repo (and checkout commit a294978e346fe9d7ede0f1a57012c36f64f1212a)
+# 2. Copy this file inside that repo as `devnet.yaml` (on the root), and move inside it
 # 3. Download the SRS files by running:
 #    mkdir -p resources
 #    curl --range 0-2097151 -L https://srs-mainnet.s3.amazonaws.com/kzg/g1.point -o resources/g1.point
 #    curl --range 0-4194303 -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point -o resources/g2.point
 #    curl -L https://srs-mainnet.s3.amazonaws.com/kzg/g2.point.powerOf2 -o resources/g2.point.powerOf2
-# 4. Run `devnet start eigenda.yaml`
+# 4. Run `devnet start`
 
 deployments:
   # NOTE: this script also deploys EigenLayer contracts
@@ -448,13 +450,20 @@ services:
       BATCHER_VERBOSE: true
       BATCHER_S3_BUCKET_NAME: "test-eigenda-blobstore"
       BATCHER_DYNAMODB_TABLE_NAME: "test-BlobMetadata"
-      BATCHER_PULL_INTERVAL: "1s"
       BATCHER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
       BATCHER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
       BATCHER_ENCODER_ADDRESS: "{{.services.encoder.ip_address}}:8080"
       BATCHER_ENABLE_METRICS: true
       BATCHER_METRICS_HTTP_PORT: 9100
-      BATCHER_BATCH_SIZE_LIMIT: 10240
+      # The following config has been tested against 10xMBps
+      BATCHER_BATCH_SIZE_LIMIT: 65536
+      BATCHER_NUM_CONNECTIONS: "512"
+      BATCHER_PULL_INTERVAL: 120s
+      # setting this too low may result in encoding jobs never finishing
+      BATCHER_ENCODING_TIMEOUT: 64s
+      BATCHER_ATTESTATION_TIMEOUT: 100s
+      BATCHER_ENCODING_REQUEST_QUEUE_SIZE: 1000
+
       BATCHER_USE_GRAPH: false
       BATCHER_GRAPH_URL: ""
       BATCHER_SRS_ORDER: 65536

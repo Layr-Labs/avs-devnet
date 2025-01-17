@@ -1,0 +1,39 @@
+version: 2
+
+updates:
+  # Group Security Updates
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+      timezone: "America/Los_Angeles"
+    target-branch: "main"
+    commit-message:
+      prefix: "[golang-security]"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "-"
+    open-pull-requests-limit: 0
+    reviewers:
+      - "Layr-Labs/avs-devnet"
+    labels:
+      - "security"
+      - "golang"
+    allow:
+      - dependency-type: "direct"
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+          - "major"
+
+  # Version updates
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
