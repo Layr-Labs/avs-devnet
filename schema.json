@@ -1,169 +1,295 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
-    "$ref": "#/definitions/DevnetConfig",
-    "definitions": {
-        "DevnetConfig": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "deployments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Deployment"
-                    }
-                },
-                "services": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Service"
-                    }
-                },
-                "keys": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Key"
-                    }
-                },
-                "artifacts": {
-                    "$ref": "#/definitions/Artifacts"
-                },
-                "ethereum_package": {
-                    "$ref": "#/definitions/EthereumPackage"
-                }
-            },
-            "required": [],
-            "title": "DevnetConfig"
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "AvsDevnet configuration",
+  "$ref": "#/definitions/DevnetConfig",
+  "definitions": {
+    "DevnetConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deployments": {
+          "type": "array",
+          "title": "Deployments",
+          "description": "Deployments to deploy",
+          "items": {
+            "$ref": "#/definitions/Deployment"
+          }
         },
-        "Deployment": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "repo": {
-                    "type": "string"
-                },
-                "ref": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                },
-                "contracts_path": {
-                    "type": "string"
-                },
-                "script": {
-                    "type": "string"
-                },
-                "extra_args": {
-                    "type": "string"
-                },
-                "verify": {
-                    "type": "boolean"
-                },
-                "env": {
-                    "type": "object"
-                },
-                "input": {
-                    "type": "object"
-                },
-                "output": {
-                    "type": "object"
-                },
-                "addresses": {
-                    "type": "object"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "strategies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "operators": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
-                }
-            },
-            "required": [],
-            "title": "Deployment"
+        "services": {
+          "type": "array",
+          "title": "Services",
+          "description": "Services to start",
+          "items": {
+            "$ref": "#/definitions/Service"
+          }
         },
-        "Service": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "image": {
-                    "type": "string"
-                },
-                "build_context": {
-                    "type": "string"
-                },
-                "build_file": {
-                    "type": "string"
-                },
-                "build_cmd": {
-                    "type": "string"
-                },
-                "ports": {
-                    "type": "object"
-                },
-                "input": {
-                    "type": "object"
-                },
-                "env": {
-                    "type": "object"
-                },
-                "cmd": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "image",
-                "name"
-            ],
-            "title": "Service"
+        "keys": {
+          "type": "array",
+          "title": "Keys",
+          "description": "Keys to generate",
+          "items": {
+            "$ref": "#/definitions/Key"
+          }
         },
-        "Key": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "address": {
-                    "type": "string"
-                },
-                "private_key": {
-                    "type": "string"
-                }
-            },
-            "required": [],
-            "title": "Key"
+        "artifacts": {
+          "title": "Artifacts",
+          "description": "Artifact specifications",
+          "$ref": "#/definitions/Artifacts"
         },
-        "Artifacts": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": [],
-            "title": "Artifacts"
-        },
-        "EthereumPackage": {
-            "type": "object",
-            "additionalProperties": true,
-            "title": "ethereum-package args"
+        "ethereum_package": {
+          "title": "ethereum-package args",
+          "description": "Arguments to pass to ethereum-package",
+          "$ref": "#/definitions/EthereumPackage"
         }
+      },
+      "required": [],
+      "title": "DevnetConfig"
+    },
+    "Deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the deployment"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Git repository with the source to deploy"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Git ref to checkout for deployment"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version to use for the deployment scripts"
+        },
+        "contracts_path": {
+          "type": "string",
+          "default": ".",
+          "description": "Path to the contracts folder"
+        },
+        "script": {
+          "type": "string",
+          "description": "Path to the Solidity deployment script to run"
+        },
+        "extra_args": {
+          "type": "string",
+          "default": "",
+          "description": "Extra args to pass to `foundry script`"
+        },
+        "verify": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to automatically verify the contracts with Blockscan"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables to set for the deployment"
+        },
+        "input": {
+          "type": "object",
+          "description": "Artifacts to include inside the deployment environment"
+        },
+        "output": {
+          "type": "object",
+          "description": "Artifacts to generate from files inside the deployment environment"
+        },
+        "addresses": {
+          "type": "object",
+          "description": "Addresses to extract from the deployment environment"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "EigenLayer"
+          ],
+          "description": "Type of deployment"
+        },
+        "strategies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Strategies to deploy and whitelist"
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Operators to register and their stakes"
+        }
+      },
+      "oneOf": [
+        {
+          "$comment": "Default deployment type",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "type"
+                ]
+              },
+              {
+                "required": [
+                  "strategies"
+                ]
+              },
+              {
+                "required": [
+                  "operators"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$comment": "EigenLayer deployment type",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "EigenLayer"
+            }
+          }
+        }
+      ],
+      "title": "Deployment"
+    },
+    "Service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the service"
+        },
+        "image": {
+          "type": "string",
+          "description": "Container image for the service"
+        },
+        "build_context": {
+          "type": "string",
+          "description": "Context to use when building the image"
+        },
+        "build_file": {
+          "type": "string",
+          "default": "Dockerfile",
+          "description": "Dockerfile to use when building the image"
+        },
+        "build_cmd": {
+          "type": "string",
+          "description": "Command to build the image"
+        },
+        "ports": {
+          "type": "object",
+          "description": "Ports to expose on the service"
+        },
+        "input": {
+          "type": "object",
+          "description": "Artifacts to mount inside the service"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables to set on the service"
+        },
+        "cmd": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Command to run inside the service"
+        }
+      },
+      "$comment": "This requires either a build_context, or a build_cmd (without build_file), or none of them",
+      "oneOf": [
+        {
+          "required": [
+            "build_context"
+          ]
+        },
+        {
+          "required": [
+            "build_cmd"
+          ],
+          "not": {
+            "required": [
+              "build_file"
+            ]
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "build_context"
+                ]
+              },
+              {
+                "required": [
+                  "build_file"
+                ]
+              },
+              {
+                "required": [
+                  "build_cmd"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "required": [
+        "image",
+        "name"
+      ],
+      "title": "Service",
+      "description": "A service to start"
+    },
+    "Key": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Name for the key",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type of key",
+          "default": "ecdsa",
+          "enum": [
+            "ecdsa",
+            "bls"
+          ]
+        },
+        "address": {
+          "description": "Address of the key",
+          "type": "string"
+        },
+        "private_key": {
+          "description": "Private key",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "Key"
+    },
+    "Artifacts": {
+      "type": "object",
+      "description": "Artifacts to generate",
+      "additionalProperties": true,
+      "required": [],
+      "title": "Artifacts"
+    },
+    "EthereumPackage": {
+      "type": "object",
+      "description": "ethereum-package args",
+      "additionalProperties": true,
+      "title": "ethereum-package args"
     }
+  }
 }
