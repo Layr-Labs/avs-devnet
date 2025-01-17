@@ -24,7 +24,7 @@ def run(plan, args={}):
     data = {
         "http_rpc_url": http_rpc_url,
         "ws_rpc_url": ws_url,
-        "deployer_private_key": private_key,
+        "deployer_private_key": "0x" + private_key,
         "deployer_address": deployer_address,
     }
     plan.print("Initial data: " + json.indent(json.encode(data)))
@@ -57,6 +57,13 @@ def parse_args(plan, args):
     keys = args.get("keys", [])
     deployments = args.get("deployments", [])
     services = args.get("services", [])
+
+    # Mark artifacts that have static files as generated
+    # TODO: support mixed artifacts
+    for artifact_name, artifact in artifacts.items():
+        files = artifact.get("files", {})
+        if any(["static_file" in file for file in files.values()]):
+            artifacts[artifact_name]["generated"] = True
 
     return struct(
         artifacts=artifacts,

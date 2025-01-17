@@ -6,15 +6,22 @@ def add_service(plan, service_args, context):
     files = generate_input_files(plan, context, service_args.get("input", {}))
 
     ports = generate_port_specs(service_args.get("ports", {}))
+    # Prefix for the artifact generated during variable expansion
+    prefix = "service_{}_expanded_env_var_".format(name)
     env_vars = shared_utils.generate_env_vars(
-        plan, context, service_args.get("env", {})
+        plan, context, service_args.get("env", {}), prefix
     )
+    prefix = "service_{}_expanded_cmd_".format(name)
+    cmd = [
+        shared_utils.expand(plan, context, v, prefix + str(i))
+        for i, v in enumerate(service_args.get("cmd", []))
+    ]
     config = ServiceConfig(
         image=service_args["image"],
         ports=ports,
         files=files,
         env_vars=env_vars,
-        cmd=service_args.get("cmd", []),
+        cmd=cmd,
         # TODO: use default user
         # We need to do this due to artifacts being owned by root
         user=User(uid=0, gid=0),

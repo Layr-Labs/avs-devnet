@@ -41,8 +41,9 @@ def ensure_generated(plan, context, artifact_name):
             data[varname] = read_json_artifact(plan, artifact, json_field)
 
     config = {}
-    for name, template in artifact_files.items():
-        config[name] = struct(template=template, data=data)
+    for file_name, file_data in artifact_files.items():
+        template = file_data["template"]
+        config[file_name] = struct(template=template, data=data)
 
     artifact = plan.render_templates(
         config=config,
@@ -57,7 +58,7 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
     input_dir = "/_input"
     result = plan.run_sh(
         image="badouralix/curl-jq",
-        run="jq -j {field} {input}/{path}".format(
+        run="jq -j '{field}' {input}/{path}".format(
             field=json_field, input=input_dir, path=file_path
         ),
         files={input_dir: artifact_name},
@@ -68,7 +69,7 @@ def read_json_artifact(plan, artifact_name, json_field, file_path="*.json"):
 def send_funds(plan, context, to, amount="10ether"):
     http_rpc_url = context.ethereum.all_participants[0].el_context.rpc_http_url
     funded_private_key = context.ethereum.pre_funded_accounts[0].private_key
-    cmd = "cast send --value {} --private-key {} --rpc-url {} {}".format(
+    cmd = "cast send --confirmations 0 --value {} --private-key {} --rpc-url {} {}".format(
         amount, funded_private_key, http_rpc_url, to
     )
     plan.run_sh(
@@ -78,19 +79,33 @@ def send_funds(plan, context, to, amount="10ether"):
     )
 
 
-def generate_env_vars(plan, context, env_vars):
+def generate_env_vars(plan, context, env_vars, artifact_prefix):
+    # `artifact_prefix` is prepended to the env-var's name to generate
+    # the artifact name to use during variable expansion
     return {
-        env_var_name: expand(plan, context, env_var_value)
+        env_var_name: expand(
+            plan, context, env_var_value, artifact_prefix + env_var_name
+        )
         for env_var_name, env_var_value in env_vars.items()
     }
 
 
-def expand(plan, context, var):
+def expand(plan, context, var, artifact_name):
     """
     Replaces templates containing double brackets ("{{") to their dynamically evaluated counterpart.
 
     Example: "{{.service.some_service_name.ip_address}}" -> <some_service_name's ip address>
+
+    `artifact_name` is used as the name for the artifact generated during expansion.
     """
+    # Make sure we only expand strings
+    if type(var) == type(42) or type(var) == type(42.0) or type(var) == type(True):
+        return str(var)
+
+    # Fail if types aren't boolean, integer, float, or string
+    if type(var) != type(""):
+        fail("Cannot expand non-string value: {}".format(var))
+
     # NOTE: this is just an optimization to avoid template rendering if it doesn't need it
     if var.find("{{") == -1:
         return var
@@ -99,6 +114,7 @@ def expand(plan, context, var):
 
     artifact = plan.render_templates(
         config={file_name: struct(template=var, data=context.data)},
+        name=artifact_name,
         description="Expanding envvar '{}'".format(var),
     )
     result = plan.run_sh(

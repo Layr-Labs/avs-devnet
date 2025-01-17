@@ -36,7 +36,7 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
 test: ## 🧪 Run tests
-	go test -v ./...
+	go test -v -timeout 30m ./...
 
 
 ##### CLI #####
@@ -69,7 +69,7 @@ kurtosis_deps:
 	@command -v docker 2>&1 > /dev/null || (echo "Docker not found" && exit 1)
 
 kurtosis_start: ## 🚀 Start the devnet (Kurtosis)
-	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=$(KURTOSIS_DIR)/devnet_params.yaml
+	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=src/config/default_config.yaml
 
 kurtosis_stop: ## 🛑 Stop the devnet (Kurtosis)
 	-kurtosis enclave rm -f devnet
@@ -98,7 +98,7 @@ check_devnet:
 
 # hello-world-avs example
 
-HELLO_WORLD_REF:=001dc6e944280559dfb44f75faf5102349a61d8e
+HELLO_WORLD_REF:=master
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."

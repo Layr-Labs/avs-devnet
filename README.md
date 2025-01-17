@@ -115,15 +115,20 @@ Contract not found: eigenlayer_addresses:.MockETH
 ### Local development
 
 Some fields in the config can be used to ease deployment of local projects.
+Under `examples/` we have some devnet configurations that follow this approach.
+
+#### Deployment from local source
 
 The `repo` field in `deployments` accepts local paths.
-This can be used when deployments should be done from locally available versions.
+Use this to deploy from locally available versions.
 
 ```yaml
 deployments:
-  - name: some-deployment
-    repo: "foo/bar/baz"
+  - name: incredible-squaring
+    repo: "." # the directory where the devnet config file is in
 ```
+
+#### Services with locally-built images
 
 The `build_context` field in `services`, if specified, allows the Devnet to automatically build docker images via `docker build`.
 Images are built in the specified context, and tagged with the name specified in the `image` field.
@@ -131,10 +136,86 @@ If the build file is named something other than `Dockerfile`, or isn't located i
 
 ```yaml
 services:
-  - name: my-service
-    image: some-local-image-name
-    build_context: path/to/context
-    build_file: path/to/context/Dockerfile
+  - name: my-aggregator
+    image: aggregator
+    build_context: "dockerfiles/"
+    build_file: "aggregator.Dockerfile"
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-aggregator
+    image: aggregator
+    build_cmd: "docker build . -t aggregator && touch .finished"
+```
+
+#### Static files
+
+Static files can be made into a file artifact by using `static_file` in the `artifacts.<artifact-name>.files.<file-name>` section.
+
+```yaml
+artifacts:
+  my_artifact:
+    files:
+      somefile.txt: "path/to/myfile.log"
+```
+
+### Plug and play examples
+
+Devnet configurations can be made to run without any local dependencies.
+In that case, running it is as easy as:
+
+1. Install AvsDevnet
+2. Download the devnet configuration to use as `devnet.yaml`
+3. Run `devnet start` in the same folder
+
+Under `examples/` we have some devnet configurations that follow this approach.
+
+#### Deployment from remote source
+
+The `repo` field in `deployments` accepts any remote git repo URL.
+This should be used for deployment of contracts not locally available.
+
+```yaml
+deployments:
+  - name: incredible-squaring
+    # URL taken from the clone option on GitHub
+    repo: "https://github.com/Layr-Labs/incredible-squaring-avs.git"
+```
+
+#### Services with remote images
+
+If no other option is specified (see [Services with locally-built images](#services-with-locally-built-images)), images will be.
+
+```yaml
+services:
+  - name: my-aggregator
+    image: aggregator
+```
+
+For image builds requiring a custom command, you can use `build_cmd` to specify it.
+This overrides the `build_context` and `build_file`.
+
+```yaml
+services:
+  - name: my-aggregator
+    image: aggregator
+    build_cmd: "docker build . -t aggregator && touch .finished"
+```
+
+#### Remote static files
+
+Static files can be specified by an arbitrary URL.
+The devnet will then send a GET HTTP request to fetch the file.
+
+```yaml
+artifacts:
+  my_artifact:
+    files:
+      somefile.txt: "https://raw.githubusercontent.com/Layr-Labs/incredible-squaring-avs/refs/heads/master/README.md"
 ```
 
 ### More Help
@@ -216,6 +297,11 @@ deployments:
         path: "script/output/devnet/M2_from_scratch_deployment_data.json"
         # The new name to give to the file
         rename: "eigenlayer_deployment_output.json"
+    # Specifies addresses to extract from output artifacts
+    addresses:
+      # Key: name of the address
+      # Value: `<artifact-name>:<jq-filter-to-apply>`, same syntax as `devnet get-address`
+      my_contract: "eigenlayer_addresses:.addresses.avsDirectoryImplementation"
 
     # Available types: eigenlayer
     # This autofills some of the other options, and allows access
@@ -223,6 +309,9 @@ deployments:
   - type: eigenlayer
     # Same as before
     ref: v0.4.2-mainnet-pepe
+    # In case the ref doesn't start with the version (i.e. is a specific commit or branch)
+    # you can specify the nearest version, so the devnet knows how to deploy it
+    version: v0.4.2
     # The strategies to deploy, all of them backed by the same mocked token
     strategies:
       # The strategy name
@@ -241,14 +330,17 @@ deployments:
 # Lists the services to start after the contracts are deployed
 services:
     # Name for the service
-  - name: "aggregator"
+  - name: my-service
     # The docker image to use
-    image: "ghcr.io/layr-labs/incredible-squaring/aggregator/cmd/main.go:latest"
+    image: image-name
     # Local images are built automatically when specifying `build_context`
     # Specifies the context for the image's dockerfile
     build_context: path/to/context
     # Optional. Used to override the default of "build_context/Dockerfile".
     build_file: path/to/context/Dockerfile
+    # Specifies a custom command for building the image.
+    # This overrides the `build_context` and `build_file` options.
+    build_cmd: "docker build . -t image-name && touch somefile.txt"
     # The ports to expose on the container
     ports:
       # The key is a name for the port
@@ -271,12 +363,13 @@ services:
       # Key: env variable name
       # Value: env variable's value
       key: value
-      # Values inside double brackets '{{ }}' are expanded at runtime according
-      # to Go template syntax.
+      # Values inside double brackets '{{ }}' (templates) are expanded
+      # at runtime according to Go template syntax.
       # This example expands to the `ecdsa_keys` keystore's password
       ECDSA_KEY_PASSWORD: "{{.keys.ecdsa_keys.password}}"
     # Command to use when running the docker image
-    cmd: ["some", "option", "here"]
+    # Options may contain templates
+    cmd: ["some", "option", "here", "{{.keys.ecdsa_keys.address}}"]
 
 # Lists the keys to be generated at startup
 keys:
@@ -299,23 +392,37 @@ artifacts:
       # Artifact name to fetch data from
       artifact_name:
         # Key: name of the variable to populate
-        # Value: JSONPath to the data
+        # Value: jq filter to extract the data
         # NOTE: this assumes that the data inside the artifact is a single JSON file
         some_variable: ".field1.foo[0]"
 
     # List of files to store inside the artifact
     files:
       # Key: file name
-      # Value: a string to be the file's contents.
-      # The string is assumed to be a Go template
-      # (see https://pkg.go.dev/text/template for more information).
-      # There are also some dynamically populated fields like 'deployer_address'
-      someconfig.config.json: |
-        {
-          "a": 5,
-          "someVariable": {{.some_variable}},
-          "deployerAddress": {{.deployer_address}}
-        }
+      # Value: a description on how to construct the file.
+      someconfig.config.json:
+        # For templates, the value is a string, assumed to be a Go template
+        # (see https://pkg.go.dev/text/template for more information).
+        # There are also some dynamically populated fields like 'deployer_address'
+        # See the "Context object" section for more info
+        template: |
+          {
+            "a": 5,
+            "someVariable": {{.some_variable}},
+            "deployerAddress": {{.deployer_address}},
+            "avsDirectory": {{.addresses.EigenLayer.avsDirectory}},
+            "contractAddress": {{(index .addresses "deployment-name").my_contract}}
+          }
+
+  some_other_artifact:
+    files:
+      foobar.log:
+        # For static_file, the value is a URL to the file to include inside the artifact.
+        static_file: docs/foobar.txt
+
+      remote_foobar.json:
+        # The URL can be for a remote file too (see "Remote static files")
+        static_file: https://example.com/
 
 # Args to pass on to ethereum-package.
 # See https://github.com/ethpandaops/ethereum-package for more information
@@ -323,6 +430,91 @@ ethereum_package:
   additional_services:
     - blockscout
 ```
+
+### Context object
+
+The *Context object* can be accessed via [Go template syntax](https://pkg.go.dev/text/template) (e.g: `{{.}}`).
+Thinking of it as a nested map, items can be accessed by specifying the keys to be accessed, in order: `{{.first_key.second_key.third_key}}`
+Some additional functions are also available, like `{{slice ...}}` and `{{index ...}}` (more info [here](https://pkg.go.dev/text/template#hdr-Functions)).
+
+What follows is a list of the values available in the *Context object*.
+
+#### `.http_rpc_url`
+
+The URL of the HTTP-RPC exposed on the first node of the underlying devnet.
+
+Example value: `http://172.16.0.9:8545`
+
+#### `.ws_rpc_url`
+
+The URL of the WebSocket-RPC exposed on the first node of the underlying devnet.
+
+Example value: `ws://172.16.0.9:8546`
+
+#### `.deployer_private_key`
+
+The ECDSA private key used when deploying contracts.
+
+Example value: `0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31`
+
+#### `.deployer_address`
+
+The address used to deploy contracts.
+
+Example value: `0x8943545177806ED17B9F23F0a21ee5948eCaa776`
+
+#### `.addresses.<deployment-name>.<contract-name>`
+
+The address of the contract `<contract-name>` from deployment `<deployment-name>`.
+Note that this requires the address to be declared before the template expansion.
+
+Example value: `{{.addresses.MyAvs.serviceManager}}` expands to `0x89a37F5cd42162B56DE8A48bDe38A6E97C965675`
+
+#### `.services.<service-name>.ip_address`
+
+The IP address of the service `<service-name>`.
+Note that this requires the service to be started before the template expansion.
+
+Example value: `{{.services.aggregator.ip_address}}` expands to `172.16.0.70`
+
+#### `.keys.<key-name>.address`
+
+The Ethereum address associated to the key named `<key-name>`.
+Only ECDSA keys have this property.
+
+Example value: `0x0d7597aedfa6b73f3aac93ecfcf5abcfbcc5cd40`
+
+#### `.keys.<key-name>.private_key`
+
+The private key of the key named `<key-name>`.
+
+Example value:
+
+- ECDSA: `0xe314a391f6e0128c35573c9157baedd8381350e4efdc7e73509849a8e0b73f32`
+- BLS: `11311926940818870267862834934784331525396505743635597567466859068964031983193`
+
+#### `.keys.<key-name>.password`
+
+The password to the keystore for the key named `<key-name>`.
+Only dynamically generated keys have this property.
+
+Example value: `jR07sE6zmoIElmwjsf7m`
+
+## Troubleshooting
+
+### "An API version mismatch was detected"
+
+Sometimes the Kurtosis CLI and engine have mismatching versions.
+When that happens you can fix it by updating the Kurtosis CLI via your chosen method, and restarting the engine with:
+
+```bash
+kurtosis engine restart
+```
+
+### `failed to read downloaded context: failed to load cache key: invalid response status 403` ([#145](https://github.com/Layr-Labs/avs-devnet/issues/145))
+
+This errors happens due to [a bug in moby/moby](https://github.com/moby/moby/issues/47717).
+It can be fixed by disabling the "Use containerd for pulling and storing images" option in Docker Desktop.
 
 ## Kurtosis package
 
@@ -333,6 +525,10 @@ For how to use the Kurtosis package or interact with the devnet via Kurtosis CLI
 We have a Makefile for some of the usual tasks.
 Run `make help` for more info.
 
+## Security Bugs
+
+Please report security vulnerabilities to [security@eigenlabs.org](mailto:security@eigenlabs.org). Do NOT report security bugs via Github Issues.
+
 ## Disclaimer
 
-🚧 AvsDevnet is under active development and has not been audited. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧
+🚧 AvsDevnet is under active development. AvsDevnet is rapidly being upgraded, features may be added, removed or otherwise improved or modified and interfaces will have breaking changes. AvsDevnet should be used only for testing purposes and not in production. AvsDevnet is provided "as is" and Eigen Labs, Inc. does not guarantee its functionality or provide support for its use in production. 🚧
