@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
     branches: [ '**' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   KURTOSIS_VERSION: '1.4.1'
@@ -170,6 +170,7 @@ jobs:
         with:
           repository: Layr-Labs/eigenda
           path: eigenda/
+          ref: a294978e346fe9d7ede0f1a57012c36f64f1212a
       
       - name: Download SRS points
         run: |

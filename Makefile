@@ -69,7 +69,7 @@ kurtosis_deps:
 	@command -v docker 2>&1 > /dev/null || (echo "Docker not found" && exit 1)
 
 kurtosis_start: ## 🚀 Start the devnet (Kurtosis)
-	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=$(KURTOSIS_DIR)/devnet_params.yaml
+	kurtosis run $(KURTOSIS_DIR) --enclave=devnet --args-file=src/config/default_config.yaml
 
 kurtosis_stop: ## 🛑 Stop the devnet (Kurtosis)
 	-kurtosis enclave rm -f devnet

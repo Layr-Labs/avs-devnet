@@ -2,10 +2,13 @@ package flags
 
 import "github.com/urfave/cli/v2"
 
-// This is overwritten on release builds
-// TODO: move to constants
+// This is overwritten on release builds.
+// TODO: move to constants.
+//
+//nolint:gochecknoglobals // this is a constant
 var DefaultKurtosisPackage string = ""
 
+//nolint:gochecknoglobals // these are constants
 var (
 	ConfigFilePathFlag = cli.StringFlag{
 		Name:  "config-file",

@@ -1,4 +1,4 @@
-package cmds
+package cmds_test
 
 import (
 	"context"
@@ -7,25 +7,29 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Layr-Labs/avs-devnet/src/cmds"
 	"github.com/Layr-Labs/avs-devnet/src/config"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var rootDir string = func() string {
-	rootDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Join(rootDir, "../..")
-}()
+//nolint:gochecknoglobals // these are constants used for tests
+var (
+	rootDir string = func() string {
+		cwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		return filepath.Join(cwd, "../..")
+	}()
 
-var examplesDir string = filepath.Join(rootDir, "examples")
+	examplesDir string = filepath.Join(rootDir, "examples")
+)
 
 func startDevnet(t *testing.T, devnetConfig config.DevnetConfig, workingDir string) {
-	name, err := ToValidEnclaveName(t.Name())
-	assert.NoError(t, err, "Failed to generate test name")
+	name, err := cmds.ToValidEnclaveName(t.Name())
+	require.NoError(t, err, "Failed to generate test name")
 
-	opts := StartOptions{
+	opts := cmds.StartOptions{
 		KurtosisPackageUrl: filepath.Join(rootDir, "kurtosis_package"),
 		DevnetName:         name,
 		WorkingDir:         workingDir,
@@ -34,20 +38,20 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig, workingDir stri
 	ctx := context.Background()
 
 	// Ensure the devnet isn't running
-	_ = Stop(ctx, opts.DevnetName)
+	_ = cmds.Stop(ctx, opts.DevnetName)
 	// Cleanup devnet after test
-	t.Cleanup(func() { _ = Stop(ctx, opts.DevnetName) })
+	t.Cleanup(func() { _ = cmds.Stop(ctx, opts.DevnetName) })
 
-	err = Start(ctx, opts)
-	assert.NoError(t, err, "Failed to start new devnet")
+	err = cmds.Start(ctx, opts)
+	require.NoError(t, err, "Failed to start new devnet")
 }
 
 func goToDir(t *testing.T, destination string) {
 	dir, err := os.Getwd()
-	assert.NoError(t, err, "Failed to get cwd")
+	require.NoError(t, err, "Failed to get cwd")
 
 	err = os.Chdir(destination)
-	assert.NoError(t, err, "Failed to go to repo root")
+	require.NoError(t, err, "Failed to go to repo root")
 
 	t.Cleanup(func() {
 		// Return to the original directory
@@ -68,7 +72,7 @@ func TestStartIncredibleSquaring(t *testing.T) {
 	t.Parallel()
 	examplePath := filepath.Join(examplesDir, "incredible_squaring.yaml")
 	parsedConfig, err := config.LoadFromPath(examplePath)
-	assert.NoError(t, err, "Failed to parse example config")
+	require.NoError(t, err, "Failed to parse example config")
 	startDevnet(t, parsedConfig, examplesDir)
 }
 
@@ -78,11 +82,11 @@ func TestStartLocalHelloWorld(t *testing.T) {
 
 	// Clone the hello-world-avs repo
 	err := exec.Command("make", "examples/hello-world-avs").Run()
-	assert.NoError(t, err, "Failed to make hello-world-avs repo")
+	require.NoError(t, err, "Failed to make hello-world-avs repo")
 
 	configFile := filepath.Join(examplesDir, "hello_world_local.yaml")
 	devnetConfig, err := config.LoadFromPath(configFile)
-	assert.NoError(t, err, "Failed to parse example config")
+	require.NoError(t, err, "Failed to parse example config")
 
 	// Start the devnet
 	helloWorldRepo := filepath.Join(examplesDir, "hello-world-avs")

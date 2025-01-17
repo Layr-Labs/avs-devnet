@@ -3,10 +3,12 @@
 # Example devnet config file for the EigenDA AVS (https://github.com/Layr-Labs/eigenda)
 # This file can be used inside the EigenDA repo to start a devnet with any local changes
 # TODO: move this to the EigenDA repo
+# TODO: update to work with latest version
+# TODO: update to work with v2
 
 # To run this example:
 # 0. Ensure you have the latest version of the devnet (see the README for how to install)
-# 1. Clone the https://github.com/Layr-Labs/eigenda repo
+# 1. Clone the https://github.com/Layr-Labs/eigenda repo (and checkout commit a294978e346fe9d7ede0f1a57012c36f64f1212a)
 # 2. Copy this file inside that repo as `devnet.yaml` (on the root), and move inside it
 # 3. Download the SRS files by running:
 #    mkdir -p resources

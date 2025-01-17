@@ -3,7 +3,7 @@ utils = import_module("./utils.star")
 
 
 def deploy(plan, context, deployment):
-    el_args = EL_DEFAULT | deployment
+    el_args = get_version_args(deployment) | deployment
     el_name = el_args["name"]
     plan.print("Initiating {} deployment".format(el_name))
 
@@ -16,8 +16,14 @@ def deploy(plan, context, deployment):
         token_address = deploy_mocktoken(plan, context, el_name, el_args["verify"])
 
     config_name = generate_el_config(plan, context, token_address, strategies)
-    # TODO: insert as list if user specifies same path
-    el_args["input"] = el_args["input"] | {"script/configs/devnet/": config_name}
+
+    el_args["input"] = dict(el_args["input"])
+
+    # Allow any number of replacements, so users can change the config path
+    # when using an unsupported version
+    for key, value in el_args["input"].items():
+        if value == CONFIG_ARTIFACT_PLACEHOLDER:
+            el_args["input"][key] = config_name
 
     el_args["addresses"] = el_args["addresses"] | generate_addresses_arg(
         "eigenlayer_addresses", strategies
@@ -57,6 +63,26 @@ def generate_addresses_arg(el_output, strategies):
     return addresses
 
 
+def get_version_args(deployment):
+    ref = deployment.get("ref", "dev")
+    deployment_version = deployment.get("version", ref)
+    if deployment_version == "":
+        return EL_DEPLOY_ARGS_LATEST
+
+    version_unprefixed = deployment_version.lstrip("v")
+
+    if version_unprefixed[0].isdigit():
+        version = version_unprefixed.split("-")[0].split(".")
+        major = int(version[0])
+        minor = int(version[1])
+        patch = int(version[2])
+        # EigenLayer contracts v0.4.2-mainnet-pepe and below
+        if major == 0 and (minor < 4 or (minor == 4 and patch <= 2)):
+            return EL_DEPLOY_ARGS_v0_4_2
+
+    return EL_DEPLOY_ARGS_LATEST
+
+
 def deploy_mocktoken(plan, context, deployment_name, verify):
     repo = "https://github.com/Layr-Labs/incredible-squaring-avs.git"
     ref = "83e64c8f11439028186380ef0ed35eea6316ec47"
@@ -69,7 +95,7 @@ def deploy_mocktoken(plan, context, deployment_name, verify):
 
     verify_args = utils.get_verify_args(context) if verify else ""
 
-    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key 0x{} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
+    cmd = "set -e ; forge create --broadcast --rpc-url {} --private-key {} {} src/ERC20Mock.sol:ERC20Mock 2> /dev/null \
     | awk '/Deployed to: .*/{{ print $3 }}' | tr -d '\"\n'".format(
         http_rpc_url,
         private_key,
@@ -128,11 +154,14 @@ def format_strategies(context, token_address, strategies):
 
 
 def whitelist_strategies(plan, context, deployment_name, strategies):
+    if len(strategies) == 0:
+        return
+
     data = context.data
     addresses = data["addresses"][deployment_name]
     strategy_params = ",".join([addresses[strategy["name"]] for strategy in strategies])
     flag_params = ",".join(["true" for _ in strategies])
-    cmd = "set -e ; cast send --rpc-url {rpc} --private-key 0x{pk} \
+    cmd = "set -e ; cast send --rpc-url {rpc} --private-key {pk} \
     {addr} 'addStrategiesToDepositWhitelist(address[],bool[])' '[{strategy_params}]' '[{flag_params}]'".format(
         rpc=data["http_rpc_url"],
         pk=data["deployer_private_key"],
@@ -155,8 +184,10 @@ def register_operators(plan, context, deployment_name, operators):
         operator_keys = data["keys"][keys_name]
         addresses = data["addresses"][deployment_name]
 
-        send_cmd = "cast send --rpc-url {rpc} --private-key {pk}".format(
-            rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+        send_cmd = (
+            "cast send --confirmations 0 --rpc-url {rpc} --private-key {pk}".format(
+                rpc=data["http_rpc_url"], pk=operator_keys["private_key"]
+            )
         )
         cmds = ["set -e"]
         cmds.append(
@@ -237,33 +268,54 @@ EL_CONTRACT_NAMES = [
     "strategyManagerImplementation",
 ]
 
-EL_DEFAULT = {
+EL_DEFAULT_ARGS = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
-    "ref": "dev",
+    "verify": False,
     "contracts_path": ".",
+    "addresses": {},
+    "strategies": [],
+    "operators": [],
+}
+
+# Placeholder for the dynamically generated artifact name
+CONFIG_ARTIFACT_PLACEHOLDER = "+$+CONFIG_ARTIFACT+$+"
+
+EL_DEPLOY_ARGS_v0_4_2 = {
+    "ref": "v0.4.2-mainnet-pepe",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
     "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
-    "verify": False,
-    "input": {},
+    "input": {"script/configs/devnet/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
             "rename": "eigenlayer_deployment_output.json",
         }
     },
-    "addresses": {},
-    "strategies": [],
-    "operators": [],
-}
+} | EL_DEFAULT_ARGS
+
+EL_DEPLOY_ARGS_LATEST = {
+    "ref": "dev",
+    "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
+    "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
+    "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
+    "output": {
+        "eigenlayer_addresses": {
+            "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
+            "rename": "eigenlayer_deployment_output.json",
+        }
+    },
+} | EL_DEFAULT_ARGS
 
 EL_CONFIG_TEMPLATE = """
 {
   "maintainer": "example@example.org",
   "multisig_addresses": {
     "operationsMultisig": "{{.deployer_address}}",
+    "communityMultisig": "{{.deployer_address}}",
     "pauserMultisig": "{{.deployer_address}}",
-    "executorMultisig": "{{.deployer_address}}"
+    "executorMultisig": "{{.deployer_address}}",
+    "timelock": "{{.deployer_address}}"
   },
   "strategies": [{{.strategies}}],
   "strategyManager": {
@@ -284,6 +336,11 @@ EL_CONFIG_TEMPLATE = """
   "slasher": {
     "init_paused_status": 0
   },
+  "allocationManager": {
+    "init_paused_status": 0,
+    "DEALLOCATION_DELAY": 900,
+    "ALLOCATION_CONFIGURATION_DELAY": 1200
+  },
   "delegation": {
     "init_paused_status": 0,
     "init_withdrawal_delay_blocks": 1
@@ -298,8 +355,11 @@ EL_CONFIG_TEMPLATE = """
     "rewards_updater_address": "{{.deployer_address}}",
     "activation_delay": 7200,
     "calculation_interval_seconds": 604800,
-    "global_operator_commission_bips": 1000
+    "global_operator_commission_bips": 1000,
+    "default_operator_split_bips": 1000,
+    "OPERATOR_SET_GENESIS_REWARDS_TIMESTAMP": 1720656000,
+    "OPERATOR_SET_MAX_RETROACTIVE_LENGTH": 2592000
   },
-  "ethPOSDepositAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa"
+  "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242"
 }
 """

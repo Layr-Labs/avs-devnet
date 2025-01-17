@@ -9,10 +9,10 @@
 > [!WARNING]
 > Since `Layr-Labs/avs-devnet` is a private repository, you'll need to login with `kurtosis github login` to access it.
 
-[After Kurtosis is installed](../README.md#dependencies), you can run [the default config](kurtosis_package/devnet_params.yaml). This spins up a local Ethereum devnet with a single node and all EigenLayer core contracts deployed. It also includes the [blockscout](https://github.com/blockscout/blockscout) explorer.
+[After Kurtosis is installed](../README.md#dependencies), you can run the default config. This spins up a local Ethereum devnet with a single node.
 
 ```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file github.com/kurtosis_package/devnet_params.yaml
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet
 ```
 
 What follows is a brief tutorial on Kurtosis CLI.
@@ -23,10 +23,11 @@ For more information, you can check [the documentation](https://docs.kurtosis.co
 To run a different configuration, you can write your own config file and pass it to the package like so:
 
 ```sh
-kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file devnet_params.yaml
+kurtosis run github.com/Layr-Labs/avs-devnet --enclave my_devnet --args-file devnet.yaml
 ```
 
-For example configurations, check [`examples`](examples/). For more information on the config file format, check [Configuration](../README.md#configuration).
+For example configurations, check [`examples`](examples/).
+For more information on the config file format, check [Configuration](../README.md#configuration).
 
 ### Stopping and deleting the devnet
 
