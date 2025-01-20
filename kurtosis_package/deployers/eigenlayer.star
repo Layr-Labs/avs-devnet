@@ -304,7 +304,7 @@ EL_DEPLOY_ARGS_v0_5_3 = {
     "input": {"script/configs/local/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
-            "path": "script/output/devnet/M2_from_scratch_deployment_data.json",
+            "path": "script/output/devnet/local_from_scratch_deployment_data.json",
             "rename": "eigenlayer_deployment_output.json",
         }
     },
