@@ -21,6 +21,31 @@ For development, we require [the `go` toolchain to be installed](https://go.dev/
 
 ## How to install
 
+### Using the install script
+
+To download a binary for the latest release, run:
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/Layr-Labs/avs-devnet/main/install.sh | sh -s
+```
+
+The binary will be installed inside the `~/bin` directory.
+You'll need to have this directory in your `PATH` to be able to call it by name (i.e. `avs-devnet` instead of `~/bin/avs-devnet`).
+This can be done by running:
+
+```sh
+export PATH=$PATH:~/bin
+```
+
+To persist this change, you'll need to add it to your `~/.bashrc` file (or other, depending on your chosen shell).
+
+> [!TIP]
+> Alternatively, you can specify the install path with `-b <path>`, like so:
+>
+> ```sh
+> curl -sSfL https://raw.githubusercontent.com/Layr-Labs/avs-devnet/main/install.sh | sh -s -- -b /usr/local/bin
+> ```
+
 ### Using `go` toolchain
 
 To install the devnet using the `go` toolchain:
