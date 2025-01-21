@@ -76,9 +76,13 @@ def get_version_args(deployment):
         major = int(version[0])
         minor = int(version[1])
         patch = int(version[2])
-        # EigenLayer contracts v0.4.2-mainnet-pepe and below
+        # v0.4.2-mainnet-pepe and below
         if major == 0 and (minor < 4 or (minor == 4 and patch <= 2)):
             return EL_DEPLOY_ARGS_v0_4_2
+
+        # Other versions before v1.0.0
+        if major == 0:
+            return EL_DEPLOY_ARGS_v0_5_3
 
     return EL_DEPLOY_ARGS_LATEST
 
@@ -271,6 +275,7 @@ EL_CONTRACT_NAMES = [
 EL_DEFAULT_ARGS = {
     "name": "EigenLayer",
     "repo": "https://github.com/Layr-Labs/eigenlayer-contracts.git",
+    "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
     "verify": False,
     "contracts_path": ".",
     "addresses": {},
@@ -284,7 +289,6 @@ CONFIG_ARTIFACT_PLACEHOLDER = "+$+CONFIG_ARTIFACT+$+"
 EL_DEPLOY_ARGS_v0_4_2 = {
     "ref": "v0.4.2-mainnet-pepe",
     "script": "script/deploy/devnet/M2_Deploy_From_Scratch.s.sol:Deployer_M2",
-    "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
     "input": {"script/configs/devnet/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
@@ -294,10 +298,21 @@ EL_DEPLOY_ARGS_v0_4_2 = {
     },
 } | EL_DEFAULT_ARGS
 
+EL_DEPLOY_ARGS_v0_5_3 = {
+    "ref": "v0.5.3",
+    "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
+    "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
+    "output": {
+        "eigenlayer_addresses": {
+            "path": "script/output/devnet/local_from_scratch_deployment_data.json",
+            "rename": "eigenlayer_deployment_output.json",
+        }
+    },
+} | EL_DEFAULT_ARGS
+
 EL_DEPLOY_ARGS_LATEST = {
     "ref": "dev",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
-    "extra_args": "--sig 'run(string memory configFileName)' -- deploy_from_scratch.config.json",
     "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
