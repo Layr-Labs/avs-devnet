@@ -301,7 +301,7 @@ EL_DEPLOY_ARGS_v0_4_2 = {
 EL_DEPLOY_ARGS_v0_5_3 = {
     "ref": "v0.5.3",
     "script": "script/deploy/local/Deploy_From_Scratch.s.sol:DeployFromScratch",
-    "input": {"script/configs/local/": CONFIG_ARTIFACT_PLACEHOLDER},
+    "input": {"script/configs/": CONFIG_ARTIFACT_PLACEHOLDER},
     "output": {
         "eigenlayer_addresses": {
             "path": "script/output/devnet/local_from_scratch_deployment_data.json",
