@@ -36,6 +36,9 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
 test: ## 🧪 Run tests
+	# NOTE: we do this to avoid race conditions in the engine initialization
+	kurtosis engine start
+
 	go test -v -timeout 30m ./...
 
 
