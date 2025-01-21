@@ -28,7 +28,7 @@ jobs:
         with:
           version: ${{ env.KURTOSIS_VERSION }}
 
-      - name: Cache Docker images.
+      - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
@@ -55,7 +55,7 @@ jobs:
         with:
           version: ${{ env.KURTOSIS_VERSION }}
 
-      - name: Cache Docker images.
+      - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
@@ -76,7 +76,7 @@ jobs:
         with:
           version: ${{ env.KURTOSIS_VERSION }}
 
-      - name: Cache Docker images.
+      - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-${{ env.KURTOSIS_VERSION }}
@@ -135,7 +135,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Cache Docker images.
+      - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
@@ -165,7 +165,7 @@ jobs:
       - name: Install devnet
         run: make install
 
-      - name: Cache Docker images.
+      - name: Cache Docker images
         uses: ScribeMD/docker-cache@0.5.0
         with:
           key: docker-${{ runner.os }}-a294978-${{ hashFiles('examples/eigenda.yaml') }}
