@@ -77,11 +77,9 @@ func TestStartIncredibleSquaring(t *testing.T) {
 }
 
 func TestStartLocalHelloWorld(t *testing.T) {
-	// NOTE: we don't run t.Parallel() here because we need to change the working directory
-	goToDir(t, "../../")
-
+	t.Parallel()
 	// Clone the hello-world-avs repo
-	err := exec.Command("make", "examples/hello-world-avs").Run()
+	err := exec.Command("sh", "-s", "cd ../../ && make examples/hello-world-avs").Run()
 	require.NoError(t, err, "Failed to make hello-world-avs repo")
 
 	configFile := filepath.Join(examplesDir, "hello_world_local.yaml")
