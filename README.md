@@ -19,14 +19,6 @@ Also, only contracts inside foundry projects are supported as of now.
 
 For development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
 
-> [!IMPORTANT]  
-> To be able to [install the CLI via `go`](#installation), you'll need to add `$HOME/go/bin` to your `PATH`.
-> You can do so by adding to your `~/.bashrc` (or the equivalent for your shell) the following line:
->
-> ```bash
-> export PATH="$PATH:$HOME/go/bin"
-> ```
-
 ## How to install
 
 ### Using `go` toolchain
@@ -36,6 +28,16 @@ To install the devnet using the `go` toolchain:
 ```sh
 go install github.com/Layr-Labs/avs-devnet/cmd/avs-devnet
 ```
+
+> [!IMPORTANT]  
+> To be able to use the CLI when installed via `go`, you'll need to add `GOBIN` (by default `$HOME/go/bin`) to your `PATH`.
+> You can do so by adding to your `~/.bashrc`, or the equivalent for your shell, the following line:
+>
+> ```bash
+> export PATH="$PATH:$HOME/go/bin"
+> ```
+>
+> More information [on the Go wiki](https://go.dev/wiki/GOPATH).
 
 ### With a local copy of the repo
 
