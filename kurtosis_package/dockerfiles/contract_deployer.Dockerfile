@@ -43,4 +43,4 @@ RUN git remote add origin ${CONTRACTS_REPO} && \
 WORKDIR /app/${CONTRACTS_PATH}
 
 # TODO: we can use a multi-stage build to store artifacts only
-RUN forge build
+RUN forge install
