@@ -46,23 +46,6 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig, workingDir stri
 	require.NoError(t, err, "Failed to start new devnet")
 }
 
-func goToDir(t *testing.T, destination string) {
-	dir, err := os.Getwd()
-	require.NoError(t, err, "Failed to get cwd")
-
-	err = os.Chdir(destination)
-	require.NoError(t, err, "Failed to go to repo root")
-
-	t.Cleanup(func() {
-		// Return to the original directory
-		err = os.Chdir(dir)
-		// Panic if failed, to avoid running other tests in the wrong directory
-		if err != nil {
-			panic(err)
-		}
-	})
-}
-
 func TestStartDefaultDevnet(t *testing.T) {
 	t.Parallel()
 	startDevnet(t, config.DefaultConfig(), examplesDir)
