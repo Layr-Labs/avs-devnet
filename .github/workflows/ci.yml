@@ -28,6 +28,11 @@ jobs:
         with:
           version: ${{ env.KURTOSIS_VERSION }}
 
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
+
       - name: Run Package with default args
         run: |
           kurtosis run ./kurtosis_package
@@ -50,6 +55,11 @@ jobs:
         with:
           version: ${{ env.KURTOSIS_VERSION }}
 
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
+
       - name: Run example '${{ matrix.example }}'
         run: make ${{ matrix.example }}
 
@@ -65,6 +75,11 @@ jobs:
         uses: ./.github/actions/kurtosis-install
         with:
           version: ${{ env.KURTOSIS_VERSION }}
+
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ env.KURTOSIS_VERSION }}
 
       - name: Kurtosis Lint
         run: make kurtosis_lint
@@ -120,6 +135,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
+
       - name: Run go test
         run: make test
 
@@ -144,14 +164,19 @@ jobs:
 
       - name: Install devnet
         run: make install
-      
+
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-a294978-${{ hashFiles('examples/eigenda.yaml') }}
+
       - name: Checkout EigenDA repo
         uses: actions/checkout@v4
         with:
           repository: Layr-Labs/eigenda
           path: eigenda/
           ref: a294978e346fe9d7ede0f1a57012c36f64f1212a
-      
+
       - name: Download SRS points
         run: |
           cd eigenda/
