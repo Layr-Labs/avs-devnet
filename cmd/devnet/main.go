@@ -18,12 +18,16 @@ func main() {
 	app.Version = version
 	app.Flags = append(app.Flags, &flags.KurtosisPackageFlag)
 
+	commonFlags := []cli.Flag{
+		&flags.ConfigFilePathFlag,
+	}
+
 	app.Commands = append(app.Commands, &cli.Command{
 		Name:      "init",
 		Usage:     "Initialize a devnet configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     commonFlags,
 		Action:    cmds.InitCmd,
 	})
 
@@ -32,7 +36,7 @@ func main() {
 		Usage:     "Start devnet from configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     append(commonFlags, &flags.KurtosisPackageFlag),
 		Action:    cmds.StartCmd,
 	})
 
@@ -41,7 +45,7 @@ func main() {
 		Usage:     "Stop devnet from configuration file",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     commonFlags,
 		Action:    cmds.StopCmd,
 	})
 
@@ -50,7 +54,7 @@ func main() {
 		Usage:     "Get a devnet contract or EOA address",
 		Args:      true,
 		ArgsUsage: "<contract-name>...",
-		Flags:     []cli.Flag{&flags.ConfigFilePathFlag},
+		Flags:     commonFlags,
 		Action:    cmds.GetAddress,
 	})
 
@@ -59,7 +63,7 @@ func main() {
 		Usage:     "Get the published ports on the devnet",
 		Args:      true,
 		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		Flags:     commonFlags,
 		Action:    cmds.GetPorts,
 	})
 
