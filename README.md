@@ -27,9 +27,19 @@ For development, we require [the `go` toolchain to be installed](https://go.dev/
 > export PATH="$PATH:$HOME/go/bin"
 > ```
 
-## Installation
+## How to install
 
-To build and install the CLI locally, run:
+### Using `go` toolchain
+
+To install the devnet using the `go` toolchain:
+
+```sh
+go install github.com/Layr-Labs/avs-devnet/cmd/avs-devnet
+```
+
+### With a local copy of the repo
+
+To build and install the CLI with a local copy of the repo, first clone the repo, and then run:
 
 ```sh
 make deps      # installs dependencies
