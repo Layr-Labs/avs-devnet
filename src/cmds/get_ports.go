@@ -3,16 +3,14 @@ package cmds
 import (
 	"fmt"
 
+	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
 )
 
 func GetPorts(ctx *cli.Context) error {
-	devnetName, _, err := parseArgs(ctx)
-	if err != nil {
-		return cli.Exit(err, 1)
-	}
+	devnetName := flags.DevnetNameFlag.Get(ctx)
 
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {

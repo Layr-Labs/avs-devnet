@@ -3,47 +3,31 @@ package cmds
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/urfave/cli/v2"
 )
 
-// Parses the main arguments from the given context.
-// Returns the devnet name and the configuration file name.
-func parseArgs(ctx *cli.Context) (string, string, error) {
+// Parses the configuration file path from the positional args.
+// Fails if more than one positional arg is provided.
+func parseConfigFileName(ctx *cli.Context) (string, error) {
 	args := ctx.Args()
 	if args.Len() > 1 {
-		return "", "", errors.New("expected exactly 1 argument: <config-file>")
+		return "", errors.New("expected none or 1 argument: [<file-name>]")
 	}
 	fileName := args.First()
-	var devnetName string
-
+	// TODO: check file exists and support yml extension
 	if fileName == "" {
-		fileName = "devnet.yaml"
-		devnetName = "devnet"
-	} else {
-		name, err := EnclaveNameFromFileName(fileName)
-		if err != nil {
-			return "", "", err
-		}
-		devnetName = name
+		return "devnet.yaml", nil
 	}
-	return devnetName, fileName, nil
+	return fileName, nil
 }
 
 // Checks if a file exists at the given path.
 func fileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return !errors.Is(err, os.ErrNotExist)
-}
-
-// Extracts the devnet name from the given configuration file name.
-func EnclaveNameFromFileName(fileName string) (string, error) {
-	name := filepath.Base(fileName)
-	name = strings.Split(name, ".")[0]
-	return ToValidEnclaveName(name)
 }
 
 func ToValidEnclaveName(name string) (string, error) {
