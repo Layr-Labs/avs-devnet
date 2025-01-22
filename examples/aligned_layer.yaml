@@ -1,0 +1,533 @@
+# yaml-language-server: $schema=../schema.json
+
+# Example devnet config file for Aligned Layer (https://github.com/yetanotherco/aligned_layer)
+
+# Things to note:
+# - images need to be built manually, by running `make docker_build` in the Aigned Layer repo
+#   - the branch required is: https://github.com/yetanotherco/aligned_layer/pull/1708
+# - proof sending doesn't work yet
+# - to try sending proofs, you need to:
+#   - replace 0x7bc06c482DEAd17c0e297aFbC32f6e63d3846650 with the correct contract address in sdk
+#   - specify the correct RPC URL when sending proofs (look at the makefile for that)
+#   - pass batcher URL and proof sender PK with the `--batcher_url` and `--private_key` flags
+deployments:
+  # TODO: use devnet EigenLayer deployer
+  - name: EigenLayer
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "output-batcher-addresses-as-json"
+    contracts_path: "contracts"
+    script: script/deploy/EigenLayerDeployer.s.sol
+    extra_args: --sig 'run(string memory configFileName)' -- eigen.devnet.config.json
+    input:
+      script/deploy/config/devnet/: eigenlayer_deployment_config
+    output:
+      eigenlayer_addresses: "script/output/devnet/eigenlayer_deployment_output.json"
+    addresses:
+      delegationManager: "eigenlayer_addresses:.addresses.delegationManager"
+      mockStrategy: "eigenlayer_addresses:.addresses.strategies.MOCK"
+
+  - name: Aligned
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "output-batcher-addresses-as-json"
+    contracts_path: "contracts"
+    script: script/deploy/AlignedLayerDeployer.s.sol
+    extra_args: >-
+      --sig "run(string memory existingDeploymentInfoPath, string memory deployConfigPath, string memory outputPath)"
+      ./script/output/devnet/eigenlayer_deployment_output.json
+      ./script/deploy/config/devnet/aligned.devnet.config.json
+      ./script/output/devnet/alignedlayer_deployment_output.json
+    input:
+      script/deploy/config/devnet/: aligned_deployment_config
+      script/output/devnet/: eigenlayer_addresses
+    output:
+      avs_addresses: script/output/devnet/alignedlayer_deployment_output.json
+    addresses:
+      alignedLayerServiceManager: "avs_addresses:.addresses.alignedLayerServiceManager"
+      registryCoordinator: "avs_addresses:.addresses.registryCoordinator"
+
+  - name: BatcherPaymentService
+    repo: "https://github.com/yetanotherco/aligned_layer.git"
+    ref: "output-batcher-addresses-as-json"
+    contracts_path: "contracts"
+    script: script/deploy/BatcherPaymentServiceDeployer.s.sol
+    extra_args: >-
+      --sig "run(string batcherConfigPath, string outputPath)"
+      ./script/deploy/config/devnet/batcher.devnet.config.json
+      ./script/output/devnet/batcher_deployment_output.json
+    input:
+      script/deploy/config/devnet/: batcher_deployment_config
+    output:
+      batcher_addresses: script/output/devnet/batcher_deployment_output.json
+    addresses:
+      batcherPaymentService: "batcher_addresses:.addresses.batcherPaymentService"
+
+services:
+  - name: localstack
+    image: localstack/localstack
+    ports:
+      gateway:
+        number: 4566
+        transport_protocol: TCP
+        application_protocol: "http"
+        wait: 1m
+    env:
+      DEBUG: 1
+      DEFAULT_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    input:
+      /etc/localstack/init/ready.d: localstack_init_script
+
+  - name: "aggregator"
+    image: "ghcr.io/yetanotherco/aligned_layer/aggregator:latest"
+    ports:
+      rpc:
+        number: 8090
+        transport_protocol: "TCP"
+        application_protocol: "http"
+      metrics:
+        number: 9091
+        transport_protocol: "TCP"
+        application_protocol: "http"
+    input:
+      /aggregator/config-files/: aggregator_config
+      /aggregator/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aggregator/keystores/:
+        - aggregator_bls
+        - aggregator_ecdsa
+    cmd:
+      - "aligned-layer-aggregator"
+      - "--config"
+      - "./config-files/config-aggregator.yaml"
+
+  # One-shot services to perform tasks
+  - name: "operator1-register-operator-eigenlayer"
+    image: ghcr.io/yetanotherco/aligned_layer/eigenlayer-cli:latest
+    input:
+      /go/config-files/: operator_config
+      /go/keystores/: operator1_ecdsa
+    env:
+      PASSWORD: "{{.keys.operator1_ecdsa.password}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - 'echo "$PASSWORD" | eigenlayer operator register ./config-files/config-docker.yaml'
+
+  - name: "operator1-mint-mock-tokens"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    input:
+      /config-files/: operator_config
+      /keystores/: operator1_ecdsa
+    env:
+      DEPLOYER_PRIVATE_KEY: "{{.deployer_private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        sleep 6 &&
+        TOKEN_ADDR=$(cast call --rpc-url $RPC_URL {{.addresses.EigenLayer.mockStrategy}} 'underlyingToken()(address)') &&
+        cast send $TOKEN_ADDR 'mint(address, uint256)' $OPERATOR_ADDRESS 100000000000000000
+        --private-key $DEPLOYER_PRIVATE_KEY --rpc-url $RPC_URL
+
+  - name: "batcher-payment-service-deposit-initial-funds"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    env:
+      PRIVATE_KEY: "{{.keys.batcher_ecdsa.private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      BATCHER_PAYMENT_SERVICE_ADDRESS: "{{.addresses.BatcherPaymentService.batcherPaymentService}}"
+      ALIGNED_SERVICE_MANAGER_ADDRESS: "{{.addresses.Aligned.alignedLayerServiceManager}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        cast send --value "1ether"
+        --private-key $PRIVATE_KEY --rpc-url $RPC_URL
+        $ALIGNED_SERVICE_MANAGER_ADDRESS 'depositToBatcher(address)' $BATCHER_PAYMENT_SERVICE_ADDRESS
+
+  - name: "operator1-deposit-into-mock-strategy"
+    image: ghcr.io/yetanotherco/aligned_layer/operator:latest
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls
+        - operator1_ecdsa
+    env:
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        sleep 12 &&
+        aligned-layer-operator deposit-into-strategy --config ./config-files/config-docker.yaml
+        --strategy-address {{.addresses.EigenLayer.mockStrategy}} --amount 100000000000000000
+
+  - name: "operator1-whitelist-devnet"
+    image: ghcr.io/yetanotherco/aligned_layer/foundry:latest
+    input:
+      /config-files/: operator_config
+      /addresses/: avs_addresses
+      /keystores/: operator1_ecdsa
+    env:
+      DEPLOYER_PRIVATE_KEY: "{{.deployer_private_key}}"
+      RPC_URL: "{{.http_rpc_url}}"
+      OPERATOR_ADDRESS: "{{.keys.operator1_ecdsa.address}}"
+      REGISTRY_ADDR: "{{.addresses.Aligned.registryCoordinator}}"
+    cmd:
+      - "sh"
+      - "-c"
+      - >-
+        echo "Registry address: $REGISTRY_ADDR" &&
+        sleep 18 &&
+        cast send  $REGISTRY_ADDR 'add(address)' $OPERATOR_ADDRESS --rpc-url $RPC_URL --private-key $DEPLOYER_PRIVATE_KEY
+
+  - name: operator-register-with-aligned-layer
+    image: ghcr.io/yetanotherco/aligned_layer/operator:latest
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls
+        - operator1_ecdsa
+    cmd:
+      - "sh"
+      - "-c"
+      - "sleep 24 && aligned-layer-operator register --config ./config-files/config-docker.yaml"
+
+  - name: "operator1"
+    image: "ghcr.io/yetanotherco/aligned_layer/operator:latest"
+    input:
+      /aligned_layer/config-files/: operator_config
+      /aligned_layer/contracts/script/output/devnet/:
+        - eigenlayer_addresses
+        - avs_addresses
+      /aligned_layer/keystores/:
+        - operator1_bls
+        - operator1_ecdsa
+    cmd:
+      - "sh"
+      - "-c"
+      - "sleep 30 && aligned-layer-operator start --config ./config-files/config-docker.yaml"
+
+  - name: batcher
+    image: ghcr.io/yetanotherco/aligned_layer/batcher:latest
+    ports:
+      metrics:
+        number: 9093
+        transport_protocol: "TCP"
+        application_protocol: "http"
+      rpc:
+        number: 8080
+        transport_protocol: "TCP"
+        application_protocol: "http"
+    input:
+      /config-files/:
+        - batcher_config
+        - batcher_ecdsa
+      /deployment_output/:
+        - eigenlayer_addresses
+        - avs_addresses_merged
+    env:
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_BUCKET_NAME: aligned.storage
+      UPLOAD_ENDPOINT: http://{{.services.localstack.ip_address}}:4566
+      DOWNLOAD_ENDPOINT: http://{{.services.localstack.ip_address}}:4566/aligned.storage
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
+    cmd:
+      [
+        "aligned-batcher",
+        "--config",
+        "./config-files/config-batcher-docker.yaml",
+        "--addr",
+        "0.0.0.0",
+        "--port",
+        "8080",
+      ]
+
+keys:
+  - name: "aggregator_bls"
+    type: "bls"
+  - name: "aggregator_ecdsa"
+    type: "ecdsa"
+  - name: "operator1_bls"
+    type: "bls"
+  - name: "operator1_ecdsa"
+    type: "ecdsa"
+  - name: "batcher_ecdsa"
+    type: "ecdsa"
+    # Account to be used when sending proofs
+  - name: "proof_sender"
+    type: "ecdsa"
+
+artifacts:
+  localstack_init_script:
+    files:
+      init-s3.py:
+        static_file: https://raw.githubusercontent.com/yetanotherco/aligned_layer/refs/heads/testnet/scripts/init-s3.py
+
+  eigenlayer_deployment_config:
+    files:
+      eigen.devnet.config.json:
+        template: |
+          {
+            "chainInfo": {
+              "chainId": 31337
+            },
+            "multisig_addresses": {
+              "pauserMultisig": "{{.deployer_address}}",
+              "communityMultisig": "{{.deployer_address}}",
+              "operationsMultisig": "{{.deployer_address}}",
+              "executorMultisig": "{{.deployer_address}}",
+              "timelock": "{{.deployer_address}}"
+            },
+            "strategies": {
+              "numStrategies": 0,
+              "MAX_PER_DEPOSIT": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+              "MAX_TOTAL_DEPOSITS": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+              "strategiesToDeploy": []
+            },
+            "strategyManager": {
+              "init_strategy_whitelister": "{{.deployer_address}}",
+              "init_paused_status": 0
+            },
+            "delegationManager": {
+              "init_paused_status": 0,
+              "init_minWithdrawalDelayBlocks": 10
+            },
+            "rewardsCoordinator": {
+              "init_paused_status": 0,
+              "CALCULATION_INTERVAL_SECONDS": 604800,
+              "MAX_REWARDS_DURATION": 6048000,
+              "MAX_RETROACTIVE_LENGTH": 7776000,
+              "MAX_FUTURE_LENGTH": 2592000,
+              "GENESIS_REWARDS_TIMESTAMP": 1710979200,
+              "rewards_updater_address": "{{.deployer_address}}",
+              "activation_delay": 7200,
+              "calculation_interval_seconds": 604800,
+              "global_operator_commission_bips": 1000
+            },
+            "avsDirectory": {
+              "init_paused_status": 0
+            },
+            "slasher": {
+              "init_paused_status": 0
+            },
+            "eigenPod": {
+              "MAX_RESTAKED_BALANCE_GWEI_PER_VALIDATOR": 32000000000,
+              "GENESIS_TIME": 1695902400
+            },
+            "eigenPodManager": {
+              "init_paused_status": 0,
+              "deneb_fork_timestamp": "1707305664"
+            },
+            "delayedWithdrawalRouter": {
+              "init_paused_status": 0,
+              "init_withdrawalDelayBlocks": 10
+            },
+            "ethPOSDepositAddress": "0x4242424242424242424242424242424242424242",
+            "beaconOracleAddress": "0x4C116BB629bff7A8373c2378bBd919f8349B8f25"
+          }
+
+  aligned_deployment_config:
+    files:
+      aligned.devnet.config.json:
+        template: |
+          {
+            "chainInfo": {
+              "chainId": 31337
+            },
+            "permissions": {
+              "owner": "{{.deployer_address}}",
+              "pauser": "{{.deployer_address}}",
+              "aggregator": "{{.keys.aggregator_ecdsa.address}}",
+              "upgrader": "{{.deployer_address}}",
+              "churner": "{{.deployer_address}}",
+              "ejector": "{{.deployer_address}}",
+              "deployer": "{{.deployer_address}}",
+              "initalPausedStatus": 0
+            },
+            "minimumStakes": [
+              1
+            ],
+            "strategyWeights": [
+              [
+                {
+                  "0_strategy": "{{.addresses.EigenLayer.mockStrategy}}",
+                  "1_multiplier": 1e+18
+                }
+              ]
+            ],
+            "operatorSetParams": [
+              {
+                "0_maxOperatorCount": 200,
+                "1_kickBIPsOfOperatorStake": 11000,
+                "2_kickBIPsOfTotalStake": 50
+              }
+            ],
+            "uri": ""
+          }
+
+  batcher_deployment_config:
+    files:
+      batcher.devnet.config.json:
+        template: |
+          {
+            "address": {
+              "batcherWallet": "{{.keys.batcher_ecdsa.address}}",
+              "batcherPrivateKey": "{{.keys.batcher_ecdsa.private_key}}",
+              "alignedLayerServiceManager": "{{.addresses.Aligned.alignedLayerServiceManager}}"
+            },
+            "amounts": {
+              "gasForAggregator": "300000",
+              "gasPerProof": "21000"
+            },
+            "permissions": {
+              "owner": "{{.deployer_address}}"
+            }
+          }
+
+  aggregator_config:
+    files:
+      config-aggregator.yaml:
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
+
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "keystores/keys/1.ecdsa.key.json"
+            private_key_store_password: "{{.keys.aggregator_ecdsa.password}}"
+
+          ## BLS Configurations
+          bls:
+            private_key_store_path: "keystores/keys/1.bls.key.json"
+            private_key_store_password: "{{.keys.aggregator_bls.password}}"
+
+          ## Aggregator Configurations
+          aggregator:
+            server_ip_port_address: 0.0.0.0:8090
+            bls_public_key_compendium_address: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44"
+            avs_service_manager_address: "{{.addresses.Aligned.alignedLayerServiceManager}}"
+            enable_metrics: true
+            metrics_ip_port_address: 0.0.0.0:9091
+            telemetry_ip_port_address: localhost:4001
+            garbage_collector_period: 2m #The period of the GC process. Suggested value for Prod: '168h' (7 days)
+            garbage_collector_tasks_age: 20 #The age of tasks that will be removed by the GC, in blocks. Suggested value for prod: '216000' (30 days)
+            garbage_collector_tasks_interval: 10 #The interval of queried blocks to get an old batch. Suggested value for prod: '900' (3 hours)
+
+  operator_config:
+    files:
+      config-docker.yaml:
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "./contracts/script/output/devnet/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "./contracts/script/output/devnet/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
+
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "keystores/keys/1.ecdsa.key.json"
+            private_key_store_password: "{{.keys.operator1_ecdsa.password}}"
+
+          ## BLS Configurations
+          bls:
+            private_key_store_path: "keystores/keys/1.bls.key.json"
+            private_key_store_password: "{{.keys.operator1_bls.password}}"
+
+          ## Operator Configurations
+          operator:
+            aggregator_rpc_server_ip_port_address: {{.services.aggregator.ip_address}}:8090
+            operator_tracker_ip_port_address: http://localhost:3030
+            address: {{.keys.operator1_ecdsa.address}}
+            earnings_receiver_address: {{.keys.operator1_ecdsa.address}}
+            delegation_approver_address: "0x0000000000000000000000000000000000000000"
+            staker_opt_out_window_blocks: 0
+            metadata_url: "https://yetanotherco.github.io/operator_metadata/metadata.json"
+            enable_metrics: true
+            metrics_ip_port_address: localhost:9092
+            max_batch_size: 268435456 # 256 MiB
+            last_processed_batch_filepath: config-files/operator.last_processed_batch.json
+
+          # Operators variables needed for register it in EigenLayer
+          el_delegation_manager_address: "{{.addresses.EigenLayer.delegationManager}}"
+          private_key_store_path: keystores/keys/1.ecdsa.key.json
+          bls_private_key_store_path: keystores/keys/1.bls.key.json
+          signer_type: local_keystore
+          chain_id: 31337
+
+  avs_addresses_merged:
+    files:
+      alignedlayer_deployment_output.json:
+        template: |
+          {
+            "addresses": {
+              "alignedLayerServiceManager": "{{.addresses.Aligned.alignedLayerServiceManager}}",
+              "batcherPaymentService": "{{.addresses.BatcherPaymentService.batcherPaymentService}}"
+            }
+          }
+
+  batcher_config:
+    files:
+      config-batcher-docker.yaml:
+        template: |
+          # Common variables for all the services
+          # 'production' only prints info and above. 'development' also prints debug
+          environment: "production"
+          aligned_layer_deployment_config_file_path: "/deployment_output/alignedlayer_deployment_output.json"
+          eigen_layer_deployment_config_file_path: "/deployment_output/eigenlayer_deployment_output.json"
+          eth_rpc_url: "{{.http_rpc_url}}"
+          eth_rpc_url_fallback: "{{.http_rpc_url}}"
+          eth_ws_url: "{{.ws_rpc_url}}"
+          eth_ws_url_fallback: "{{.ws_rpc_url}}"
+          eigen_metrics_ip_port_address: "localhost:9090"
+
+          ## ECDSA Configurations
+          ecdsa:
+            private_key_store_path: "config-files/keys/1.ecdsa.key.json"
+            private_key_store_password: "{{.keys.batcher_ecdsa.password}}"
+
+          ## Batcher configurations
+          batcher:
+            block_interval: 3
+            batch_size_interval: 10
+            transaction_wait_timeout: 96000 # 8 blocks
+            max_proof_size: 67108864 # 64 MiB
+            max_batch_byte_size: 268435456 # 256 MiB
+            max_batch_proof_qty: 3000 # 3000 proofs in a batch
+            eth_ws_reconnects: 99999999999999
+            pre_verification_is_enabled: true
+            metrics_port: 9093
+            telemetry_ip_port_address: localhost:4001
+
+ethereum_package:
+  additional_services:
+    - blockscout
+  network_params:
+    # We use anvil's chain ID because 3151908 is not supported by eigenlayer-cli
+    network_id: "31337"
+    seconds_per_slot: 3
