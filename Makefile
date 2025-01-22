@@ -8,7 +8,7 @@
 KURTOSIS_DIR:=$(shell cd kurtosis_package/ && pwd -P)
 
 CURRENT_COMMIT:=$(shell git describe --always --abbrev=8 --dirty)
-INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/devnet/main.go))
+INSTALLATION_DIR:=$(shell dirname $$(go list -f '{{.Target}}' cmd/avs-devnet/main.go))
 # These flags set some global constants in the build
 GO_LDFLAGS:='-X main.version=dev-$(CURRENT_COMMIT) -X github.com/Layr-Labs/avs-devnet/src/cmds/flags.DefaultKurtosisPackage=$(KURTOSIS_DIR)'
 
@@ -49,13 +49,13 @@ cli_deps:
 	go mod tidy
 
 devnet.yaml:
-	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go init
+	$(PACKAGE_ENV_VAR) go run cmd/avs-devnet/main.go init
 
 cli_start: devnet.yaml ## 🚀 Start the devnet (CLI)
-	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go start
+	$(PACKAGE_ENV_VAR) go run cmd/avs-devnet/main.go start
 
 cli_stop: devnet.yaml ## 🛑 Stop the devnet (CLI)
-	$(PACKAGE_ENV_VAR) go run cmd/devnet/main.go stop
+	$(PACKAGE_ENV_VAR) go run cmd/avs-devnet/main.go stop
 
 cli_fmt:
 	go fmt ./...
