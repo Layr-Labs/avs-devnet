@@ -153,6 +153,8 @@ vc-1-besu-lighthouse:
     metrics: 127.0.0.1:65048
 ```
 
+## Advanced Features
+
 ### Local development
 
 Some fields in the config can be used to ease deployment of local projects.
