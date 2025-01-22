@@ -7,6 +7,8 @@ To release a new version of the CLI, follow the steps below:
 > [!WARNING]
 > You need to have write permission to this repo to release a new version
 
+- [ ] Check the last CI run on `main` succeeded.
+
 - [ ] Checkout `main` and pull the latest changes:
 
     ```sh

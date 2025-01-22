@@ -6,7 +6,7 @@ import "github.com/urfave/cli/v2"
 // TODO: move to constants.
 //
 //nolint:gochecknoglobals // this is a constant
-var DefaultKurtosisPackage string = ""
+var DefaultKurtosisPackage string = "github.com/Layr-Labs/avs-devnet/kurtosis_package"
 
 //nolint:gochecknoglobals // these are constants
 var (
