@@ -3,7 +3,6 @@ package cmds_test
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -46,23 +45,6 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig, workingDir stri
 	require.NoError(t, err, "Failed to start new devnet")
 }
 
-func goToDir(t *testing.T, destination string) {
-	dir, err := os.Getwd()
-	require.NoError(t, err, "Failed to get cwd")
-
-	err = os.Chdir(destination)
-	require.NoError(t, err, "Failed to go to repo root")
-
-	t.Cleanup(func() {
-		// Return to the original directory
-		err = os.Chdir(dir)
-		// Panic if failed, to avoid running other tests in the wrong directory
-		if err != nil {
-			panic(err)
-		}
-	})
-}
-
 func TestStartDefaultDevnet(t *testing.T) {
 	t.Parallel()
 	startDevnet(t, config.DefaultConfig(), examplesDir)
@@ -77,13 +59,9 @@ func TestStartIncredibleSquaring(t *testing.T) {
 }
 
 func TestStartLocalHelloWorld(t *testing.T) {
-	// NOTE: we don't run t.Parallel() here because we need to change the working directory
-	goToDir(t, "../../")
-
-	// Clone the hello-world-avs repo
-	err := exec.Command("make", "examples/hello-world-avs").Run()
-	require.NoError(t, err, "Failed to make hello-world-avs repo")
-
+	// Check that the Hello World AVS repo was downloaded
+	require.DirExists(t, filepath.Join(examplesDir, "hello-world-avs"), "Hello World AVS repo not found")
+	t.Parallel()
 	configFile := filepath.Join(examplesDir, "hello_world_local.yaml")
 	devnetConfig, err := config.LoadFromPath(configFile)
 	require.NoError(t, err, "Failed to parse example config")

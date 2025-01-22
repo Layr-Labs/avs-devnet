@@ -35,7 +35,10 @@ fmt: kurtosis_fmt cli_fmt ## 🧹 Format all code
 
 lint: kurtosis_lint cli_lint ## 🧹 Lint all code
 
-test: ## 🧪 Run tests
+test: examples/hello-world-avs ## 🧪 Run tests
+	# NOTE: we do this to avoid race conditions in the engine initialization
+	kurtosis engine start
+
 	go test -v -timeout 30m ./...
 
 
@@ -103,8 +106,8 @@ HELLO_WORLD_REF:=4626e206fd119b26ebe98935b256daa7256e863b
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
-	@mkdir -p examples/hello-world-avs
-	@cd examples/hello-world-avs && \
+	@mkdir -p $@
+	@cd $@ && \
 		git init . && \
 		git remote add origin https://github.com/Layr-Labs/hello-world-avs.git && \
 		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \

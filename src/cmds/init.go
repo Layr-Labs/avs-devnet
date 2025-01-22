@@ -11,7 +11,7 @@ import (
 
 // Creates a new devnet configuration with the given context.
 func InitCmd(ctx *cli.Context) error {
-	_, configFileName, err := parseArgs(ctx)
+	configFileName, err := parseConfigFileName(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}
