@@ -3,7 +3,6 @@ package cmds_test
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -60,11 +59,9 @@ func TestStartIncredibleSquaring(t *testing.T) {
 }
 
 func TestStartLocalHelloWorld(t *testing.T) {
+	// Check that the Hello World AVS repo was downloaded
+	require.DirExists(t, filepath.Join(examplesDir, "hello-world-avs"), "Hello World AVS repo not found")
 	t.Parallel()
-	// Clone the hello-world-avs repo
-	err := exec.Command("sh", "-s", "cd "+rootDir+" && make examples/hello-world-avs").Run()
-	require.NoError(t, err, "Failed to make hello-world-avs repo")
-
 	configFile := filepath.Join(examplesDir, "hello_world_local.yaml")
 	devnetConfig, err := config.LoadFromPath(configFile)
 	require.NoError(t, err, "Failed to parse example config")
