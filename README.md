@@ -261,6 +261,32 @@ artifacts:
       somefile.txt: "https://raw.githubusercontent.com/Layr-Labs/incredible-squaring-avs/refs/heads/master/README.md"
 ```
 
+### Running multiple devnets
+
+Some subcommands accepts a `--name`/`-n` parameter, which sets the devnet name to be used (the default is `devnet`).
+By specifying different names, you can work with multiple devnets at the same time.
+
+Example:
+
+```sh
+# Starts a devnet with name "devnet"
+avs-devnet start
+# Starts a devnet with name "foo"
+avs-devnet start -n foo
+
+# Gets the ports exposed by "devnet"
+avs-devnet get-ports
+# Gets the ports exposed by "foo"
+avs-devnet get-ports -n foo
+
+# Stops "devnet"
+avs-devnet stop
+# The next command fails because "devnet" is not running
+avs-devnet get-ports
+# This works
+avs-devnet get-ports -n foo
+```
+
 ### More Help
 
 You can find the options for each command by appending `--help`:
