@@ -16,14 +16,12 @@ func main() {
 	app.Name = "avs-devnet"
 	app.Usage = "start an AVS devnet"
 	app.Version = version
-	app.Flags = append(app.Flags, &flags.KurtosisPackageFlag)
 
 	app.Commands = append(app.Commands, &cli.Command{
 		Name:      "init",
 		Usage:     "Initialize a devnet configuration file",
 		Args:      true,
-		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
+		ArgsUsage: "[<file-name>]",
 		Action:    cmds.InitCmd,
 	})
 
@@ -31,18 +29,19 @@ func main() {
 		Name:      "start",
 		Usage:     "Start devnet from configuration file",
 		Args:      true,
-		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
-		Action:    cmds.StartCmd,
+		ArgsUsage: "[<file-name>]",
+		Flags: []cli.Flag{
+			&flags.DevnetNameFlag,
+			&flags.KurtosisPackageFlag,
+		},
+		Action: cmds.StartCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:      "stop",
-		Usage:     "Stop devnet from configuration file",
-		Args:      true,
-		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
-		Action:    cmds.StopCmd,
+		Name:   "stop",
+		Usage:  "Stop devnet from configuration file",
+		Flags:  []cli.Flag{&flags.DevnetNameFlag},
+		Action: cmds.StopCmd,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
@@ -50,17 +49,15 @@ func main() {
 		Usage:     "Get a devnet contract or EOA address",
 		Args:      true,
 		ArgsUsage: "<contract-name>...",
-		Flags:     []cli.Flag{&flags.ConfigFilePathFlag},
+		Flags:     []cli.Flag{&flags.DevnetNameFlag},
 		Action:    cmds.GetAddress,
 	})
 
 	app.Commands = append(app.Commands, &cli.Command{
-		Name:      "get-ports",
-		Usage:     "Get the published ports on the devnet",
-		Args:      true,
-		ArgsUsage: "[<config-file>]",
-		Flags:     []cli.Flag{},
-		Action:    cmds.GetPorts,
+		Name:   "get-ports",
+		Usage:  "Get the published ports on the devnet",
+		Flags:  []cli.Flag{&flags.DevnetNameFlag},
+		Action: cmds.GetPorts,
 	})
 
 	if err := app.Run(os.Args); err != nil {

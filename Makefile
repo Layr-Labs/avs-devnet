@@ -103,8 +103,8 @@ HELLO_WORLD_REF:=4626e206fd119b26ebe98935b256daa7256e863b
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
-	@mkdir -p examples/hello-world-avs
-	@cd examples/hello-world-avs && \
+	@mkdir -p $@
+	@cd $@ && \
 		git init . && \
 		git remote add origin https://github.com/Layr-Labs/hello-world-avs.git && \
 		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \
