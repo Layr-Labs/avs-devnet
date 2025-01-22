@@ -14,11 +14,7 @@ import (
 
 func GetAddress(ctx *cli.Context) error {
 	args := ctx.Args()
-	configFileName := ctx.String(flags.ConfigFilePathFlag.Name)
-	devnetName, err := EnclaveNameFromFileName(configFileName)
-	if err != nil {
-		return cli.Exit(err, 1)
-	}
+	devnetName := flags.DevnetNameFlag.Get(ctx)
 
 	kurtosisCtx, err := kurtosis.InitKurtosisContext()
 	if err != nil {

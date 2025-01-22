@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Layr-Labs/avs-devnet/src/cmds/flags"
 	"github.com/Layr-Labs/avs-devnet/src/kurtosis"
 	"github.com/urfave/cli/v2"
 )
@@ -13,12 +14,9 @@ var ErrEnclaveNotExists = errors.New("enclave doesn't exist")
 
 // Stops the devnet with the given context.
 func StopCmd(ctx *cli.Context) error {
-	devnetName, _, err := parseArgs(ctx)
-	if err != nil {
-		return cli.Exit(err, 1)
-	}
+	devnetName := flags.DevnetNameFlag.Get(ctx)
 	fmt.Println("Stopping devnet...")
-	err = Stop(ctx.Context, devnetName)
+	err := Stop(ctx.Context, devnetName)
 	if errors.Is(err, ErrEnclaveNotExists) {
 		return cli.Exit("Failed to find '"+devnetName+"'. Maybe it's not running?", 1)
 	} else if err != nil {

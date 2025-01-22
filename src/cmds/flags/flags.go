@@ -10,12 +10,13 @@ var DefaultKurtosisPackage string = ""
 
 //nolint:gochecknoglobals // these are constants
 var (
-	ConfigFilePathFlag = cli.StringFlag{
-		Name:      "file",
-		TakesFile: true,
-		Aliases:   []string{"f"},
-		Usage:     "Path to the devnet configuration file",
-		Value:     "devnet.yaml",
+	DevnetNameFlag = cli.StringFlag{
+		Name:        "name",
+		TakesFile:   true,
+		Aliases:     []string{"n"},
+		Usage:       "Assign a name to the devnet",
+		Value:       "devnet",
+		DefaultText: "devnet",
 	}
 
 	// NOTE: this flag is for internal use.
