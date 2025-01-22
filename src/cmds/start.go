@@ -24,7 +24,8 @@ import (
 // Starts the devnet with the given context.
 func StartCmd(ctx *cli.Context) error {
 	pkgName := flags.KurtosisPackageFlag.Get(ctx)
-	devnetName, configPath, err := parseArgs(ctx)
+	devnetName := flags.DevnetNameFlag.Get(ctx)
+	configPath, err := parseConfigFileName(ctx)
 	if err != nil {
 		return cli.Exit(err, 1)
 	}

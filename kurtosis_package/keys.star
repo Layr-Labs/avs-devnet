@@ -63,8 +63,7 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
     output_dir = "/_output"
 
     cmd = "set -e ; rm -rf {output} && \
-    egnkey generate --key-type {type} --num-keys 1 --output-dir {output} ; \
-    cat {output}/password.txt | tr -d '\n'".format(
+    egnkey generate --key-type {type} --num-keys 1 --output-dir {output}".format(
         output=output_dir, type=key_type
     )
 
@@ -73,7 +72,6 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
         recipe=ExecRecipe(command=["sh", "-c", cmd]),
         description="Generating " + key_type + " key",
     )
-    password = result["output"]
 
     artifact_name = plan.store_service_files(
         service_name=egnkey_service_name,
@@ -81,6 +79,16 @@ def generate_keys(plan, egnkey_service_name, key_type, artifact_name):
         name=artifact_name,
         description="Storing " + key_type + " key",
     )
+
+    # NOTE: we do this in another step to avoid egnkey's output from being stored
+    cmd = "set -e ; cat {}/password.txt | tr -d '\n'".format(output_dir)
+
+    result = plan.exec(
+        service_name=egnkey_service_name,
+        recipe=ExecRecipe(command=["sh", "-c", cmd]),
+        description="Extracting keystore password",
+    )
+    password = result["output"]
 
     cmd = "set -e ; cat {}/private_key_hex.txt | tr -d '\n'".format(output_dir)
 
