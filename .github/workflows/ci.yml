@@ -189,4 +189,4 @@ jobs:
         run: |
           cp examples/eigenda.yaml eigenda/devnet.yaml
           cd eigenda/
-          devnet start
+          avs-devnet start
