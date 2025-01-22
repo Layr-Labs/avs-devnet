@@ -6,9 +6,9 @@
 version: 2
 
 builds:
-  - id: devnet
-    main: ./cmd/devnet/main.go
-    binary: devnet
+  - id: avs-devnet
+    main: ./cmd/avs-devnet/main.go
+    binary: avs-devnet
     flags:
       - -v
     ldflags:

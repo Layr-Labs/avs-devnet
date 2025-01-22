@@ -44,7 +44,7 @@ This will create a new devnet config.
 By default it's stored as `devnet.yaml`, but another name can be passed as parameter.
 
 ```sh
-devnet init
+avs-devnet init
 ```
 
 The default configuration deploys EigenLayer with a single strategy and operator.
@@ -56,7 +56,7 @@ This will start a devnet according to the configuration inside `devnet.yaml`.
 Another file name can be specified as the first parameter.
 
 ```sh
-devnet start
+avs-devnet start
 ```
 
 Note that only one devnet per file name can be running at the same time.
@@ -68,7 +68,7 @@ This will stop the devnet according to the configuration inside `devnet.yaml`.
 Another file name can be specified as the first parameter.
 
 ```sh
-devnet stop
+avs-devnet stop
 ```
 
 ### Fetching the address of a contract
@@ -77,7 +77,7 @@ This will output the address of the deployed contract named `delegation`, from t
 In the default configuration, this corresponds to the address of EigenLayer's `DelegationManager`.
 
 ```sh
-$ devnet get-address eigenlayer_addresses:delegation
+$ avs-devnet get-address eigenlayer_addresses:delegation
 0x9f9F5Fd89ad648f2C000C954d8d9C87743243eC5
 ```
 
@@ -88,7 +88,7 @@ More examples:
 
 ```sh
 # print all addresses in eigenlayer_addresses artifact
-$ devnet get-address eigenlayer_addresses:
+$ avs-devnet get-address eigenlayer_addresses:
 {
   "addresses": {
     # ...
@@ -102,13 +102,13 @@ $ devnet get-address eigenlayer_addresses:
   # ...
 }
 # print the address under strategies -> MockETH
-$ devnet get-address eigenlayer_addresses:strategies.MockETH
+$ avs-devnet get-address eigenlayer_addresses:strategies.MockETH
 0x2b45cD38B213Bbd3A1A848bf2467927c976877Cb
 # because we also search nested entries, the last one can be shortened to
-$ devnet get-address eigenlayer_addresses:MockETH
+$ avs-devnet get-address eigenlayer_addresses:MockETH
 0x2b45cD38B213Bbd3A1A848bf2467927c976877Cb
 # by adding a . at the start, we disable the search function
-$ devnet get-address eigenlayer_addresses:.MockETH  # this fails
+$ avs-devnet get-address eigenlayer_addresses:.MockETH  # this fails
 Contract not found: eigenlayer_addresses:.MockETH
 ```
 
@@ -170,7 +170,7 @@ In that case, running it is as easy as:
 
 1. Install AvsDevnet
 2. Download the devnet configuration to use as `devnet.yaml`
-3. Run `devnet start` in the same folder
+3. Run `avs-devnet start` in the same folder
 
 Under `examples/` we have some devnet configurations that follow this approach.
 
@@ -223,12 +223,12 @@ artifacts:
 You can find the options for each command by appending `--help`:
 
 ```sh
-$ devnet --help
+$ avs-devnet --help
 NAME:
-   devnet - start an AVS devnet
+   avs-devnet - start an AVS devnet
 
 USAGE:
-   devnet [global options] command [command options]
+   avs-devnet [global options] command [command options]
 
 VERSION:
    development

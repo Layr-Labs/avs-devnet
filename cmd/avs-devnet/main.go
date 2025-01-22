@@ -13,7 +13,7 @@ var version = "development"
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "devnet"
+	app.Name = "avs-devnet"
 	app.Usage = "start an AVS devnet"
 	app.Version = version
 
