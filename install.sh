@@ -378,7 +378,32 @@ CHECKSUM_URL=${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}
 
 execute
 
+log_info "Checking dependencies..."
+
+all_ok=true
+
+if is_command kurtosis; then
+  log_debug "Kurtosis: installed"
+else
+  log_err "Kurtosis: NOT INSTALLED"
+  log_err "To install it, go to: https://docs.kurtosis.com/install/."
+  all_ok=false
+fi
+
+if is_command forge; then
+  log_debug "Foundry: installed"
+else
+  log_err "Foundry: NOT INSTALLED"
+  log_err "To install it, go to: https://book.getfoundry.sh/getting-started/installation."
+  all_ok=false
+fi
+
+if [ $all_ok == false ]; then
+  log_err "The package was installed, but some dependencies were missing. Please install the missing dependencies before using the devnet."
+else
+  log_info "All dependencies are already installed."
+fi
+
 if [ "$RUN_COMPLETIONS" = true ]; then
-  log_crit "completions aren't supported yet"
-  return 1
+  log_err "completions aren't supported yet"
 fi
