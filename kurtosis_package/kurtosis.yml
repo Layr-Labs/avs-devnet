@@ -1,4 +1,4 @@
-name: "github.com/Layr-Labs/avs-devnet"
+name: "github.com/Layr-Labs/avs-devnet/kurtosis_package"
 description: |
   Runs an Ethereum devnet with EigenLayer and AVS contracts plus off-chain services
 replace:
