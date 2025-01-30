@@ -10,14 +10,28 @@ The library, on the other hand, is commonly used in place of mocks for automated
 
 ## Dependencies
 
-Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
-For how to install it, you can check [here](https://docs.kurtosis.com/install/).
-As part of that, you'll also need to install Docker.
+### Kurtosis
 
-For deploying local contracts, [foundry needs to be installed](https://book.getfoundry.sh/getting-started/installation).
+Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
+And since it uses Docker, you'll also need to install it.
+
+You can find how to install it in the Kurtosis documentation:
+<https://docs.kurtosis.com/install/>
+
+### Foundry
+
+For deploying local contracts, foundry needs to be installed.
 Also, only contracts inside foundry projects are supported as of now.
 
-For development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
+You can find how to install it in the Foundry documentation:
+<https://book.getfoundry.sh/getting-started/installation>
+
+### Development dependencies
+
+For development, we use the `go` toolchain.
+
+To install it, check the official installation guide:
+<https://go.dev/doc/install>
 
 ## How to install
 
