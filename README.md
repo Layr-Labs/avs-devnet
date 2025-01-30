@@ -10,16 +10,56 @@ The library, on the other hand, is commonly used in place of mocks for automated
 
 ## Dependencies
 
-Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
-For how to install it, you can check [here](https://docs.kurtosis.com/install/).
-As part of that, you'll also need to install Docker.
+### Kurtosis
 
-For deploying local contracts, [foundry needs to be installed](https://book.getfoundry.sh/getting-started/installation).
+Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be installed.
+And since it uses Docker, you'll also need to install it.
+
+You can find how to install it in the Kurtosis documentation:
+<https://docs.kurtosis.com/install>
+
+### Foundry
+
+For deploying local contracts, foundry needs to be installed.
 Also, only contracts inside foundry projects are supported as of now.
 
-For development, we require [the `go` toolchain to be installed](https://go.dev/doc/install).
+You can find how to install it in the Foundry documentation:
+<https://book.getfoundry.sh/getting-started/installation>
+
+### Development dependencies
+
+For development, we use the `go` toolchain.
+
+To install it, check the official installation guide:
+<https://go.dev/doc/install>
 
 ## How to install
+
+### Using the install script
+
+To download a binary for the latest release, run:
+
+```sh
+curl -sSfL https://raw.githubusercontent.com/Layr-Labs/avs-devnet/main/install.sh | sh -s
+```
+
+This command downloads and executes [our `main` branch install script](./install.sh), installing the latest binary release of the devnet.
+It will be installed inside the `~/bin` directory by default.
+You'll need to have this directory in your `PATH` to be able to call it by name (i.e. `avs-devnet` instead of `~/bin/avs-devnet`).
+This can be done by running:
+
+```sh
+export PATH=$PATH:~/bin
+```
+
+To persist this change, you'll need to add it to your `~/.bashrc` file (or other, depending on your chosen shell).
+
+> [!TIP]
+> Alternatively, you can specify the install path with `-b <path>`, like so:
+>
+> ```sh
+> curl -sSfL https://raw.githubusercontent.com/Layr-Labs/avs-devnet/main/install.sh | sh -s -- -b /usr/local/bin
+> ```
 
 ### Using `go` toolchain
 
