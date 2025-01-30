@@ -16,7 +16,7 @@ Since the Devnet is implemented as a Kurtosis package, we require Kurtosis to be
 And since it uses Docker, you'll also need to install it.
 
 You can find how to install it in the Kurtosis documentation:
-<https://docs.kurtosis.com/install/>
+<https://docs.kurtosis.com/install>
 
 ### Foundry
 
