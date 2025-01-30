@@ -26,7 +26,7 @@ For development, we require [the `go` toolchain to be installed](https://go.dev/
 To install the devnet using the `go` toolchain:
 
 ```sh
-go install github.com/Layr-Labs/avs-devnet/cmd/avs-devnet
+go install github.com/Layr-Labs/avs-devnet/cmd/avs-devnet@latest
 ```
 
 > [!IMPORTANT]  
