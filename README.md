@@ -43,7 +43,8 @@ To download a binary for the latest release, run:
 curl -sSfL https://raw.githubusercontent.com/Layr-Labs/avs-devnet/main/install.sh | sh -s
 ```
 
-The binary will be installed inside the `~/bin` directory.
+This command downloads and executes [our `main` branch install script](./install.sh), installing the latest binary release of the devnet.
+It will be installed inside the `~/bin` directory by default.
 You'll need to have this directory in your `PATH` to be able to call it by name (i.e. `avs-devnet` instead of `~/bin/avs-devnet`).
 This can be done by running:
 
