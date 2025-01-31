@@ -129,7 +129,7 @@ This will output the address of the deployed contract named `delegation`, from t
 In the default configuration, this corresponds to the address of EigenLayer's `DelegationManager`.
 
 ```sh
-$ avs-devnet get-address eigenlayer_addresses:delegation
+$ avs-devnet get-address eigenlayer_addresses:delegationManager
 0x9f9F5Fd89ad648f2C000C954d8d9C87743243eC5
 ```
 
