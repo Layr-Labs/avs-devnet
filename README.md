@@ -115,7 +115,7 @@ Note that only one devnet per file name can be running at the same time.
 Trying to start another one (or the same one more than once) will fail.
 
 > [!TIP]
-> If you're having any problems running the devnet, check the ["Troubleshooting"](#troubleshooting) section for known issues.
+> If you encounter any issues while running the devnet, check the ["Troubleshooting"](#troubleshooting) section for known problems.
 > If that doesn't help, feel free to open an issue [here](https://github.com/Layr-Labs/avs-devnet/issues/new?template=bug_report.md).
 
 ### Stopping the devnet
