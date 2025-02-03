@@ -23,7 +23,8 @@ func InitKurtosisContext() (KurtosisCtx, error) {
 		// Kurtosis engine is probably not running. Try to start it.
 		// TODO: avoid using the CLI for this
 		if exec.Command("kurtosis", "engine", "start").Run() != nil {
-			return KurtosisCtx{}, fmt.Errorf("failed to start Kurtosis engine: %w\nThis might be because the docker daemon is not running", err)
+			return KurtosisCtx{}, fmt.Errorf("failed to start Kurtosis engine: %w\n"+
+				"This might be because the docker daemon is not running", err)
 		}
 		ctx, err = kurtosis_context.NewKurtosisContextFromLocalEngine()
 	}
