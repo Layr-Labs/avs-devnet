@@ -114,6 +114,10 @@ avs-devnet start
 Note that only one devnet per file name can be running at the same time.
 Trying to start another one (or the same one more than once) will fail.
 
+> [!TIP]
+> If you encounter any issues while running the devnet, check the ["Troubleshooting"](#troubleshooting) section for known problems.
+> If that doesn't help, feel free to open an issue [here](https://github.com/Layr-Labs/avs-devnet/issues/new?template=bug_report.md).
+
 ### Stopping the devnet
 
 This will stop the devnet according to the configuration inside `devnet.yaml`.
@@ -129,7 +133,7 @@ This will output the address of the deployed contract named `delegation`, from t
 In the default configuration, this corresponds to the address of EigenLayer's `DelegationManager`.
 
 ```sh
-$ avs-devnet get-address eigenlayer_addresses:delegation
+$ avs-devnet get-address eigenlayer_addresses:delegationManager
 0x9f9F5Fd89ad648f2C000C954d8d9C87743243eC5
 ```
 
