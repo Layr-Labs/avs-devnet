@@ -1,5 +1,5 @@
 # Taken from https://github.com/Layr-Labs/eigenlayer-cli/blob/79add3518f856c71faa3b95b383e35df370bcc52/.github/workflows/release.yml
-name: Release (with lint and test)
+name: Release
 
 on:
   push:
