@@ -401,41 +401,6 @@ services:
       DISPERSER_ENCODER_SRS_LOAD: 65536
       DISPERSER_ENCODER_PREVENT_REENCODING: true
 
-  - name: retriever
-    image: eigenda-retriever
-    build_cmd: "docker build . -t eigenda-retriever --target retriever"
-    ports:
-      grpc:
-        number: 8080
-        transport_protocol: TCP
-        application_protocol: "grpc"
-        wait: 1m
-      metrics:
-        number: 9100
-        transport_protocol: TCP
-        application_protocol: "http"
-        wait: 1m
-    input:
-      /kzg/: kzg_config
-    env:
-      RETRIEVER_LOG_LEVEL: debug
-      RETRIEVER_VERBOSE: true
-      RETRIEVER_HOSTNAME: "retriever"
-      RETRIEVER_GRPC_PORT: "8080"
-      RETRIEVER_TIMEOUT: "20s"
-      RETRIEVER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
-      RETRIEVER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
-      RETRIEVER_G1_PATH: /kzg/g1.point
-      RETRIEVER_G2_PATH: /kzg/g2.point
-      RETRIEVER_CACHE_PATH: /kzg/cache
-      RETRIEVER_SRS_ORDER: 65536
-      RETRIEVER_SRS_LOAD: 65536
-      RETRIEVER_CHAIN_RPC: "{{.http_rpc_url}}"
-      RETRIEVER_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
-      RETRIEVER_ENABLE_METRICS: true
-      RETRIEVER_METRICS_HTTP_PORT: 9100
-      RETRIEVER_GRAPH_URL: ""
-
   - name: batcher
     image: eigenda-batcher
     build_cmd: "docker build . -t eigenda-batcher --target batcher"
@@ -478,6 +443,51 @@ services:
       BATCHER_AWS_SECRET_ACCESS_KEY: "localstack"
       BATCHER_AWS_ENDPOINT_URL: "http://{{.services.localstack.ip_address}}:4566"
       BATCHER_FINALIZATION_BLOCK_DELAY: 1
+
+  - name: retriever
+    image: eigenda-retriever
+    build_cmd: "docker build . -t eigenda-retriever --target retriever"
+    ports:
+      grpc:
+        number: 8080
+        transport_protocol: TCP
+        application_protocol: "grpc"
+        wait: 1m
+      metrics:
+        number: 9100
+        transport_protocol: TCP
+        application_protocol: "http"
+        wait: 1m
+    input:
+      /kzg/: kzg_config
+    env:
+      RETRIEVER_LOG_LEVEL: debug
+      RETRIEVER_VERBOSE: true
+      RETRIEVER_HOSTNAME: "retriever"
+      RETRIEVER_GRPC_PORT: "8080"
+      RETRIEVER_TIMEOUT: "20s"
+      RETRIEVER_BLS_OPERATOR_STATE_RETRIVER: "{{.addresses.EigenDA.operatorStateRetriever}}"
+      RETRIEVER_EIGENDA_SERVICE_MANAGER: "{{.addresses.EigenDA.serviceManager}}"
+      RETRIEVER_G1_PATH: /kzg/g1.point
+      RETRIEVER_G2_PATH: /kzg/g2.point
+      RETRIEVER_CACHE_PATH: /kzg/cache
+      RETRIEVER_SRS_ORDER: 65536
+      RETRIEVER_SRS_LOAD: 65536
+      RETRIEVER_CHAIN_RPC: "{{.http_rpc_url}}"
+      RETRIEVER_PRIVATE_KEY: "{{slice .keys.disperser_key.private_key 2}}"
+      RETRIEVER_ENABLE_METRICS: true
+      RETRIEVER_METRICS_HTTP_PORT: 9100
+      RETRIEVER_GRAPH_URL: ""
+
+  # TODO: configure
+  - name: controller
+    image: eigenda-controller
+    build_cmd: "docker build . -t eigenda-controller --target controller"
+
+  # TODO: configure
+  - name: relay
+    image: eigenda-relay
+    build_cmd: "docker build . -t eigenda-relay --target relay"
 
   - name: traffic-generator
     image: traffic-generator
