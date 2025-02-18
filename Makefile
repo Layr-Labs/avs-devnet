@@ -113,6 +113,8 @@ examples/hello-world-avs:
 		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
+	# Enable the solc optimizer
+	sed -i '' 's/via-ir = true/optimizer = true\nvia-ir = true/' $@/contracts/foundry.toml
 
 build_hello_world_image: examples/hello-world-avs
 	@echo "Building hello_world docker image..."
