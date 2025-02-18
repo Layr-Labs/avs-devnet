@@ -4,9 +4,10 @@
 deployments:
   - name: EigenLayer
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
+    # Version from 2025-02-18 (PR #108)
+    ref: "f2e76cf710c3492cc1db16b3cef2f3a5adf502f4"
     contracts_path: "contracts"
-    script: script/DeployEigenLayerCore.s.sol
+    script: script/DeployEigenLayerCore.s.sol:DeployEigenlayerCore
     env:
       # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "{{.deployer_private_key}}"
@@ -19,7 +20,8 @@ deployments:
 
   - name: hello-world-avs
     repo: "https://github.com/Layr-Labs/hello-world-avs.git"
-    ref: "001dc6e944280559dfb44f75faf5102349a61d8e"
+    # Version from 2025-02-18 (PR #108)
+    ref: "f2e76cf710c3492cc1db16b3cef2f3a5adf502f4"
     contracts_path: "contracts"
     script: script/HelloWorldDeployer.s.sol
     env:

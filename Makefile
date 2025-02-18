@@ -101,8 +101,8 @@ check_devnet:
 
 # hello-world-avs example
 
-# Version from 2025-01-04
-HELLO_WORLD_REF:=4626e206fd119b26ebe98935b256daa7256e863b
+# Version from 2025-02-18 (PR #108)
+HELLO_WORLD_REF:=f2e76cf710c3492cc1db16b3cef2f3a5adf502f4
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."
@@ -113,8 +113,6 @@ examples/hello-world-avs:
 		git fetch --depth 1 origin $(HELLO_WORLD_REF) && \
 		git checkout FETCH_HEAD && \
 		git submodule update --init --recursive --depth 1
-	# Enable the solc optimizer
-	sed -i '' 's/via-ir = true/optimizer = true\nvia-ir = true/' $@/contracts/foundry.toml
 
 build_hello_world_image: examples/hello-world-avs
 	@echo "Building hello_world docker image..."
