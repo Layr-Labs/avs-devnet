@@ -60,14 +60,10 @@ jobs:
         with:
           key: docker-${{ runner.os }}-${{ hashFiles('Makefile', 'examples', 'src/config/default_config.yaml') }}
 
-      # TODO: fix the hello-world example
       - name: Run example '${{ matrix.example }}'
-        if: matrix.example != 'kurtosis_hello_world'
         run: make ${{ matrix.example }}
 
-      # TODO: fix the hello-world example
       - name: Check example is still running
-        if: matrix.example != 'kurtosis_hello_world'
         run: make check_devnet
 
       - name: Print logs
