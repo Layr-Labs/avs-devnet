@@ -15,7 +15,7 @@ deployments:
   - name: EigenLayer
     repo: "."
     contracts_path: "contracts"
-    script: script/DeployEigenLayerCore.s.sol
+    script: script/DeployEigenLayerCore.s.sol:DeployEigenlayerCore
     env:
       # NOTE: this is used inside the deployer script
       PRIVATE_KEY: "{{.deployer_private_key}}"
@@ -23,6 +23,8 @@ deployments:
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
+    input:
+      config/core/: core_deployment_config
     output:
       eigenlayer_addresses: "deployments/core/31337.json"
 
@@ -39,6 +41,7 @@ deployments:
       ETHERSCAN_API_KEY: ""
     input:
       deployments/core/: eigenlayer_addresses
+      config/hello-world/: avs_deployment_config
     output:
       avs_addresses: "deployments/hello-world/31337.json"
 
@@ -72,6 +75,16 @@ keys:
     type: ecdsa
   - name: traffic_generator_ecdsa_keys
     type: ecdsa
+
+artifacts:
+  core_deployment_config:
+    files:
+      31337.json:
+        static_file: "contracts/config/core/31337.json"
+  avs_deployment_config:
+    files:
+      31337.json:
+        static_file: "contracts/config/hello-world/31337.json"
 
 ethereum_package:
   additional_services:
