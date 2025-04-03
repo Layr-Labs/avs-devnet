@@ -1,6 +1,5 @@
 # Foundry image (arm64-compatible)
-FOUNDRY_IMAGE = ImageSpec.from_image("ghcr.io/foundry-rs/foundry:latest")
-
+FOUNDRY_IMAGE = "ghcr.io/foundry-rs/foundry:latest"
 
 def ensure_all_generated(plan, context, artifacts):
     """
