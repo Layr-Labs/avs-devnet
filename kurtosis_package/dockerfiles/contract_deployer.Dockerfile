@@ -1,10 +1,9 @@
 FROM ghcr.io/foundry-rs/foundry:latest AS contract_deployer
 
 # Install git
-RUN apt update -y && \
-    apt upgrade -y && \
-    apt install -y git && \
-    apt clean
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
 
 WORKDIR /app/
 
