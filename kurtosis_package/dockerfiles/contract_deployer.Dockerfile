@@ -3,7 +3,7 @@ FROM ghcr.io/foundry-rs/foundry:latest AS contract_deployer
 # Install git
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
-    apt-get clean && \
+    apt-get clean
 
 WORKDIR /app/
 
