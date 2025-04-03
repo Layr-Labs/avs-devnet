@@ -1,6 +1,7 @@
 # Foundry image (arm64-compatible)
 FOUNDRY_IMAGE = "ghcr.io/foundry-rs/foundry:latest"
 
+
 def ensure_all_generated(plan, context, artifacts):
     """
     Ensures all the given artifacts are generated.
