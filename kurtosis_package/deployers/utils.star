@@ -1,13 +1,7 @@
 shared_utils = import_module("../shared_utils.star")
 
-
-# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
-FOUNDRY_IMAGE = ImageBuildSpec(
-    image_name="Layr-Labs/foundry",
-    build_context_dir="../dockerfiles/",
-    build_file="contract_deployer.Dockerfile",
-    target_stage="foundry",
-)
+# Foundry image (arm64-compatible)
+FOUNDRY_IMAGE = "ghcr.io/foundry-rs/foundry:latest"
 
 
 def deploy_generic_contract(plan, context, deployment):

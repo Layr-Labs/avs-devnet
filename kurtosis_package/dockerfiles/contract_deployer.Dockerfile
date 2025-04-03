@@ -1,19 +1,12 @@
-FROM debian:bookworm-slim AS foundry
+FROM ghcr.io/foundry-rs/foundry:latest AS contract_deployer
 
-# Install curl & git
+# Install git
 RUN apt update -y && \
     apt upgrade -y && \
-    apt install -y curl git && \
+    apt install -y git && \
     apt clean
 
-# Install foundry
-RUN curl -L https://foundry.paradigm.xyz | bash
-ENV PATH="/root/.foundry/bin:${PATH}"
-
-RUN foundryup
-
 WORKDIR /app/
-
 
 # The repository's URL.
 ARG CONTRACTS_REPO
@@ -22,8 +15,6 @@ ARG CONTRACTS_REF
 # Path to the contracts directory within the repository.
 # It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
-
-FROM foundry AS contract_deployer
 
 WORKDIR /
 
