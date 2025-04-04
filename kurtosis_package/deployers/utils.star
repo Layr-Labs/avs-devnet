@@ -1,7 +1,7 @@
 shared_utils = import_module("../shared_utils.star")
 
 # Foundry image (arm64-compatible)
-FOUNDRY_IMAGE = "ghcr.io/foundry-rs/foundry:latest"
+FOUNDRY_IMAGE = shared_utils.FOUNDRY_IMAGE
 
 
 def deploy_generic_contract(plan, context, deployment):
