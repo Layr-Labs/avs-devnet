@@ -1,9 +1,9 @@
-FROM debian:bookworm-slim
+FROM ghcr.io/foundry-rs/foundry
 
 # Install required tools
-RUN apt-get update && \
-    apt-get install -y curl git && \
-    apt-get clean
+RUN apt update && \
+    apt install -y curl git && \
+    apt clean
 
 # Install Foundry
 RUN curl -L https://foundry.paradigm.xyz | bash && \
