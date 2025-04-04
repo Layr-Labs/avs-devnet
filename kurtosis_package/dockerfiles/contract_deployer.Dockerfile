@@ -1,8 +1,7 @@
-FROM ghcr.io/foundry-rs/foundry
+FROM debian:bookworm-slim
 
-# Install curl & git
-RUN apt update -y && \
-    apt upgrade -y && \
+# Install required tools
+RUN apt update && \
     apt install -y curl git && \
     apt clean
 
