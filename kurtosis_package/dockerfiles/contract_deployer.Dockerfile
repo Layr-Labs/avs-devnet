@@ -1,4 +1,4 @@
-FROM ghcr.io/foundry-rs/foundry
+FROM debian:bookworm-slim
 
 # Install required tools
 RUN apt update && \
