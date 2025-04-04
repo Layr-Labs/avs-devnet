@@ -1,6 +1,4 @@
-FROM debian:bookworm-slim
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM ghcr.io/foundry-rs/foundry
 
 # Install required tools
 RUN apt-get update && \
@@ -16,8 +14,12 @@ ENV PATH="/root/.foundry/bin:$PATH"
 # Clone contracts
 WORKDIR /app
 
+# The repository's URL.
 ARG CONTRACTS_REPO
+# The commit hash, tag, or branch to checkout from the repo.
 ARG CONTRACTS_REF
+# Path to the contracts directory within the repository.
+# It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
 
 RUN git init && \
