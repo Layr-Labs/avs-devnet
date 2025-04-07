@@ -112,7 +112,3 @@ artifacts:
           enable_node_api: True
           register_operator_on_startup: True
           token_strategy_addr: {{.addresses.incredible_squaring.erc20MockStrategy}}
-
-ethereum_package:
-  additional_services:
-    - blockscout

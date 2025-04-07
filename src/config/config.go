@@ -27,9 +27,8 @@ type DevnetConfig struct {
 }
 
 type EthereumPackageConfig struct {
-	Participants   []EthereumParticipant  `yaml:"participants"`
-	AdditionalSvcs []string               `yaml:"additional_services"`
-	NetworkParams  map[string]interface{} `yaml:"network_params"`
+	Participants  []EthereumParticipant  `yaml:"participants"`
+	NetworkParams map[string]interface{} `yaml:"network_params"`
 }
 
 type EthereumParticipant struct {

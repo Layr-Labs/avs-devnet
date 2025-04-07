@@ -74,8 +74,6 @@ keys:
     type: ecdsa
 
 ethereum_package:
-  additional_services:
-    - blockscout
   network_params:
     # We use the chain ID hardcoded in the hello-world-avs example
     network_id: "31337"
