@@ -28,5 +28,5 @@ ethereum_package:
     seconds_per_slot: 3
   participants:
     - el_type: besu
-      el_image: hyperledger/besu:develop
+      el_image: hyperledger/besu:latest
   

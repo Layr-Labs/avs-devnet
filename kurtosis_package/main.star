@@ -76,9 +76,9 @@ def parse_args(plan, args):
 # We pin the images to a specific digest to ensure the package is not broken by upstream changes
 DEFAULT_PARTICIPANT = {
     "el_type": "besu",
-    "el_image": "hyperledger/besu:develop",
+    "el_image": "hyperledger/besu:latest",
     "cl_type": "lighthouse",
-    "cl_image": "sigp/lighthouse:latest",
+    "cl_image": "ethpandaops/lighthouse:unstable",
 }
 
 
