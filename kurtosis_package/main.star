@@ -75,19 +75,19 @@ def parse_args(plan, args):
 
 # We pin the images to a specific digest to ensure the package is not broken by upstream changes
 DEFAULT_PARTICIPANT = {
-    "el_type": "geth",
-    "el_image": "ethereum/client-go:latest",
+    "el_type": "besu",
+    "el_image": "hyperledger/besu:develop",
     "cl_type": "lighthouse",
-    "cl_image": "sigp/lighthouse@sha256:dccf864e7cf837eae341977b1787e15ea5e7647cbfb6134ecc880fa29b8c168e",
+    "cl_image": "sigp/lighthouse:latest",
 }
 
 
 def parse_ethereum_package_args(plan, args):
     ethereum_args = dict(args.get("ethereum_package", {}))
-    participants = ethereum_args.get("participants", [{"el_type": "geth"}])
+    participants = ethereum_args.get("participants", [{"el_type": "besu"}])
 
     # If there are no supported clients in first participant, add one
-    if len(participants) == 0 or participants[0].get("el_type") != "geth":
+    if len(participants) == 0 or participants[0].get("el_type") != "besu":
         plan.print("WARNING: no 'besu' client as first participant. Adding one...")
         participants = [DEFAULT_PARTICIPANT] + participants
 
