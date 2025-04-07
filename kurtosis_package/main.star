@@ -81,6 +81,7 @@ DEFAULT_PARTICIPANT = {
     "cl_image": "sigp/lighthouse@sha256:dccf864e7cf837eae341977b1787e15ea5e7647cbfb6134ecc880fa29b8c168e",
 }
 
+
 def parse_ethereum_package_args(plan, args):
     ethereum_args = dict(args.get("ethereum_package", {}))
     participants = ethereum_args.get("participants", [{"el_type": "geth"}])
