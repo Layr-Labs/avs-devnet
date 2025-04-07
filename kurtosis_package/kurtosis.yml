@@ -4,8 +4,9 @@ description: |
 replace:
   # Fix to a specific version of kurtosis ethereum package to avoid breaking changes
   # Version from 2024-11-25
-  github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@05fdd35bc5eeb74f779dab9777cbeabc9e762830
+  github.com/ethpandaops/ethereum-package: github.com/ethpandaops/ethereum-package@ad5ed42f3b4ee97f1d6bfc8bd950ce76b9a37579
   # Versions from 2024-11-25
   github.com/kurtosis-tech/prometheus-package: github.com/kurtosis-tech/prometheus-package@637c9dea933be18e47f96cadc0d9bb0e3a5aa9d6
   github.com/kurtosis-tech/postgres-package: github.com/kurtosis-tech/postgres-package@9cbdde2c55e8d1656deb87821465a2ad244d8b33
   github.com/kurtosis-tech/redis-package: github.com/kurtosis-tech/redis-package@173e7f28c102dd1926adefcffa693a7627d8e576
+  

@@ -26,3 +26,7 @@ ethereum_package:
     - blockscout
   network_params:
     seconds_per_slot: 3
+  participants:
+    - el_type: geth
+      el_image: ethereum/client-go:latest
+  

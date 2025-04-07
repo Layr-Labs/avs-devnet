@@ -17,11 +17,26 @@ type DevnetConfig struct {
 	// Contains artifacts to generate
 	// The key is the artifact name
 	Artifacts map[string]Artifact `yaml:"artifacts"`
+	
+	// 🆕 Add this
+	EthereumPackage *EthereumPackageConfig `yaml:"ethereum_package"`
 
 	// non-exhaustive
 
 	raw []byte
 }
+
+type EthereumPackageConfig struct {
+	Participants     []EthereumParticipant `yaml:"participants"`
+	AdditionalSvcs   []string              `yaml:"additional_services"`
+	NetworkParams    map[string]interface{} `yaml:"network_params"`
+}
+
+type EthereumParticipant struct {
+	ELType  string `yaml:"el_type"`
+	ELImage string `yaml:"el_image,omitempty"`
+}
+
 
 // A group of contracts to deploy.
 type Deployment struct {
