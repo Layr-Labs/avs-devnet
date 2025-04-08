@@ -18,7 +18,7 @@ type DevnetConfig struct {
 	// The key is the artifact name
 	Artifacts map[string]Artifact `yaml:"artifacts"`
 
-	// 🆕 Add this
+	// Contains https://github.com/ethpandaops/ethereum-package configuration
 	EthereumPackage *EthereumPackageConfig `yaml:"ethereum_package"`
 
 	// non-exhaustive
