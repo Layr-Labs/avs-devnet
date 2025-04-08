@@ -33,7 +33,12 @@ def deploy_generic_contract(plan, context, deployment):
         deployer_img = ImageBuildSpec(
             image_name="Layr-Labs/foundry",
             build_context_dir="../dockerfiles/",
-            build_file="contract_deployer.Dockerfile"
+            build_file="contract_deployer.Dockerfile",
+            build_args={
+                "CONTRACTS_REPO": repo,
+                "CONTRACTS_REF": deployment.get("ref", "main"),  # fallback if not set
+                "CONTRACTS_PATH": contracts_path,
+            },
         )
         split_path = script.split(".sol:")
         script_path = script
