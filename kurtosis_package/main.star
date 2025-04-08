@@ -88,7 +88,7 @@ def parse_ethereum_package_args(plan, args):
 
     # If there are no supported clients in first participant, add one
     if len(participants) == 0 or participants[0].get("el_type") != "reth":
-        plan.print("WARNING: no 'besu' client as first participant. Adding one...")
+        plan.print("WARNING: no 'reth' client as first participant. Adding one...")
         participants = [DEFAULT_PARTICIPANT] + participants
 
     ethereum_args["participants"] = participants

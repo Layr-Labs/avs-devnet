@@ -39,7 +39,7 @@ func startDevnet(t *testing.T, devnetConfig config.DevnetConfig, workingDir stri
 	// Ensure the devnet isn't running
 	_ = cmds.Stop(ctx, opts.DevnetName)
 	// Cleanup devnet after test
-	// t.Cleanup(func() { _ = cmds.Stop(ctx, opts.DevnetName) })
+	t.Cleanup(func() { _ = cmds.Stop(ctx, opts.DevnetName) })
 
 	err = cmds.Start(ctx, opts)
 	require.NoError(t, err, "Failed to start new devnet")
