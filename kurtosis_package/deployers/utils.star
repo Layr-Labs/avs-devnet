@@ -30,7 +30,12 @@ def deploy_generic_contract(plan, context, deployment):
     if is_remote_repo:
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
-        deployer_img = FOUNDRY_IMAGE
+        deployer_img = ImageBuildSpec(
+            image_name="Layr-Labs/foundry",
+            build_context_dir="../dockerfiles/",
+            build_file="contract_deployer.Dockerfile",
+            target_stage="foundry",
+        )
         split_path = script.split(".sol:")
         script_path = script
         # In case the contract name is not provided, we assume the contract name is in the script name

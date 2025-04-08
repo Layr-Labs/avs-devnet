@@ -11,7 +11,10 @@ RUN curl -L https://foundry.paradigm.xyz | bash && \
 
 ENV PATH="/root/.foundry/bin:$PATH"
 
-# Clone contracts
+# Create /app and make it writable
+RUN mkdir -p /app && chmod -R 777 /app
+
+# Use /app as working directory
 WORKDIR /app
 
 # The repository's URL.
@@ -22,12 +25,13 @@ ARG CONTRACTS_REF
 # It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
 
+# Clone contracts
 RUN git init && \
     git remote add origin ${CONTRACTS_REPO} && \
     git fetch --depth 1 origin ${CONTRACTS_REF} && \
     git checkout FETCH_HEAD && \
     git submodule update --init --recursive --depth 1 --single-branch
 
+# Change to contracts path and install dependencies
 WORKDIR /app/${CONTRACTS_PATH}
-
 RUN forge install

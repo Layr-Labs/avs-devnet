@@ -15,14 +15,16 @@ deployments:
   - name: EigenLayer
     repo: "."
     contracts_path: "contracts"
-    script: script/DeployEigenLayerCore.s.sol
+    script: script/DeployEigenLayerCore.s.sol:DeployEigenLayerCore
     env:
       # NOTE: this is used inside the deployer script
-      PRIVATE_KEY: "{{.deployer_private_key}}"
+      PRIVATE_KEY: "{{.keys.deployer_key.private_key}}"
       # NOTE: these are needed because of repo's `foundry.toml`
       HOLESKY_PRIVATE_KEY: ""
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
+    input:
+      config/core/: eigenlayer-config
     output:
       eigenlayer_addresses: "deployments/core/31337.json"
 
@@ -38,6 +40,7 @@ deployments:
       HOLESKY_RPC_URL: ""
       ETHERSCAN_API_KEY: ""
     input:
+      config/hello-world/: hello-world-config
       deployments/core/: eigenlayer_addresses
     output:
       avs_addresses: "deployments/hello-world/31337.json"
@@ -72,6 +75,20 @@ keys:
     type: ecdsa
   - name: traffic_generator_ecdsa_keys
     type: ecdsa
+  - name: deployer_key
+    type: "ecdsa"
+    address: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+    private_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
+artifacts:
+  eigenlayer-config:
+    files:
+      31337.json:
+        static_file: "contracts/config/core/31337.json"
+  hello-world-config:
+    files:
+      31337.json:
+        static_file: "contracts/config/hello-world/31337.json"
 
 ethereum_package:
   network_params:
