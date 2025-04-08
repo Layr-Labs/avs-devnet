@@ -17,11 +17,15 @@ RUN mkdir -p /app && chmod -R 777 /app
 # Use /app as working directory
 WORKDIR /app
 
-# Only clone if CONTRACTS_REPO is not empty
+# The repository's URL.
 ARG CONTRACTS_REPO=""
+# The commit hash, tag, or branch to checkout from the repo.
 ARG CONTRACTS_REF=""
+# Path to the contracts directory within the repository.
+# It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
 
+# Only clone if CONTRACTS_REPO is not empty
 RUN if [ -n "$CONTRACTS_REPO" ]; then \
     git init && \
     git remote add origin "$CONTRACTS_REPO" && \
