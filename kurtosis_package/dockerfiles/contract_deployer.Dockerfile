@@ -1,40 +1,46 @@
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS foundry
 
-# Install required tools
-RUN apt update && \
+# Install curl & git
+RUN apt update -y && \
+    apt upgrade -y && \
     apt install -y curl git && \
     apt clean
 
-# Install Foundry
-RUN curl -L https://foundry.paradigm.xyz | bash && \
-    /root/.foundry/bin/foundryup
+# Install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+ENV PATH="/root/.foundry/bin:${PATH}"
 
-ENV PATH="/root/.foundry/bin:$PATH"
+RUN foundryup
 
-# Create /app and make it writable
-RUN mkdir -p /app && chmod -R 777 /app
+WORKDIR /app/
 
-# Use /app as working directory
-WORKDIR /app
 
 # The repository's URL.
-ARG CONTRACTS_REPO=""
+ARG CONTRACTS_REPO
 # The commit hash, tag, or branch to checkout from the repo.
-ARG CONTRACTS_REF=""
+ARG CONTRACTS_REF
 # Path to the contracts directory within the repository.
 # It must contain a foundry.toml file.
 ARG CONTRACTS_PATH="."
 
-# Only clone if CONTRACTS_REPO is not empty
-RUN if [ -n "$CONTRACTS_REPO" ]; then \
-    git init && \
-    git remote add origin "$CONTRACTS_REPO" && \
-    git fetch --depth 1 origin "$CONTRACTS_REF" && \
+FROM foundry AS contract_deployer
+
+WORKDIR /
+
+ARG CONTRACTS_REPO
+ARG CONTRACTS_REF
+ARG CONTRACTS_PATH
+
+RUN git init app
+
+WORKDIR /app
+
+RUN git remote add origin ${CONTRACTS_REPO} && \
+    git fetch --depth 1 origin ${CONTRACTS_REF} && \
     git checkout FETCH_HEAD && \
-    git submodule update --init --recursive --depth 1 --single-branch; \
-fi
+    git submodule update --init --recursive --depth 1 --single-branch
 
-
-# Change to contracts path and install dependencies
 WORKDIR /app/${CONTRACTS_PATH}
-RUN if [ -d ".git" ]; then forge install; else echo "Skipping forge install (no .git)"; fi
+
+# TODO: we can use a multi-stage build to store artifacts only
+RUN forge install

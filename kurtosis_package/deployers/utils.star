@@ -1,10 +1,12 @@
 shared_utils = import_module("../shared_utils.star")
 
-# Foundry image (arm64-compatible)
+
+# NOTE: this is a temporary workaround due to foundry-rs not having arm64 images
 FOUNDRY_IMAGE = ImageBuildSpec(
-    image_name="Layr-Labs/foundry-local",
+    image_name="Layr-Labs/foundry",
     build_context_dir="../dockerfiles/",
     build_file="contract_deployer.Dockerfile",
+    target_stage="foundry",
 )
 
 
@@ -30,11 +32,11 @@ def deploy_generic_contract(plan, context, deployment):
     root = "/app/" + contracts_path + "/"
 
     input_artifacts = generate_input_artifacts(plan, context, input, root)
+
     if is_remote_repo:
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
         deployer_img = FOUNDRY_IMAGE
-
         split_path = script.split(".sol:")
         script_path = script
         # In case the contract name is not provided, we assume the contract name is in the script name
