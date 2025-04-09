@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim as foundry
+FROM debian:bookworm-slim
 
 # Install required tools
 RUN apt update && \

@@ -33,7 +33,6 @@ def deploy_generic_contract(plan, context, deployment):
             image_name="Layr-Labs/foundry-local",
             build_context_dir="../dockerfiles/",
             build_file="contract_deployer.Dockerfile",
-            target_stage="foundry",
             build_args={
                 "CONTRACTS_REPO": "",  # will skip git logic
                 "CONTRACTS_REF": "local",  # dummy value, required by Docker ARG
