@@ -101,8 +101,8 @@ check_devnet:
 
 # hello-world-avs example
 
-# Version from 2025-01-04
-HELLO_WORLD_REF:=4626e206fd119b26ebe98935b256daa7256e863b
+# Version from 2025-04-09
+HELLO_WORLD_REF:=2f9ea12345b0b5311f575b2e001c76db601918dc
 
 examples/hello-world-avs:
 	@echo "Cloning hello-world-avs repo..."

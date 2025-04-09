@@ -75,22 +75,22 @@ def parse_args(plan, args):
 
 # We pin the images to a specific digest to ensure the package is not broken by upstream changes
 DEFAULT_PARTICIPANT = {
-    "el_type": "besu",
-    # hyperledger/besu:latest from 2024-11-25
-    "el_image": "hyperledger/besu@sha256:644f31577d06f0076375fb4a92805e30038b8dee2b25dda4dd3a843f79ccca65",
+    "el_type": "reth",
+    # Version date: 2025-04-09
+    "el_image": "ghcr.io/paradigmxyz/reth@sha256:f50487067918dae485a77bba724be8bb975a318b9aaa057f6afe14d76ba2351e",
     "cl_type": "lighthouse",
-    # ethpandaops/lighthouse:stable from 2024-11-25
-    "cl_image": "ethpandaops/lighthouse@sha256:924fe8fb9505595b5689d86c18ced5ebfc43817d5d96811977e5d37dbab07dba",
+    # Version date: 2025-04-09
+    "cl_image": "ethpandaops/lighthouse@sha256:4df3cb9f86b999979170fb53fa28d40223f35e63ba76b9804a045525520c2d14",
 }
 
 
 def parse_ethereum_package_args(plan, args):
     ethereum_args = dict(args.get("ethereum_package", {}))
-    participants = ethereum_args.get("participants", [{"el_type": "besu"}])
+    participants = ethereum_args.get("participants", [{"el_type": "reth"}])
 
     # If there are no supported clients in first participant, add one
-    if len(participants) == 0 or participants[0].get("el_type") != "besu":
-        plan.print("WARNING: no 'besu' client as first participant. Adding one...")
+    if len(participants) == 0 or participants[0].get("el_type") != "reth":
+        plan.print("WARNING: no 'reth' client as first participant. Adding one...")
         participants = [DEFAULT_PARTICIPANT] + participants
 
     ethereum_args["participants"] = participants
