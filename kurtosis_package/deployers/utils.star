@@ -5,11 +5,6 @@ FOUNDRY_IMAGE = ImageBuildSpec(
     image_name="Layr-Labs/foundry-local",
     build_context_dir="../dockerfiles/",
     build_file="contract_deployer.Dockerfile",
-    build_args={
-        "CONTRACTS_REPO": "",  # will skip git logic
-        "CONTRACTS_REF": "local",  # dummy value, required by Docker ARG
-        "CONTRACTS_PATH": contracts_path,
-    },
 )
 
 
