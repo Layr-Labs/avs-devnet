@@ -76,9 +76,11 @@ def parse_args(plan, args):
 # We pin the images to a specific digest to ensure the package is not broken by upstream changes
 DEFAULT_PARTICIPANT = {
     "el_type": "reth",
-    "el_image": "ghcr.io/paradigmxyz/reth",
+    # Version date: 2025-04-09
+    "el_image": "ghcr.io/paradigmxyz/reth@sha256:f50487067918dae485a77bba724be8bb975a318b9aaa057f6afe14d76ba2351e",
     "cl_type": "lighthouse",
-    "cl_image": "ethpandaops/lighthouse:unstable",
+    # Version date: 2025-04-09
+    "cl_image": "ethpandaops/lighthouse@sha256:4df3cb9f86b999979170fb53fa28d40223f35e63ba76b9804a045525520c2d14",
 }
 
 
