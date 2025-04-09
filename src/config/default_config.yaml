@@ -24,7 +24,4 @@ keys:
 ethereum_package:
   network_params:
     seconds_per_slot: 3
-  participants:
-    - el_type: reth
-      el_image: ghcr.io/paradigmxyz/reth
   
