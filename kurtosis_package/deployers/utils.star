@@ -1,7 +1,16 @@
 shared_utils = import_module("../shared_utils.star")
 
 # Foundry image (arm64-compatible)
-FOUNDRY_IMAGE = shared_utils.FOUNDRY_IMAGE
+FOUNDRY_IMAGE = ImageBuildSpec(
+    image_name="Layr-Labs/foundry-local",
+    build_context_dir="../dockerfiles/",
+    build_file="contract_deployer.Dockerfile",
+    build_args={
+        "CONTRACTS_REPO": "",  # will skip git logic
+        "CONTRACTS_REF": "local",  # dummy value, required by Docker ARG
+        "CONTRACTS_PATH": contracts_path,
+    },
+)
 
 
 def deploy_generic_contract(plan, context, deployment):
@@ -29,16 +38,7 @@ def deploy_generic_contract(plan, context, deployment):
     if is_remote_repo:
         deployer_img = gen_deployer_img(repo, deployment["ref"], contracts_path)
     else:
-        deployer_img = ImageBuildSpec(
-            image_name="Layr-Labs/foundry-local",
-            build_context_dir="../dockerfiles/",
-            build_file="contract_deployer.Dockerfile",
-            build_args={
-                "CONTRACTS_REPO": "",  # will skip git logic
-                "CONTRACTS_REF": "local",  # dummy value, required by Docker ARG
-                "CONTRACTS_PATH": contracts_path,
-            },
-        )
+        deployer_img = FOUNDRY_IMAGE
 
         split_path = script.split(".sol:")
         script_path = script
