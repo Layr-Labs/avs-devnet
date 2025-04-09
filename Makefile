@@ -101,7 +101,7 @@ check_devnet:
 
 # hello-world-avs example
 
-# Version from 2025-01-04
+# Version from 2025-04-09
 HELLO_WORLD_REF:=2f9ea12345b0b5311f575b2e001c76db601918dc
 
 examples/hello-world-avs:
