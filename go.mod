@@ -3,7 +3,7 @@ module github.com/Layr-Labs/avs-devnet
 go 1.22.4
 
 require (
-	github.com/kurtosis-tech/kurtosis/api/golang v1.4.4
+	github.com/kurtosis-tech/kurtosis/api/golang v1.6.0
 	github.com/schollz/progressbar/v3 v3.18.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0

@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
-  KURTOSIS_VERSION: '1.4.4'
+  KURTOSIS_VERSION: '1.6.0'
   GO_VERSION: '1.22.4'
 
 
