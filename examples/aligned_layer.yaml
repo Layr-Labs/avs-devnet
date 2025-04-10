@@ -525,8 +525,6 @@ artifacts:
             telemetry_ip_port_address: localhost:4001
 
 ethereum_package:
-  additional_services:
-    - blockscout
   network_params:
     # We use anvil's chain ID because 3151908 is not supported by eigenlayer-cli
     network_id: "31337"
