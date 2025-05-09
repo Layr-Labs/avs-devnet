@@ -3,7 +3,7 @@ utils = import_module("./utils.star")
 
 
 def deploy(plan, context, deployment):
-    el_args = get_version_args(deployment) | deployment
+    el_args = add_version_args(deployment)
     el_name = el_args["name"]
     plan.print("Initiating {} deployment".format(el_name))
 
@@ -61,6 +61,19 @@ def generate_addresses_arg(el_output, strategies):
         addresses[name] = path
 
     return addresses
+
+
+def add_version_args(deployment):
+    output = deployment.get("output")
+    version_args = get_version_args(deployment)
+    result = version_args | deployment
+    # If `output` is a string, we use the default version output config,
+    # but renaming the file with the specified name
+    if output != None and type(output) == type(""):
+        result["output"] = version_args["output"]
+        result["output"]["eigenlayer_addresses"]["rename"] = output
+
+    return result
 
 
 def get_version_args(deployment):
